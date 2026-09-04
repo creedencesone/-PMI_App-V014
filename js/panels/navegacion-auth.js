@@ -487,6 +487,13 @@ function initNavegacion() {
     });
 }
 
+function toggleNavGroup(header) {
+    if (!header) return;
+    const group = header.closest('.nav-group');
+    if (group) group.classList.toggle('collapsed');
+}
+window.toggleNavGroup = toggleNavGroup;
+
 function cerrarModalSatisfaccion() {
     const modal = document.getElementById('modalSatisfaccion');
     if (modal) modal.style.display = 'none';

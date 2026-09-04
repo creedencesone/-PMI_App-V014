@@ -76,8 +76,27 @@
                 <i data-feather="chevron-left" class="nav-feather"></i>
                 <span>Volver a Cartera</span>
             </button>
+            <div class="nav-group" data-fase="Inicio">
+                <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                    <span class="nav-group-title">Inicio</span>
+                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
+                </div>
+                <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header" data-panel="acta"><span class="nav-icon"><i data-feather="file-text" class="nav-feather"></i></span><span class="nav-title">Acta de Inicio</span></div></div>
-            <div class="nav-section"><div class="nav-header" data-panel="salud"><span class="nav-icon"><i data-feather="thumbs-up" class="nav-feather"></i></span><span class="nav-title">Salud del Proyecto</span></div></div>
+            <div class="nav-section"><div class="nav-header has-submenu" data-submenu="stakeholders"><span class="nav-icon"><i data-feather="user-plus" class="nav-feather"></i></span><span class="nav-title">Stakeholders</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
+                <div class="submenu" data-submenu="stakeholders">
+                    <div class="submenu-item" data-panel="stakeholders"><i data-feather="entries" class="nav-feather"></i> Lista y Matriz</div>
+                    <div class="submenu-item" data-panel="Raci"><i data-feather="divide-square" class="nav-feather"></i> Matriz RACI</div>
+                </div>
+            </div>
+                </div>
+            </div>
+            <div class="nav-group" data-fase="Planificación">
+                <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                    <span class="nav-group-title">Planificación</span>
+                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
+                </div>
+                <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header has-submenu" data-submenu="finanzas"><span class="nav-icon"><i data-feather="dollar-sign" class="nav-feather"></i></span><span class="nav-title">Finanzas</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
             
              <div class="submenu" data-submenu="finanzas">
@@ -94,13 +113,6 @@
             <div class="nav-section"><div class="nav-header" data-panel="cronograma" style="justify-content:center;gap:6px"><span class="nav-icon"><i data-feather="fast-forward" class="nav-feather"></i></span><span class="nav-title" style="flex:none">Cronograma Gantt</span></div></div>
             <div class="nav-section"><div class="nav-header" data-panel="riesgos"><span class="nav-icon"><i data-feather="alert-triangle" class="nav-feather"></i></span><span class="nav-title">Gestión de Riesgos</span></div></div>
             <div class="nav-section"><div class="nav-header" data-panel="agenda"><span class="nav-icon"><i data-feather="calendar" class="nav-feather"></i></span><span class="nav-title">Agenda de Proyecto</span></div></div>
-            <div class="nav-section"><div class="nav-header has-submenu" data-submenu="stakeholders"><span class="nav-icon"><i data-feather="user-plus" class="nav-feather"></i></span><span class="nav-title">Stakeholders</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
-                <div class="submenu" data-submenu="stakeholders">
-                    <div class="submenu-item" data-panel="stakeholders"><i data-feather="entries" class="nav-feather"></i> Lista y Matriz</div>
-                    <div class="submenu-item" data-panel="Raci"><i data-feather="divide-square" class="nav-feather"></i> Matriz RACI</div>
-                </div>
-            </div>
-            <div class="nav-section"><div class="nav-header" data-panel="procesos"><span class="nav-icon"><i data-feather="check-square" class="nav-feather"></i></span><span class="nav-title">Procesos PMBOK</span></div></div>
             <div class="nav-section"><div class="nav-header has-submenu" data-submenu="recursos"><span class="nav-icon"><i data-feather="shopping-bag" class="nav-feather"></i></span><span class="nav-title">Recursos</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
                 <div class="submenu" data-submenu="recursos">
                     <div class="submenu-item" data-panel="equipo"><i data-feather="user-plus" class="nav-feather"></i> Equipo</div>
@@ -111,36 +123,14 @@
                 </div>
             </div>
             <div class="nav-section"><div class="nav-header" data-panel="comunicaciones"><span class="nav-icon"><i data-feather="message-circle" class="nav-feather"></i></span><span class="nav-title">Comunicaciones</span></div></div>
-                        
-            <!-- NUEVOS PANELES -->
-            <div class="nav-section">
-                <div class="nav-header" data-panel="beneficios">
-                    <span class="nav-icon"><i data-feather="zap-off" class="nav-feather"></i></span>
-                    <span class="nav-title">Seguimiento Beneficios</span>
                 </div>
             </div>
-            
-            <div class="nav-section">
-                <div class="nav-header" data-panel="cambios">
-                    <span class="nav-icon"><i data-feather="pen-tool" class="nav-feather"></i></span>
-                    <span class="nav-title">Solicitudes de Cambio</span>
+            <div class="nav-group" data-fase="Ejecución">
+                <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                    <span class="nav-group-title">Ejecución</span>
+                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
                 </div>
-            </div>
-            
-            <div class="nav-section">
-                <div class="nav-header" data-panel="lecciones">
-                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
-                    <span class="nav-title">Lecciones Aprendidas</span>
-                </div>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-header" data-panel="informe">
-                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
-                    <span class="nav-title">Informes PMBOK</span>
-                </div>
-            </div>
-
+                <div class="nav-group-body">
             <div class="nav-section">
                 <div class="nav-header has-submenu" data-submenu="scrum">
                     <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
@@ -155,6 +145,58 @@
                     <div class="submenu-item" data-panel="agileMetrics"> Agile Metrics</div>
                     <div class="submenu-item" data-panel="sprintList"> Listado de Sprints</div>
                     <div class="submenu-item" data-panel="agileCostControl"> Control de Gastos Ágil</div>
+                </div>
+            </div>
+                </div>
+            </div>
+            <div class="nav-group" data-fase="Monitoreo y Control">
+                <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                    <span class="nav-group-title">Monitoreo y Control</span>
+                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
+                </div>
+                <div class="nav-group-body">
+            <div class="nav-section"><div class="nav-header" data-panel="salud"><span class="nav-icon"><i data-feather="thumbs-up" class="nav-feather"></i></span><span class="nav-title">Salud del Proyecto</span></div></div>
+            <div class="nav-section">
+                <div class="nav-header" data-panel="beneficios">
+                    <span class="nav-icon"><i data-feather="zap-off" class="nav-feather"></i></span>
+                    <span class="nav-title">Seguimiento Beneficios</span>
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-header" data-panel="cambios">
+                    <span class="nav-icon"><i data-feather="pen-tool" class="nav-feather"></i></span>
+                    <span class="nav-title">Solicitudes de Cambio</span>
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-header" data-panel="informe">
+                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
+                    <span class="nav-title">Informes PMBOK</span>
+                </div>
+            </div>
+                </div>
+            </div>
+            <div class="nav-group" data-fase="Cierre">
+                <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                    <span class="nav-group-title">Cierre</span>
+                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
+                </div>
+                <div class="nav-group-body">
+            <div class="nav-section">
+                <div class="nav-header" data-panel="lecciones">
+                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
+                    <span class="nav-title">Lecciones Aprendidas</span>
+                </div>
+            </div>
+                </div>
+            </div>
+            <div class="nav-group" data-fase="Transversal">
+                <div class="nav-group-header" onclick="toggleNavGroup(this)">
+                    <span class="nav-group-title">Transversal</span>
+                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
+                </div>
+                <div class="nav-group-body">
+            <div class="nav-section"><div class="nav-header" data-panel="procesos"><span class="nav-icon"><i data-feather="check-square" class="nav-feather"></i></span><span class="nav-title">Procesos PMBOK</span></div></div>
                 </div>
             </div>
         </div> 

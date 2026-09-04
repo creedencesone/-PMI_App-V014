@@ -626,6 +626,55 @@ body[data-theme="light"] .logo img.logo-light { content: url('LogosWIP/WIP_LOGO_
         .nav-arrow { font-size: 12px; transition: transform 0.2s; }
         .nav-arrow.expanded { transform: rotate(90deg); }
 
+        /* ============================================
+           GRUPOS PMBOK (sidebar)
+        ============================================ */
+        .nav-group { margin-bottom: 10px; }
+        .nav-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 7px 16px;
+            margin: 8px 12px 4px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--fase-color, #6B7280);
+            background: rgba(255, 255, 255, 0.04);
+            transition: background 0.2s ease;
+            user-select: none;
+        }
+        .nav-group-header:hover { background: rgba(255, 255, 255, 0.08); }
+        .nav-group-title { flex: 1; display: inline-flex; align-items: center; }
+        .nav-group-arrow { display: inline-flex; align-items: center; transition: transform 0.2s ease; }
+        .nav-group.collapsed .nav-group-arrow { transform: rotate(-90deg); }
+        .nav-group-body { overflow: hidden; }
+        .nav-group.collapsed .nav-group-body { display: none; }
+
+        /* Colores por fase PMBOK (FASE_COLORS) */
+        .nav-group[data-fase="Inicio"] .nav-group-header { --fase-color: #E54D42; }
+        .nav-group[data-fase="Planificación"] .nav-group-header { --fase-color: #F59E0B; }
+        .nav-group[data-fase="Ejecución"] .nav-group-header { --fase-color: #EAB308; }
+        .nav-group[data-fase="Monitoreo y Control"] .nav-group-header { --fase-color: #10B981; }
+        .nav-group[data-fase="Cierre"] .nav-group-header { --fase-color: #065F46; }
+        .nav-group[data-fase="Transversal"] .nav-group-header { --fase-color: #6B7280; }
+
+        /* Tema claro */
+        [data-theme="light"] .nav-group-header,
+        body[data-theme="light"] .nav-group-header {
+            background: #F1F3F5;
+            color: #6B7280;
+        }
+        [data-theme="light"] .nav-group-header:hover,
+        body[data-theme="light"] .nav-group-header:hover {
+            background: #E2E8F0;
+        }
+
         .submenu { padding-left: 48px; display: none; }
         .submenu.show { display: block; }
         .submenu-item {

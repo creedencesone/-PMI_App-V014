@@ -529,6 +529,18 @@ function setNavSectionVisibility(selector, visible) {
     el.style.display = visible ? '' : 'none';
 }
 
+function actualizarVisibilidadGrupos() {
+    document.querySelectorAll('.nav-group').forEach(group => {
+        const body = group.querySelector('.nav-group-body');
+        if (!body) return;
+        let visible = false;
+        body.querySelectorAll('.nav-section').forEach(s => {
+            if (s.style.display !== 'none') visible = true;
+        });
+        group.style.display = visible ? '' : 'none';
+    });
+}
+
 function mostrarPanelesSegunMetodologia() {
     const metodologia = proyecto?.metodologia?.tipo || 'cascada';
     
@@ -572,6 +584,8 @@ function mostrarPanelesSegunMetodologia() {
         });
         mostrarIndicadorMetodologiaMixta();
     }
+
+    actualizarVisibilidadGrupos();
 }
 
 function mostrarIndicadorMetodologiaMixta() {
