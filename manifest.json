@@ -1,0 +1,25 @@
+{
+    "name": "PMI Mind - Gestión de Proyectos",
+    "short_name": "PMI Mind",
+    "description": "Gestión integral de proyectos PMBOK 8ª Edición. Gantt, EVM, riesgos, cashflow y más.",
+    "start_url": "/dashboard.html",
+    "display": "standalone",
+    "background_color": "#0a0a1a",
+    "theme_color": "#007AFF",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["business", "productivity", "project-management"],
+    "lang": "es"
+}

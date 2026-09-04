@@ -1,0 +1,2681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PMI Mind">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <title>PMI Mind - Gestión de Proyecto</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+<!-- THREE.JS - CDN UNIFICADA (funciona siempre) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    // Fallback si el CDN principal falla
+    if (typeof THREE === 'undefined') {
+        document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/scr' + 'ipt>');
+    }
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/DragControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+
+<link rel="stylesheet" href="styles.css">
+<script src="auth.js"></script>
+</head>
+<body>
+    <div class="app-container">
+                 <div class="sidebar">
+            <div class="logo">
+                <img src="LogosWIP/WIP_LOGO_BLACK.png" alt="PMI Mind" class="logo-light" onerror="this.src='LogosWIP/WIP_LOGO_BLACK.png'">
+            </div>
+<!-- VISOR DE USUARIO EN SIDEBAR -->
+<div class="sidebar-user" style="padding:16px 20px; border-bottom:0.5px solid var(--border-color);">
+    <div id="userInfoDisplay" style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="mostrarModalPerfil()" title="Haz clic para editar tu perfil">
+        <div id="userAvatar" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#007AFF,#00A859); display:flex; align-items:center; justify-content:center; font-size:18px; color:white; font-weight:bold;">P</div>
+        <div style="flex:1;">
+            <div id="userNameDisplay" style="font-size:14px; font-weight:500;">Usuario</div>
+            <div id="userRoleDisplay" style="font-size:11px; color:var(--text-muted);">Team Member</div>
+        </div>
+        <div style="position:relative;">
+            <span style="font-size:16px; cursor:pointer;" onclick="event.stopPropagation(); mostrarPanelNotificaciones()" title="Notificaciones"><i data-feather="bell-off" class="nav-feather"></i></span>
+            <span id="notifBadge" style="display:none;position:absolute;top:-6px;right:-8px;background:#FF3B30;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;align-items:center;justify-content:center;">0</span>
+        </div>
+        <span style="font-size:14px; color:var(--text-muted); cursor:pointer;" onclick="event.stopPropagation(); mostrarModalPerfil()" title="Editar perfil"><i data-feather="pen-tool" class="nav-feather"></i></span>
+        <span onclick="cerrarSesion()" style="cursor:pointer; color:var(--text-muted); font-size:18px;" title="Cerrar sesión"><i data-feather="log-out" class="nav-feather"></i></span>
+    </div>
+    <div id="adminControlsProyecto" style="display:none; margin-top:8px;">
+        <button class="btn btn-secondary btn-small" onclick="mostrarGestionUsuarios()" style="width:100%; margin-bottom:4px;"><i data-feather="external-link" class="nav-feather"></i> Compartir proyecto</button>
+    </div>
+    <div id="syncStatus" style="display:none; margin-top:8px; padding:6px 10px; border-radius:6px; font-size:11px; background:rgba(0,168,89,0.1); color:#00A859;">
+        <span id="syncIcon">🟢</span>
+        <span id="syncText">Conectado</span>
+        <span id="syncTime" style="margin-left:8px; color:rgba(255,255,255,0.3); font-size:10px;"></span>
+        <button id="btnSyncNow" style="margin-left:6px; padding:2px 8px; font-size:10px; border:none; border-radius:4px; background:rgba(255,255,255,0.1); color:inherit; cursor:pointer; display:none;" onclick="syncNowManual()" title="Forzar sincronización ahora">↻</button>
+    </div>
+</div>
+
+            <!-- <i data-feather="check-circle" class="nav-feather"></i> BOTÓN DE TEMA EN EL SIDEBAR -->
+            <button class="theme-toggle-sidebar" onclick="toggleTheme()" id="themeToggleBtn">
+                <span id="themeIcon"><i data-feather="help-circle" class="nav-feather"></i></span>
+                <span id="themeText">Modo Oscuro</span>
+            </button>
+            <!-- <i data-feather="check-circle" class="nav-feather"></i> BOTÓN DE IA - JUSTO DEBAJO -->
+            <button class="ia-toggle-sidebar" onclick="configurarAPIKeyIA()">
+                <i data-feather="hard-drive" class="nav-feather"></i>
+                <span>Asistente IA</span>
+            </button>
+            <button class="theme-toggle-sidebar" onclick="DataService.stopAutoSync(); window.location.href='dashboard.html'">
+                <i data-feather="chevron-left" class="nav-feather"></i>
+                <span>Volver a Cartera</span>
+            </button>
+            <div class="nav-section"><div class="nav-header" data-panel="acta"><span class="nav-icon"><i data-feather="file-text" class="nav-feather"></i></span><span class="nav-title">Acta de Inicio</span></div></div>
+            <div class="nav-section"><div class="nav-header" data-panel="salud"><span class="nav-icon"><i data-feather="thumbs-up" class="nav-feather"></i></span><span class="nav-title">Salud del Proyecto</span></div></div>
+            <div class="nav-section"><div class="nav-header has-submenu" data-submenu="finanzas"><span class="nav-icon"><i data-feather="dollar-sign" class="nav-feather"></i></span><span class="nav-title">Finanzas</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
+            
+             <div class="submenu" data-submenu="finanzas">
+                    <div class="submenu-item" data-panel="monedas"><i data-feather="external-link" class="nav-feather"></i> Monedas</div>
+                    <div class="submenu-item" data-panel="venta"><i data-feather="help-circle" class="nav-feather"></i> Venta y Hitos</div>
+                    <div class="submenu-item" data-panel="cashflow"><i data-feather="help-circle" class="nav-feather"></i> Cashflow</div>
+                    <div class="submenu-item" data-panel="resumenGastos"><i data-feather="pie-chart" class="nav-feather"></i> Resumen de Gastos</div>
+                    <div class="submenu-item" data-panel="avales"><i data-feather="shield-off" class="nav-feather"></i> Avales y Garantías</div>
+                    <div class="submenu-item" data-panel="seguros"><i data-feather="help-circle" class="nav-feather"></i> Seguros y RC</div>
+                    <div class="submenu-item" data-panel="garantia"><i data-feather="help-circle" class="nav-feather"></i> Garantía</div>
+                </div>
+            </div>
+            <div class="nav-section"><div class="nav-header" data-panel="financiero"><span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span><span class="nav-title">Módulo Financiero</span></div></div>
+            <div class="nav-section"><div class="nav-header" data-panel="cronograma" style="justify-content:center;gap:6px"><span class="nav-icon"><i data-feather="fast-forward" class="nav-feather"></i></span><span class="nav-title" style="flex:none">Cronograma Gantt</span></div></div>
+            <div class="nav-section"><div class="nav-header" data-panel="riesgos"><span class="nav-icon"><i data-feather="alert-triangle" class="nav-feather"></i></span><span class="nav-title">Gestión de Riesgos</span></div></div>
+            <div class="nav-section"><div class="nav-header" data-panel="agenda"><span class="nav-icon"><i data-feather="calendar" class="nav-feather"></i></span><span class="nav-title">Agenda de Proyecto</span></div></div>
+            <div class="nav-section"><div class="nav-header has-submenu" data-submenu="stakeholders"><span class="nav-icon"><i data-feather="user-plus" class="nav-feather"></i></span><span class="nav-title">Stakeholders</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
+                <div class="submenu" data-submenu="stakeholders">
+                    <div class="submenu-item" data-panel="stakeholders"><i data-feather="entries" class="nav-feather"></i> Lista y Matriz</div>
+                    <div class="submenu-item" data-panel="Raci"><i data-feather="divide-square" class="nav-feather"></i> Matriz RACI</div>
+                </div>
+            </div>
+            <div class="nav-section"><div class="nav-header" data-panel="procesos"><span class="nav-icon"><i data-feather="check-square" class="nav-feather"></i></span><span class="nav-title">Procesos PMBOK</span></div></div>
+            <div class="nav-section"><div class="nav-header has-submenu" data-submenu="recursos"><span class="nav-icon"><i data-feather="shopping-bag" class="nav-feather"></i></span><span class="nav-title">Recursos</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
+                <div class="submenu" data-submenu="recursos">
+                    <div class="submenu-item" data-panel="equipo"><i data-feather="user-plus" class="nav-feather"></i> Equipo</div>
+                    <div class="submenu-item" data-panel="materiales"><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</div>
+                    <div class="submenu-item" data-panel="servicios"><i data-feather="pen-tool" class="nav-feather"></i> Servicios</div>
+                    <div class="submenu-item" data-panel="logistica"><i data-feather="map-pin" class="nav-feather"></i> Logística</div>
+                    <div class="submenu-item" data-panel="viajes"><i data-feather="external-link" class="nav-feather"></i> Viajes</div>
+                </div>
+            </div>
+            <div class="nav-section"><div class="nav-header" data-panel="comunicaciones"><span class="nav-icon"><i data-feather="message-circle" class="nav-feather"></i></span><span class="nav-title">Comunicaciones</span></div></div>
+                        
+            <!-- NUEVOS PANELES -->
+            <div class="nav-section">
+                <div class="nav-header" data-panel="beneficios">
+                    <span class="nav-icon"><i data-feather="zap-off" class="nav-feather"></i></span>
+                    <span class="nav-title">Seguimiento Beneficios</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-header" data-panel="cambios">
+                    <span class="nav-icon"><i data-feather="pen-tool" class="nav-feather"></i></span>
+                    <span class="nav-title">Solicitudes de Cambio</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-header" data-panel="lecciones">
+                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
+                    <span class="nav-title">Lecciones Aprendidas</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-header" data-panel="informe">
+                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
+                    <span class="nav-title">Informes PMBOK</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-header has-submenu" data-submenu="scrum">
+                    <span class="nav-icon"><i data-feather="help-circle" class="nav-feather"></i></span>
+                    <span class="nav-title">Scrum Ágil</span>
+                    <span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span>
+                </div>
+                <div class="submenu" data-submenu="scrum">
+                    <div class="submenu-item" data-panel="sprintBacklog"> Sprint Backlog</div>
+                    <div class="submenu-item" data-panel="sprintBurndown"> Sprint Burndown</div>
+                    <div class="submenu-item" data-panel="velocityTracking"> Velocity Tracking</div>
+                    <div class="submenu-item" data-panel="retrospectives"> Retrospectives</div>
+                    <div class="submenu-item" data-panel="agileMetrics"> Agile Metrics</div>
+                    <div class="submenu-item" data-panel="sprintList"> Listado de Sprints</div>
+                    <div class="submenu-item" data-panel="agileCostControl"> Control de Gastos Ágil</div>
+                </div>
+            </div>
+        </div> 
+
+
+        <div class="main-content">
+                        <!-- Botón de cambio de tema -->
+            <div class="theme-toggle" onclick="toggleTheme()" id="themeToggleBtn"><i data-feather="help-circle" class="nav-feather"></i></div>
+            <div class="header">
+                <div class="project-title">
+                    <h2 id="projectName">Cargando proyecto...</h2>
+                    <p id="projectDesc"></p>
+                </div>
+                <button class="btn btn-secondary btn-small" id="languageToggleBtn" onclick="mostrarMenuIdiomaApp()"><i data-feather="external-link" class="nav-feather"></i> Cambiar idioma</button>
+                <button class="btn btn-help btn-small" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
+                <button class="btn btn-primary btn-small" onclick="exportarProyectoActual()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+            </div>
+
+            <div id="panelActa" class="panel">
+                <div class="panel-title"><span id="actaTitulo"><i data-feather="file-text" class="nav-feather"></i> Acta de Constitución</span><button class="btn btn-primary btn-small" id="btnEditarActa" onclick="editarActa()"><i data-feather="pen-tool" class="nav-feather"></i> Editar</button></div>
+                <div id="actaContent"></div>
+            </div>
+
+            <!-- PANEL SALUD DEL PROYECTO -->
+            <div id="panelSalud" class="panel active">
+    <div class="panel-title">
+        <span><i data-feather="thumbs-up" class="nav-feather"></i> Salud del Proyecto - Cuadro de Mando</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="exportarSaludPDF()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar a PDF</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarSaludPDF()"><i data-feather="download-cloud" class="nav-feather"></i> Imprimir</button>
+            <button class="btn btn-secondary btn-small" onclick="abrirModalSatisfaccion()"><i data-feather="zap-off" class="nav-feather"></i> Satisfacción</button>
+            <button class="btn btn-secondary btn-small" onclick="registrarDefecto()"><i data-feather="alert-triangle" class="nav-feather"></i> Defectos</button>
+            <button class="btn btn-secondary btn-small" onclick="registrarVelocidad()"><i data-feather="help-circle" class="nav-feather"></i> Velocidad</button>
+            <button class="btn btn-secondary btn-small" onclick="registrarHuellaCarbono()"><i data-feather="external-link" class="nav-feather"></i> Huella CO₂</button>
+            <button class="btn btn-secondary btn-small" onclick="diagnosticarProgreso()"><i data-feather="help-circle" class="nav-feather"></i> Diagnosticar</button> 
+            <button class="btn btn-success btn-small" onclick="generarVistaPublica()"><i data-feather="external-link" class="nav-feather"></i> Compartir</button>
+        </div>
+    </div>
+
+    <!-- Semáforo de salud general -->
+    <div class="info-card info-card-center">
+        <h4><i data-feather="thumbs-up" class="nav-feather"></i> SALUD GENERAL DEL PROYECTO</h4>
+        <div id="saludSemaforo" class="salud-semaforo-display">--</div>
+        <div id="saludMensaje" class="u-fs-14">Analizando datos...</div>
+    </div>
+
+    <!-- Resumen económico del proyecto -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card" id="cardPrecioVenta">
+            <div class="small"><i data-feather="tag" class="nav-feather"></i> Precio de Venta</div>
+            <div class="big" id="saludPrecioVenta">0</div>
+        </div>
+        <div class="value-card" id="cardSaludCosteTotal">
+            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Coste Total</div>
+            <div class="big" id="saludCosteTotal">0</div>
+        </div>
+        <div class="value-card" id="cardSaludBeneficio">
+            <div class="small"><i data-feather="check-circle" class="nav-feather"></i> Beneficio</div>
+            <div class="big" id="saludBeneficio">0</div>
+        </div>
+        <div class="value-card" id="cardSaludFinanciacion">
+            <div class="small"><i data-feather="credit-card" class="nav-feather"></i> Financiación</div>
+            <div class="big" id="saludFinanciacion">0</div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de métricas principales -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card" id="cardProgreso">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Progreso General</div>
+            <div class="big" id="progresoGeneral">0%</div>
+            <div class="progress-bar-container">
+                <div class="progress-fill" id="progresoBarra"></div>
+            </div>
+        </div>
+        <div class="value-card" id="cardRiesgos">
+            <div class="small"><i data-feather="alert-triangle" class="nav-feather"></i> Riesgos</div>
+            <div class="big" id="riesgosScore">0</div>
+            <div class="small" id="riesgosNivel">Sin riesgos</div>
+        </div>
+        <div class="value-card" id="cardFinanzas">
+            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Salud Financiera</div>
+            <div class="big" id="saludFinanciera">0%</div>
+            <div class="small" id="finanzasDetalle">Beneficio: 0</div>
+        </div>
+        <div class="value-card" id="cardCronograma">
+            <div class="small"><i data-feather="fast-forward" class="nav-feather"></i> Desviación</div>
+            <div class="big" id="desviacionCronograma">0</div>
+            <div class="small" id="cronoDetalle">días de retraso</div>
+        </div>
+    </div>
+
+    <!-- Segunda fila de tarjetas -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card" id="cardCPI">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> CPI (Costos)</div>
+            <div class="big" id="cpiValor">0.00</div>
+            <div class="small" id="cpiEstado">--</div>
+        </div>
+        <div class="value-card" id="cardSPI">
+            <div class="small"><i data-feather="trending-up" class="nav-feather"></i> SPI (Cronograma)</div>
+            <div class="big" id="spiValor">0.00</div>
+            <div class="small" id="spiEstado">--</div>
+        </div>
+        <div class="value-card" id="cardROI">
+            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> ROI Proyectado</div>
+            <div class="big" id="roiValor">0%</div>
+            <div class="small" id="roiEstado">--</div>
+        </div>
+        <div class="value-card" id="cardEAC">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> EAC (Pronóstico)</div>
+            <div class="big" id="eacValor">0</div>
+            <div class="small">Costo total estimado</div>
+        </div>
+    </div>
+
+    <!-- Tercera fila: Defectos, Velocidad, Satisfacción, Huella -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card" id="cardDefectos">
+            <div class="small"><i data-feather="alert-triangle" class="nav-feather"></i> Índice de Defectos</div>
+            <div class="big" id="defectosValor">0</div>
+            <div class="small" id="defectosEstado">defectos/entregable</div>
+        </div>
+        <div class="value-card" id="cardVelocidad">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Velocidad del Equipo</div>
+            <div class="big" id="velocidadValor">0</div>
+            <div class="small" id="velocidadEstado">pts/sprint</div>
+        </div>
+        <div class="value-card" id="cardSatisfaccion">
+            <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Satisfacción Stakeholder</div>
+            <div class="big" id="satisfaccionValor">0.0</div>
+            <div class="small" id="satisfaccionEstado">/ 5.0</div>
+        </div>
+        <div class="value-card" id="cardHuella">
+            <div class="small"><i data-feather="external-link" class="nav-feather"></i> Huella de Carbono</div>
+            <div class="big" id="huellaValor">0</div>
+            <div class="small" id="huellaEstado">kg CO₂ / entregable</div>
+        </div>
+    </div>
+
+    <!-- Cuarta fila: Salud General -->
+    <div class="cards-grid u-mb-24 cards-grid-2">
+        <div class="value-card" id="cardSaludGeneral">
+            <div class="small"><i data-feather="map-pin" class="nav-feather"></i> Salud General (PMBOK 8)</div>
+            <div class="big" id="saludGeneralPMBOK">0%</div>
+            <div class="small" id="saludGeneralEstado">Basado en 8 métricas</div>
+        </div>
+        <div class="value-card" id="cardProyectado">
+            <div class="small"><i data-feather="trending-up" class="nav-feather"></i> Beneficio Proyectado</div>
+            <div class="big" id="beneficioProyectado">0</div>
+            <div class="small" id="margenProyectado">Margen: 0%</div>
+        </div>
+    </div>
+
+    <!-- Tabla de indicadores clave -->
+    <div class="info-card">
+        <h4><i data-feather="help-circle" class="nav-feather"></i> INDICADORES CLAVE (KPIs)</h4>
+        <table class="data-table" id="tablaKPIs">
+            <thead>
+                <tr>
+                    <th>Indicador</th>
+                    <th>Valor</th>
+                    <th>Estado</th>
+                    <th>Meta</th>
+                </tr>
+            </thead>
+            <tbody id="kpisBody">
+                <tr><td colspan="4" class="u-text-center">Actualizando datos...</td></tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+              
+            <div id="panelMonedas" class="panel hidden">
+                <div class="panel-header">
+                    <div class="panel-header-main">
+                        <h3 class="panel-title-text"><i data-feather="external-link" class="nav-feather"></i> Monedas y Tipos de Cambio</h3>
+                        <span class="panel-subtitle">Gestión de divisas, tasas de cambio y evolución histórica</span>
+                    </div>
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" onclick="actualizarTiposCambioAuto()" id="btnActualizarTipos">
+                            <span class="btn-icon"><i data-feather="refresh-cw" class="nav-feather"></i></span>
+                            <span class="btn-text">Actualizar Tasas</span>
+                        </button>
+                        <button class="btn btn-secondary" onclick="actualizarTiposCambio()" id="btnGuardarTipos">
+                            <span class="btn-icon"><i data-feather="download-cloud" class="nav-feather"></i></span>
+                            <span class="btn-text">Guardar Cambios</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="monedas-dashboard">
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-blue"><i data-feather="dollar-sign" class="nav-feather"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statTotalMonedas">--</div>
+                                <div class="stat-label">Monedas disponibles</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-green"><i data-feather="wifi-off" class="nav-feather"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statFuenteActiva">--</div>
+                                <div class="stat-label">Fuente de datos</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-orange"><i data-feather="stop-circle" class="nav-feather"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statUltimaAct">--</div>
+                                <div class="stat-label">Última actualización</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-purple"><i data-feather="dollar-sign" class="nav-feather"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="statMonedaBase">EUR</div>
+                                <div class="stat-label">Moneda base</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monedas-tabs">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="tab-tasas" onclick="cambiarTabMonedas('tab-tasas')">
+                                <span><i data-feather="help-circle" class="nav-feather"></i></span> Tasas de Cambio
+                            </button>
+                            <button class="tab-btn" data-tab="tab-evolucion" onclick="cambiarTabMonedas('tab-evolucion')">
+                                <span><i data-feather="trending-up" class="nav-feather"></i></span> Evolución Histórica
+                            </button>
+                            <button class="tab-btn" data-tab="tab-config" onclick="cambiarTabMonedas('tab-config')">
+                                <span><i data-feather="pen-tool" class="nav-feather"></i></span> Configuración
+                            </button>
+                        </div>
+
+                        <div class="tab-panels">
+                            <div class="tab-panel active" id="tab-tasas">
+                                <div class="table-toolbar">
+                                    <div class="toolbar-search">
+                                        <input type="text" id="searchMoneda" placeholder="Buscar moneda..." oninput="filtrarMonedas(this.value)">
+                                    </div>
+                                    <div class="toolbar-actions">
+                                        <select id="filterRegion" onchange="filtrarPorRegion(this.value)">
+                                            <option value="">Todas las regiones</option>
+                                            <option value="europe">🇪🇺 Europa</option>
+                                            <option value="americas"><i data-feather="external-link" class="nav-feather"></i> Américas</option>
+                                            <option value="asia"><i data-feather="external-link" class="nav-feather"></i> Asia</option>
+                                            <option value="africa"><i data-feather="external-link" class="nav-feather"></i> África</option>
+                                            <option value="oceania"><i data-feather="cloud-rain" class="nav-feather"></i> Oceanía</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="table-container" id="tiposCambioContainer"></div>
+                            </div>
+
+                            <div class="tab-panel" id="tab-evolucion">
+                                <div class="evolucion-controls">
+                                    <div class="control-group">
+                                        <label>Moneda a comparar</label>
+                                        <select id="monedaComparar" onchange="actualizarGraficoEvolucionMoneda()"></select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label>Período</label>
+                                        <select id="periodoGraficoMoneda" onchange="actualizarGraficoEvolucionMoneda()">
+                                            <option value="7">Últimos 7 días</option>
+                                            <option value="30" selected>Últimos 30 días</option>
+                                            <option value="90">Últimos 90 días</option>
+                                            <option value="180">Últimos 6 meses</option>
+                                            <option value="365">Último año</option>
+                                        </select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label>&nbsp;</label>
+                                        <button class="btn btn-primary u-w-full" onclick="actualizarGraficoEvolucionMoneda()">
+                                            <span><i data-feather="refresh-cw" class="nav-feather"></i></span> Actualizar Gráfico
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="evolucionMonedaChart"></canvas>
+                                </div>
+                                <div class="chart-info" id="infoEvolucionMoneda">
+                                    <div class="info-item">
+                                        <span class="info-label">Tasa actual:</span>
+                                        <span class="info-value" id="evoTasaActual">--</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Cambio período:</span>
+                                        <span class="info-value" id="evoCambioPeriodo">--</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Máximo:</span>
+                                        <span class="info-value" id="evoMaximo">--</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Mínimo:</span>
+                                        <span class="info-value" id="evoMinimo">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-panel" id="tab-config">
+                                <div class="config-sections">
+                                    <div class="config-card">
+                                        <h4><i data-feather="map-pin" class="nav-feather"></i> Moneda Base del Proyecto</h4>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Moneda Base</label>
+                                                <select id="monedaBase" onchange="cambiarMonedaBaseYActualizar()"></select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-card">
+                                        <h4><i data-feather="dollar-sign" class="nav-feather"></i> Precio de Venta y Condiciones</h4>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Precio Venta</label>
+                                                <input type="number" id="precioVenta" onchange="actualizarVenta()" step="0.01" min="0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Moneda Venta</label>
+                                                <select id="monedaVenta" onchange="actualizarVenta()"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Condiciones de pago</label>
+                                            <textarea rows="3" id="condicionesPago" placeholder="Ej: 30% anticipo, 40% hito intermedio, 30% entrega final"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-card">
+                                        <h4><i data-feather="pen-tool" class="nav-feather"></i> Fuentes de Datos y Opciones</h4>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label>Proveedor de tasas</label>
+                                                <select id="proveedorTasas" onchange="cambiarProveedorTasas(this.value)">
+                                                    <option value="auto"><i data-feather="refresh-cw" class="nav-feather"></i> Automático (múltiples fuentes)</option>
+                                                    <option value="frankfurter"><i data-feather="map-pin" class="nav-feather"></i> Frankfurter API (BCE)</option>
+                                                    <option value="exchangerate"><i data-feather="external-link" class="nav-feather"></i> ExchangeRate-API</option>
+                                                    <option value="currencyapi"><i data-feather="dollar-sign" class="nav-feather"></i> CurrencyAPI</option>
+                                                    <option value="manual"><i data-feather="help-circle" class="nav-feather"></i> Solo manual</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Actualización automática</label>
+                                                <select id="autoUpdateInterval" onchange="configurarAutoUpdate(this.value)">
+                                                    <option value="0">Desactivada</option>
+                                                    <option value="3600000">Cada hora</option>
+                                                    <option value="86400000" selected>Diaria</option>
+                                                    <option value="604800000">Semanal</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="config-actions">
+                                            <button class="btn btn-secondary" onclick="probarConexionAPI()"><i data-feather="help-circle" class="nav-feather"></i> Probar conexión</button>
+                                            <button class="btn btn-secondary" onclick="exportarTiposCambio()"><i data-feather="help-circle" class="nav-feather"></i> Exportar CSV</button>
+                                            <button class="btn btn-secondary" onclick="importarTiposCambio()"><i data-feather="help-circle" class="nav-feather"></i> Importar CSV</button>
+                                            <input type="file" id="importTiposCambioFile" accept=".csv" style="display:none" onchange="procesarImportTiposCambio(event)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panelVenta" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="help-circle" class="nav-feather"></i> Venta</span></div>
+                <div class="form-row"><div class="form-group"><label>Precio Venta</label><input type="number" id="precioVenta2" onchange="actualizarVenta2()" aria-label="Precio de venta"></div>
+                <div class="form-group"><label>Moneda</label><select id="monedaVenta2" onchange="actualizarVenta2()" aria-label="Moneda de venta"></select></div></div>
+                <div class="form-group"><label>Condiciones</label><textarea rows="2" id="condicionesPago2" aria-label="Condiciones de pago"></textarea></div>
+                <div id="hitosList2"></div>
+                <button class="btn btn-primary btn-small" onclick="abrirModalHitoFinanciero2()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button>
+            </div>
+
+            <div id="panelCashflow" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="help-circle" class="nav-feather"></i> Cashflow (<span id="monedaDisplay">EUR</span>)</span></div>
+                <div class="chart-container"><canvas id="cashflowChart"></canvas></div>
+                <table class="data-table"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Neto</th><th>Acumulado</th></tr></thead><tbody id="cashflowBody"></tbody><tfoot><tr class="total-row"><td><strong>TOTAL</strong></th><td id="totalIngresosFoot">0</th><td id="totalGastosFoot">0</th><td id="totalNetoFoot">0</th><td></th></tr></tfoot></table>
+            </div>
+                        <!-- PANEL RESUMEN DE GASTOS -->
+            <div id="panelResumenGastos" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="pie-chart" class="nav-feather"></i> Resumen de Gastos - Distribución por Categorías</span>
+                    <div>
+                        <button class="btn btn-success btn-small" onclick="actualizarResumenGastos()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
+                        <button class="btn btn-primary btn-small" onclick="exportarResumenGastos()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                    </div>
+                </div>
+
+                <!-- Tarjetas de totales -->
+                <div class="cards-grid u-mb-24 cards-grid-4">
+                    <div class="value-card vc-blue">
+                        <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Total Gastos</div>
+                        <div class="big" id="resumenTotalGastos">0</div>
+                    </div>
+                    <div class="value-card vc-green">
+                        <div class="small"><i data-feather="user-plus" class="nav-feather"></i> Personal</div>
+                        <div class="big" id="resumenGastoPersonal">0</div>
+                    </div>
+                    <div class="value-card vc-orange">
+                        <div class="small"><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</div>
+                        <div class="big" id="resumenGastoMateriales">0</div>
+                    </div>
+                    <div class="value-card vc-purple">
+                        <div class="small"><i data-feather="pen-tool" class="nav-feather"></i> Servicios</div>
+                        <div class="big" id="resumenGastoServicios">0</div>
+                    </div>
+                </div>
+
+                <div class="cards-grid u-mb-24 cards-grid-4">
+                    <div class="value-card vc-red">
+                        <div class="small"><i data-feather="external-link" class="nav-feather"></i> Viajes</div>
+                        <div class="big" id="resumenGastoViajes">0</div>
+                    </div>
+                    <div class="value-card vc-lime">
+                        <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Logística</div>
+                        <div class="big" id="resumenGastoLogistica">0</div>
+                    </div>
+                    <div class="value-card vc-yellow">
+                        <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Financieros</div>
+                        <div class="big" id="resumenGastoFinancieros">0</div>
+                    </div>
+                    <div class="value-card vc-blue-lg">
+                        <div class="small"><i data-feather="help-circle" class="nav-feather"></i> % vs Presupuesto</div>
+                        <div class="big" id="resumenPorcentajePresupuesto">0%</div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de distribución -->
+                <div class="chart-container u-mb-24">
+                    <canvas id="distribucionGastosChart" class="u-canvas-350"></canvas>
+                </div>
+
+                <!-- Tabla detallada por categorías -->
+                <div class="info-card">
+                    <h4><i data-feather="help-circle" class="nav-feather"></i> Desglose Detallado de Gastos</h4>
+                    <table class="data-table" id="tablaDesgloseGastos">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Subcategoría</th>
+                                <th>Concepto</th>
+                                <th>Mes</th>
+                                <th>Importe</th>
+                                <th>% del Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="desgloseGastosBody">
+                            <tr><td colspan="6" class="u-text-center">Cargando datos...</td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="4"><strong>TOTAL GENERAL</strong></td>
+                                <td id="desgloseTotalGeneral"><strong>0</strong></td>
+                                <td>100%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Análisis de gastos -->
+                <div class="info-card info-card-blue info-card-mt16">
+                    <h4><i data-feather="help-circle" class="nav-feather"></i> Análisis de Gastos</h4>
+                    <div id="analisisGastosTexto" class="u-fs-13 u-lh-16">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+                <!-- PANEL GARANTÍA -->
+            <div id="panelGarantia" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="shield-off" class="nav-feather"></i> Gestión de Garantía del Proyecto</span>
+                    <div>
+                        <button class="btn btn-primary btn-small" onclick="abrirModalGarantia()"><i data-feather="help-circle" class="nav-feather"></i> Configurar Garantía</button>
+                        <button class="btn btn-secondary btn-small" onclick="exportarGarantia()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                    </div>
+                </div>
+
+                <!-- Tarjetas de resumen -->
+                <div class="cards-grid u-mb-24 cards-grid-4">
+                    <div class="value-card vc-blue">
+                        <div class="small"><i data-feather="shield-off" class="nav-feather"></i> Estado</div>
+                        <div class="big" id="garantiaEstado">No configurada</div>
+                    </div>
+                    <div class="value-card vc-green">
+                        <div class="small"><i data-feather="fast-forward" class="nav-feather"></i> Duración</div>
+                        <div class="big" id="garantiaDuracion">0 años</div>
+                    </div>
+                    <div class="value-card vc-orange">
+                        <div class="small"><i data-feather="fast-forward" class="nav-feather"></i> Inicio</div>
+                        <div class="big" id="garantiaInicio">-</div>
+                    </div>
+                    <div class="value-card vc-red">
+                        <div class="small"><i data-feather="fast-forward" class="nav-feather"></i> Fin</div>
+                        <div class="big" id="garantiaFin">-</div>
+                    </div>
+                </div>
+
+                <!-- Detalles de la garantía -->
+                <div class="info-card u-mb-20" id="garantiaContent">
+                    <p class="u-text-center u-color-muted">No hay garantía configurada. Haz clic en "Configurar Garantía" para comenzar.</p>
+                </div>
+
+                <!-- Relación con hitos de pago -->
+                <div class="info-card info-card-purple">
+                    <h4><i data-feather="dollar-sign" class="nav-feather"></i> Relación con Hitos de Pago</h4>
+                    <div id="garantiaHitoInfo">
+                        <p class="u-p-sm">Configura la garantía para ver cómo afecta a los hitos de pago.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL PARA CONFIGURAR GARANTÍA -->
+            <div class="modal u-hidden" id="modalGarantia">
+                <div class="modal-content modal-sm">
+                    <div class="modal-header">
+                        <h3><i data-feather="shield-off" class="nav-feather"></i> Configurar Garantía</h3>
+                        <span class="close-modal" onclick="cerrarModalGarantia()">&times;</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i data-feather="shopping-bag" class="nav-feather"></i> Equipo / Producto en garantía *</label>
+                        <input type="text" id="garantiaEquipo" placeholder="Ej: Servidor Dell PowerEdge, Sistema ERP, etc.">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="fast-forward" class="nav-feather"></i> Duración de la garantía (años)</label>
+                            <input type="number" id="garantiaDuracionAnios" value="1" min="0" max="10" step="1" aria-label="Duración de la garantía en años">
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="fast-forward" class="nav-feather"></i> Fecha de inicio</label>
+                            <input type="date" id="garantiaFechaInicio" aria-label="Fecha de inicio de la garantía">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i data-feather="help-circle" class="nav-feather"></i> Cobertura incluida</label>
+                        <textarea rows="2" id="garantiaCobertura" placeholder="Ej: Reparación de hardware, soporte técnico, piezas de repuesto..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i data-feather="help-circle" class="nav-feather"></i> Exclusiones / Limitaciones</label>
+                        <textarea rows="2" id="garantiaExclusiones" placeholder="Ej: Daños por mal uso, desgaste normal..."></textarea>
+                    </div>
+                    
+                    <hr class="u-hr u-hr-sm">
+                    <h4 class="u-section-title"><i data-feather="dollar-sign" class="nav-feather"></i> RELACIÓN CON HITOS DE PAGO</h4>
+                    
+                    <div class="form-group">
+                        <label><input type="checkbox" id="garantiaAfectaHitoFinal"> <i data-feather="check-circle" class="nav-feather"></i> El último hito se paga al final de la garantía</label>
+                        <p class="u-p-xs">Marca esta opción si el cliente no paga el último hito hasta que finalice el período de garantía.</p>
+                    </div>
+                    
+                    <div class="form-group u-hidden" id="garantiaHitoFinalSelect">
+                        <label><i data-feather="zap-off" class="nav-feather"></i> Seleccionar el hito final</label>
+                        <select id="garantiaHitoFinalId" aria-label="Hito final de garantía">
+                            <option value="">-- Seleccionar hito --</option>
+                        </select>
+                        <p class="u-p-xs">Este hito se moverá al final del período de garantía.</p>
+                    </div>
+                    
+                    <div class="info-card-modal u-mt-16">
+                        <p><i data-feather="help-circle" class="nav-feather"></i> Si activas la opción, el hito seleccionado se pagará al finalizar la garantía, no en la fecha original.</p>
+                    </div>
+                    
+                    <button class="btn btn-primary u-mt-16" onclick="guardarGarantia()"><i data-feather="download-cloud" class="nav-feather"></i> Guardar Garantía</button>
+                </div>
+            </div>
+
+            <div id="panelFinanciero" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="help-circle" class="nav-feather"></i> Análisis Financiero Avanzado</span>
+                    <div>
+                        <button class="btn btn-success btn-small" onclick="actualizarTodosLosDatosExternos()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar Todo</button>
+                        <button class="btn btn-secondary btn-small" onclick="calcularTodosLosCostesFinancieros()">⟳ Recalcular</button>
+                    </div>
+                </div>
+                
+                <div class="cards-grid u-mb-24">
+                    <div class="value-card vc-dark">
+                        <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Coste Total Materiales</div>
+                        <div class="big" id="resumenCosteMateriales">0</div>
+                    </div>
+                    <div class="value-card vc-dark-red">
+                        <div class="small"><i data-feather="shopping-bag" class="nav-feather"></i> Total Aranceles</div>
+                        <div class="big" id="resumenTotalAranceles">0</div>
+                    </div>
+                    <div class="value-card vc-orange">
+                        <div class="small"><i data-feather="file-text" class="nav-feather"></i> Tasas Aduaneras</div>
+                        <div class="big" id="resumenTotalTasas">0</div>
+                    </div>
+                    <div class="value-card vc-blue-alt">
+                        <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Coste Total Importación</div>
+                        <div class="big" id="resumenTotalImportacion">0</div>
+                    </div>
+                </div>
+
+                <div class="u-tab-bar">
+                    <button class="btn-tab btn-tab-active" onclick="mostrarSubpanelAnalisis('materiales', this)"><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</button>
+                    <button class="btn-tab" onclick="mostrarSubpanelAnalisis('servicios', this)"><i data-feather="pen-tool" class="nav-feather"></i> Servicios</button>
+                    <button class="btn-tab" onclick="mostrarSubpanelAnalisis('equipo', this)"><i data-feather="user-plus" class="nav-feather"></i> Equipo</button>
+                    <button class="btn-tab" onclick="mostrarSubpanelAnalisis('aranceles', this)"><i data-feather="external-link" class="nav-feather"></i> Aranceles</button>
+                    <button class="btn-tab" onclick="mostrarSubpanelAnalisis('tasas', this)"><i data-feather="map-pin" class="nav-feather"></i> Tasas</button>
+                    <button class="btn-tab" onclick="mostrarSubpanelAnalisis('financieros', this)"><i data-feather="dollar-sign" class="nav-feather"></i> Financieros</button>
+                </div>
+
+                <div id="subpanelMateriales" class="subpanel-analisis">
+                    <div class="info-card u-mb-16">
+                        <h4><i data-feather="help-circle" class="nav-feather"></i> Materiales registrados</h4>
+                        <p class="u-p-sm">Los aranceles se calculan automáticamente según el país de origen.</p>
+                    </div>
+                    <table class="data-table"><thead><tr><th>Material</th><th>Cantidad</th><th>Coste</th><th>Moneda</th><th>País</th><th>Valor CIF</th><th>Arancel</th><th>Tasa</th><th>Total</th><th>Mes</th></tr></thead><tbody id="analisisMaterialesBody"></tbody><tfoot id="analisisMaterialesFoot"></tfoot></table>
+                    <div class="info-card u-mt-16"><div class="form-row"><div class="form-group"><label><i data-feather="external-link" class="nav-feather"></i> Flete %</label><input type="number" id="factorFlete" value="10" onchange="calcularAnalisisMateriales()" aria-label="Factor de flete (%)"></div><div class="form-group"><label><i data-feather="shopping-bag" class="nav-feather"></i> Seguro %</label><input type="number" id="factorSeguro" value="2" onchange="calcularAnalisisMateriales()" aria-label="Factor de seguro (%)"></div><div class="form-group"><label><i data-feather="dollar-sign" class="nav-feather"></i> Agente Aduanas</label><input type="number" id="gastoAgenteAduanas" value="300" onchange="calcularAnalisisMateriales()" aria-label="Gasto agente de aduanas"></div></div></div>
+                </div>
+
+                <div class="subpanel-analisis u-hidden" id="subpanelServicios">
+                    <table class="data-table"><thead><tr><th>Servicio</th><th>Proveedor</th><th>Cantidad</th><th>Coste</th><th>Moneda</th><th>Impuesto</th><th>Total</th><th>Mes</th><th>Acciones</th></tr></thead><tbody id="analisisServiciosBody"></tbody><tfoot id="analisisServiciosFoot"></tfoot></table>
+                </div>
+
+                <div class="subpanel-analisis u-hidden" id="subpanelEquipo">
+                    <table class="data-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Coste/h</th><th>Horas/mes</th><th>Meses</th><th>Total</th><th>Moneda</th><th>Acciones</th></tr></thead><tbody id="analisisEquipoBody"></tbody><tfoot id="analisisEquipoFoot"></tfoot></table>
+                    <div class="form-group"><label><i data-feather="stop-circle" class="nav-feather"></i> Duración (meses)</label><input type="number" id="duracionProyectoMeses" value="12" onchange="calcularAnalisisEquipo()" aria-label="Duración del proyecto en meses"></div>
+                </div>
+
+                <div class="subpanel-analisis u-hidden" id="subpanelAranceles">
+                    <div class="panel-title"><span><i data-feather="external-link" class="nav-feather"></i> Aranceles por País</span><button class="btn btn-primary btn-small" onclick="abrirModalConfigArancel()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button><button class="btn btn-success btn-small u-mt-ml-8" onclick="actualizarArancelesTodos()"><i data-feather="external-link" class="nav-feather"></i> Actualizar</button></div>
+                    <table class="data-table"><thead><tr><th>País</th><th>Categoría</th><th>% Arancel</th><th>Código</th><th>Acciones</th></tr></thead><tbody id="configArancelesBody"></tbody></table>
+                </div>
+
+                <div class="subpanel-analisis u-hidden" id="subpanelTasas">
+                    <div class="panel-title"><span><i data-feather="file-text" class="nav-feather"></i> Tasas Aduaneras</span><button class="btn btn-primary btn-small" onclick="abrirModalTasaAduaneraFija()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
+                    <table class="data-table"><thead><tr><th>Concepto</th><th>Tipo</th><th>Valor</th><th>Moneda</th><th>Acciones</th></tr></thead><tbody id="tasasFijasBody"></tbody><tr>
+                </div>
+
+                <div class="subpanel-analisis u-hidden" id="subpanelFinancieros">
+                    <div class="panel-title"><span><i data-feather="dollar-sign" class="nav-feather"></i> Costes Financieros</span><button class="btn btn-primary btn-small" onclick="abrirModalCosteFinancieroExtra()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
+                    <table class="data-table"><thead><tr><th>Concepto</th><th>Tipo</th><th>Base</th><th>Tasa</th><th>Moneda</th><th>Total</th><th>Periodicidad</th><th>Acciones</th></tr></thead><tbody id="costesFinancierosExtraBody"></tbody><tfoot id="costesFinancierosExtraFoot"></tfoot></table>
+                </div>
+            </div>
+
+            <div id="panelCronograma" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="fast-forward" class="nav-feather"></i> Cronograma — WBS + Timeline</span>
+                    <span id="cronoFechasProyecto" style="font-size:12px;color:#666;margin-left:12px;font-weight:400"></span>
+                    <div>
+                        <button class="btn btn-success btn-small" onclick="sincronizarElementosGantt()"><i data-feather="refresh-cw" class="nav-feather"></i> Sincronizar</button>
+                        <button class="btn btn-primary btn-small" onclick="abrirModalNuevoElementoGantt()"><i data-feather="help-circle" class="nav-feather"></i> Nuevo</button>
+                        <button class="btn btn-secondary btn-small" onclick="exportarGantt()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                        <button class="btn btn-secondary btn-small" onclick="importarCSV()"><i data-feather="download-cloud" class="nav-feather"></i> Importar CSV</button>
+                        <button class="btn btn-secondary btn-small" onclick="mostrarAnalisisDesviaciones()"><i data-feather="help-circle" class="nav-feather"></i> Desviaciones</button>
+                        <button class="btn btn-secondary btn-small" onclick="recalcularCostesPorProgreso()"><i data-feather="dollar-sign" class="nav-feather"></i> Costes reales</button>
+                        <button class="btn btn-secondary btn-small" onclick="reordenarNumeracionElementos()"><i data-feather="help-circle" class="nav-feather"></i> Códigos</button>
+                    </div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="crono-toolbar">
+                    <div class="crono-toolbar-left">
+                        <button class="btn-icon" id="btnToggleVista" onclick="toggleVistaCronograma()" title="Cambiar vista"><i data-feather="help-circle" class="nav-feather"></i> Tarjetas</button>
+                        <span class="crono-separator"></span>
+                        <button class="btn-icon" onclick="zoomGantt('out')" title="Alejar"><i data-feather="help-circle" class="nav-feather"></i>−</button>
+                        <span class="crono-zoom-label" id="cronoZoomLabel">100%</span>
+                        <button class="btn-icon" onclick="zoomGantt('in')" title="Acercar"><i data-feather="help-circle" class="nav-feather"></i>+</button>
+                        <span class="crono-separator"></span>
+                        <span class="crono-scale-label"><i data-feather="help-circle" class="nav-feather"></i></span>
+                        <select class="crono-scale-select" onchange="cambiarEscala(this.value)">
+                            <option value="día" selected>Día</option>
+                            <option value="semana">Semana</option>
+                            <option value="mes">Mes</option>
+                            <option value="año">Año</option>
+                        </select>
+                        <span class="crono-separator"></span>
+                        <button class="btn-icon" onclick="colapsarTodos()" title="Colapsar todo"><i data-feather="help-circle" class="nav-feather"></i></button>
+                        <button class="btn-icon" onclick="expandirTodos()" title="Expandir todo"><i data-feather="help-circle" class="nav-feather"></i></button>
+                        <span class="crono-separator"></span>
+                        <span class="crono-separator"></span>
+                        <button class="btn-icon" onclick="mostrarConfigEmailJS()" title="Notificaciones email"><i data-feather="help-circle" class="nav-feather"></i></button>
+                        <span class="crono-separator"></span>
+                        <button class="btn-icon" onclick="mostrarListadoOrdenado()" title="Listado ordenado de actividades"><i data-feather="help-circle" class="nav-feather"></i> Listado</button>
+                        <span class="crono-separator"></span>
+                        <button class="btn-icon" onclick="abrirMonteCarlo()" title="Simulación Monte Carlo"><i data-feather="divide-square" class="nav-feather"></i> Monte Carlo</button>
+                    </div>
+                    <div class="crono-toolbar-right">
+                        <input type="text" class="crono-search" id="buscarGantt" placeholder="Buscar..." onkeyup="renderizarCronograma()">
+                    </div>
+                </div>
+
+                <!-- Info bar -->
+                <div class="crono-info-bar" id="cronogramaInfoBar"></div>
+
+                <!-- Contenedor principal: WBS árbol + Timeline SVG -->
+                <div class="crono-main" id="cronogramaContainer">
+                    <div class="crono-wbs-panel" id="wbsTree"></div>
+                    <div class="crono-timeline-panel" id="timelinePanel">
+                        <svg id="timelineSvg" class="crono-svg"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Context menu for WBS -->
+            <div id="cronoContextMenu" role="menu"></div>
+
+            <div id="panelRiesgos" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="alert-triangle" class="nav-feather"></i> Gestión de Riesgos del Proyecto</span>
+                    <div>
+                        <button class="btn btn-success btn-small" onclick="analizarRiesgos()"><i data-feather="help-circle" class="nav-feather"></i> Analizar Riesgos</button>
+                        <button class="btn btn-primary btn-small" onclick="abrirModalNuevoRiesgo()"><i data-feather="help-circle" class="nav-feather"></i> Nuevo Riesgo</button>
+                        <button class="btn btn-secondary btn-small" onclick="exportarRiesgos()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                    </div>
+                </div>
+                <div class="cards-grid u-mb-24">
+                    <div class="value-card vc-red">
+                        <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Riesgos Críticos</div>
+                        <div class="big" id="totalRiesgosCriticos">0</div>
+                    </div>
+                    <div class="value-card vc-orange">
+                        <div class="small">🟠 Riesgos Altos</div>
+                        <div class="big" id="totalRiesgosAltos">0</div>
+                    </div>
+                    <div class="value-card vc-yellow">
+                        <div class="small">🟡 Riesgos Medios</div>
+                        <div class="big" id="totalRiesgosMedios">0</div>
+                    </div>
+                    <div class="value-card vc-green">
+                        <div class="small">🟢 Riesgos Bajos</div>
+                        <div class="big" id="totalRiesgosBajos">0</div>
+                    </div>
+                </div>
+                <div class="panel-title u-mt-8">
+                    <span><i data-feather="help-circle" class="nav-feather"></i> Matriz de Probabilidad vs Impacto</span>
+                    <div>
+                        <button class="btn btn-secondary btn-small" onclick="mostrarMatrizRiesgos()">Mostrar Matriz</button>
+                        <button class="btn btn-secondary btn-small" onclick="ocultarMatrizRiesgos()">Ocultar</button>
+                    </div>
+                </div>
+                <div id="matrizRiesgosContainer" class="u-hidden">
+                    <canvas id="matrizRiesgosCanvas" width="500" height="400" class="matriz-riesgos-canvas"></canvas>
+                </div>
+                <div class="panel-title u-mt-8">
+                    <span><i data-feather="help-circle" class="nav-feather"></i> Lista de Riesgos Identificados</span>
+                    <div>
+                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos('probabilidad')"><i data-feather="help-circle" class="nav-feather"></i> Por Probabilidad</button>
+                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos('impacto')"><i data-feather="help-circle" class="nav-feather"></i> Por Impacto</button>
+                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos('score')"><i data-feather="zap-off" class="nav-feather"></i> Por Score</button>
+                    </div>
+                </div>
+                <table class="data-table" id="tablaRiesgos">
+                    <thead><tr><th>ID</th><th>Riesgo</th><th>Categoría</th><th>Probabilidad</th><th>Impacto</th><th>Score</th><th>Nivel</th><th>Respuesta</th><th>Estado</th><th>Plan de acción</th><th>Acciones</th></tr></thead>
+                    <tbody id="riesgosBody"></tbody>
+                </table>
+                <div class="panel-title u-mt-24">
+                    <span><i data-feather="dollar-sign" class="nav-feather"></i> Análisis Cuantitativo de Riesgos</span>
+                    <div><button class="btn btn-primary btn-small" onclick="calcularValorEsperado()">Calcular Valor Esperado</button></div>
+                </div>
+                <div class="info-card u-mb-16">
+                    <div class="form-row">
+                        <div class="form-group"><label>Valor del Proyecto (en moneda base)</label><input type="number" id="valorProyectoRiesgos" onchange="calcularValorEsperado()" aria-label="Valor del proyecto para análisis de riesgos"></div>
+                        <div class="form-group"><label>Reserva de Contingencia Estimada</label><input type="text" id="reservaContingencia" readonly class="u-input-highlight" aria-label="Reserva de contingencia estimada"></div>
+                    </div>
+                </div>
+                <div class="panel-title u-mt-8">
+                    <span><i data-feather="help-circle" class="nav-feather"></i> Registro de Acciones de Mitigación</span>
+                    <button class="btn btn-primary btn-small" onclick="abrirModalNuevaAccionMitigacion()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Acción</button>
+                </div>
+                <table class="data-table" id="tablaAccionesMitigacion">
+                    <thead><tr><th>Riesgo asociado</th><th>Fecha</th><th>Acción tomada</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody id="accionesMitigacionBody"></tbody>
+                </table>
+            </div>
+
+            <div id="panelStakeholders" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="user-plus" class="nav-feather"></i> Stakeholders</span><button class="btn btn-primary btn-small" onclick="abrirModalStakeholder()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
+                <div id="stakeholdersContent"></div>
+            </div>
+
+<div id="panelRaci" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="divide-square" class="nav-feather"></i> Matriz RACI</span>
+                    <div>
+                        <button class="btn btn-primary btn-small" onclick="generarInformeRACI()"><i data-feather="file-text" class="nav-feather"></i> Generar Informe RACI</button>
+                    </div>
+                </div>
+                <div id="raciContent"></div>
+                <div class="raci-report u-hidden" id="raciInforme">
+                    <!-- Aquí se generará el informe dinámicamente -->
+                </div>
+            </div>
+
+            <div id="panelAgenda" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="calendar" class="nav-feather"></i> Agenda de Proyecto</span>
+                    <div></div>
+                </div>
+                <div id="agendaContent"></div>
+            </div>
+
+            <div id="panelProcesos" class="panel hidden"><div class="panel-title"><span><i data-feather="check-square" class="nav-feather"></i> Procesos PMBOK</span><button class="btn btn-secondary btn-small" onclick="resetearProcesos()"><i data-feather="rotate-ccw" class="nav-feather"></i> Resetear</button></div><div id="procesosGrid" class="process-grid"></div></div>
+             <div id="panelRoles" class="panel hidden"><div class="panel-title"><span><i data-feather="user-plus" class="nav-feather"></i> Roles</span></div><div class="info-cards" id="rolesContent"></div></div>
+
+            <div id="panelEquipo" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="user-plus" class="nav-feather"></i> Equipo</span><button class="btn btn-primary btn-small" onclick="abrirModalEquipo()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button><button class="btn btn-secondary btn-small" onclick="importarCatalogoEquipo()"><i data-feather="shopping-bag" class="nav-feather"></i> Catálogo</button></div>
+                <table class="data-table">
+                    <thead><tr><th>Foto</th><th>Nombre</th><th>Rol</th><th>Email</th><th>Teléfono</th><th>Coste/h</th><th>Moneda</th><th>Horas/mes</th><th>Acciones</th></tr></thead>
+                    <tbody id="equipoBody"></tbody>
+                </table>
+            </div>
+
+                        <div id="panelMateriales" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</span><button class="btn btn-primary btn-small" onclick="abrirModalMaterial()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button><button class="btn btn-secondary btn-small" onclick="importarCatalogoMaterial()"><i data-feather="shopping-bag" class="nav-feather"></i> Catálogo</button><button class="btn btn-success btn-small" onclick="actualizarArancelesMateriales()"><i data-feather="external-link" class="nav-feather"></i> Actualizar</button></div>
+                <div class="u-overflow-x-auto">
+                    <table class="data-table data-table--wide">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Proveedor</th>
+                                <th>Part Number</th>
+                                <th>Cantidad</th>
+                                <th>Coste</th>
+                                <th>Moneda</th>
+                                <th>País Origen</th>
+                                <th>Período</th>
+                                <th><i data-feather="stop-circle" class="nav-feather"></i> Plazo</th>
+                                <th>INCOTERM</th>
+                                <th>Envío</th>
+                                <th>Arancel</th>
+                                <th>Pago</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="panelServicios" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="pen-tool" class="nav-feather"></i> Servicios</span><button class="btn btn-primary btn-small" onclick="abrirModalServicio()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
+                <table class="data-table"><thead><tr><th>Nombre</th><th>Proveedor</th><th>Cantidad</th><th>Coste</th><th>Moneda</th><th>Impuesto</th><th>Total</th><th>Mes</th><th>Acciones</th></tr></thead><tbody id="serviciosBody"></tbody></table>
+            </div>
+                        <!-- PANEL VIAJES -->
+            <div id="panelViajes" class="panel hidden">
+                <div class="panel-title">
+                    <span><i data-feather="external-link" class="nav-feather"></i> Gestión de Viajes del Proyecto</span>
+                    <div>
+                        <button class="btn btn-primary btn-small" onclick="abrirModalViaje()"><i data-feather="help-circle" class="nav-feather"></i> Nuevo Viaje</button>
+                        <button class="btn btn-secondary btn-small" onclick="exportarViajes()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                    </div>
+                </div>
+
+                <div class="cards-grid u-mb-20 cards-grid-5">
+                    <div class="value-card vc-blue">
+                        <div class="small"><i data-feather="external-link" class="nav-feather"></i> Vuelos</div>
+                        <div class="big" id="totalVuelos">0 €</div>
+                    </div>
+                    <div class="value-card vc-green">
+                        <div class="small"><i data-feather="map-pin" class="nav-feather"></i> Hoteles</div>
+                        <div class="big" id="totalHoteles">0 €</div>
+                    </div>
+                    <div class="value-card vc-orange">
+                        <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Comidas</div>
+                        <div class="big" id="totalComidas">0 €</div>
+                    </div>
+                    <div class="value-card vc-red">
+                        <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Traslados</div>
+                        <div class="big" id="totalTraslados">0 €</div>
+                    </div>
+                    <div class="value-card vc-purple">
+                        <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Total Viajes</div>
+                        <div class="big" id="totalViajes">0 €</div>
+                    </div>
+                </div>
+
+                <div class="panel-title u-mt-8">
+                    <span><i data-feather="file-text" class="nav-feather"></i> Registro de Viajes</span>
+                </div>
+                <div id="listaViajes" class="lista-viajes-scroll"></div>
+            </div>
+
+            <!-- MODAL PARA NUEVO/EDITAR VIAJE -->
+            <div class="modal u-hidden" id="modalViaje">
+                <div class="modal-content modal-md">
+                    <div class="modal-header">
+                        <h3 id="modalViajeTitulo"><i data-feather="external-link" class="nav-feather"></i> Nuevo Viaje</h3>
+                        <span class="close-modal" onclick="cerrarModalViaje()">&times;</span>
+                    </div>
+                    <input type="hidden" id="viajeId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="help-circle" class="nav-feather"></i> Nombre del viajero *</label>
+                            <input type="text" id="viajeNombre" placeholder="Ej: Juan Pérez">
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="file-text" class="nav-feather"></i> Rol / Cargo</label>
+                            <input type="text" id="viajeRol" placeholder="Ej: Project Manager">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="map-pin" class="nav-feather"></i> Origen</label>
+                            <input type="text" id="viajeOrigen" placeholder="Ej: Madrid, España">
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="map-pin" class="nav-feather"></i> Destino</label>
+                            <input type="text" id="viajeDestino" placeholder="Ej: Luanda, Angola">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="fast-forward" class="nav-feather"></i> Fecha salida</label>
+                            <input type="date" id="viajeFechaSalida" aria-label="Fecha de salida del viaje">
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="fast-forward" class="nav-feather"></i> Fecha regreso</label>
+                            <input type="date" id="viajeFechaRegreso" aria-label="Fecha de regreso del viaje">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i data-feather="help-circle" class="nav-feather"></i> Motivo del viaje</label>
+                        <textarea rows="2" id="viajeMotivo" placeholder="Ej: Reunión con cliente, capacitación..."></textarea>
+                    </div>
+                    
+                    <hr class="u-hr u-hr-sm">
+                    <h4 class="u-section-title"><i data-feather="dollar-sign" class="nav-feather"></i> COSTES DEL VIAJE</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="external-link" class="nav-feather"></i> Vuelos (ida/vuelta)</label>
+                            <input type="number" id="viajeCosteVuelos" value="0" step="100" aria-label="Coste de vuelos">
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="map-pin" class="nav-feather"></i> Alojamiento (hotel)</label>
+                            <input type="number" id="viajeCosteHotel" value="0" step="100" aria-label="Coste de hotel">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="fast-forward" class="nav-feather"></i> Dietas / Comidas</label>
+                            <input type="number" id="viajeCosteComidas" value="0" step="50" aria-label="Coste de comidas y dietas">
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="help-circle" class="nav-feather"></i> Traslados / Transporte local</label>
+                            <input type="number" id="viajeCosteTraslados" value="0" step="50" aria-label="Coste de traslados">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i data-feather="dollar-sign" class="nav-feather"></i> Moneda</label>
+                            <select id="viajeMoneda" aria-label="Moneda del viaje">
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="USD">USD - Dólar</option>
+                                <option value="GBP">GBP - Libra</option>
+                                <option value="DZD">DZD - Dinar Argelino</option>
+                                <option value="CDF">CDF - Franco Congoleño</option>
+                                <option value="MZN">MZN - Metical</option>
+                                <option value="ZAR">ZAR - Rand</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i data-feather="fast-forward" class="nav-feather"></i> Mes del gasto</label>
+                            <input type="number" id="viajeMes" value="1" min="1" max="36" aria-label="Mes del gasto del viaje">
+                        </div>
+                    </div>
+                    
+                    <hr class="u-hr u-hr-sm">
+                    <h4 class="u-section-title"><i data-feather="help-circle" class="nav-feather"></i> CHECKLIST DE DOCUMENTACIÓN</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><input type="checkbox" id="viajeDocPasaporte"> <i data-feather="help-circle" class="nav-feather"></i> Pasaporte (vigente)</label>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="viajeDocVisa"> <i data-feather="map-pin" class="nav-feather"></i> Visa / Permiso</label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><input type="checkbox" id="viajeDocVacunas"> <i data-feather="help-circle" class="nav-feather"></i> Vacunas (fiebre amarilla, etc.)</label>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="viajeDocSeguro"> <i data-feather="map-pin" class="nav-feather"></i> Seguro de viaje</label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><input type="checkbox" id="viajeDocCarnet"> <i data-feather="help-circle" class="nav-feather"></i> Carnet de conducir internacional</label>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="viajeDocCartas"> <i data-feather="file-text" class="nav-feather"></i> Cartas de invitación</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" id="viajeDocOtros"> <i data-feather="help-circle" class="nav-feather"></i> Otros documentos</label>
+                        <input type="text" id="viajeDocOtrosTexto" placeholder="Especificar otros documentos..." class="u-mt-8">
+                    </div>
+                    
+                    <hr class="u-hr u-hr-sm">
+                    <h4 class="u-section-title"><i data-feather="help-circle" class="nav-feather"></i> ARCHIVOS ADJUNTOS</h4>
+                    <div style="margin-bottom:8px">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px;border:1px dashed rgba(255,255,255,0.2);border-radius:8px;background:rgba(0,122,255,0.05);justify-content:center;">
+                            <span style="font-size:20px"><i data-feather="help-circle" class="nav-feather"></i></span>
+                            <span>Haz clic para adjuntar billetes, bookings, PDFs...</span>
+                            <input type="file" id="viajeFileInput" multiple accept=".pdf,.eml,.msg,.png,.jpg,.jpeg" style="display:none" onchange="viajeAgregarArchivos(event)">
+                        </label>
+                    </div>
+                    <div id="viajeFilesList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
+                    <small style="opacity:0.6"><i data-feather="map-pin" class="nav-feather"></i> Los archivos se almacenan en local (máx ~5MB por archivo).</small>
+                    
+                    <button class="btn btn-primary u-mt-16" onclick="guardarViaje()"><i data-feather="download-cloud" class="nav-feather"></i> Guardar Viaje</button>
+                </div>
+            </div>
+            <!-- PANEL LOGÍSTICA -->
+<!-- PANEL LOGÍSTICA - SIMULADOR 3D COMPLETO -->
+<div id="panelLogistica" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="map-pin" class="nav-feather"></i> Logística - Simulador 3D de Cubicaje</span>
+        <div>
+            <button class="btn btn-success btn-small" onclick="window.appLogistica?.guardarEstado()"><i data-feather="download-cloud" class="nav-feather"></i> Guardar</button>
+            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cargarEstado()"><i data-feather="help-circle" class="nav-feather"></i> Cargar</button>
+            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.exportarCSV()"><i data-feather="file-text" class="nav-feather"></i> CSV</button>
+            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.exportarPDF()"><i data-feather="help-circle" class="nav-feather"></i> PDF</button>
+        </div>
+    </div>
+
+    <!-- TABS DE CONTENEDORES -->
+    <div class="logistica-tabs" id="logisticaTabs" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;"></div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="logistica-container" style="display: flex; gap: 20px; min-height: 600px; height: auto;">
+        
+        <!-- ============================================================ -->
+        <!-- PANEL IZQUIERDO -->
+        <!-- ============================================================ -->
+        <div class="logistica-panel-izquierdo" style="flex: 1; min-width: 350px; max-width: 500px; overflow-y: auto; max-height: 700px; padding-right: 10px;">
+            
+            <!-- 1. ENTORNO Y TRANSPORTE -->
+            <div class="logistica-box" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                <h4 style="margin-bottom: 12px; color: #007AFF;">1. Entorno y Transporte</h4>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Modalidad de Envío:</label>
+                    <select id="logModalidad" class="u-select-glass" onchange="window.appLogistica?.cambiarModalidad()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <option value="AEREO"> Aéreo (Equipos ULD)</option>
+                        <option value="MARITIMO"> Marítimo (Contenedores)</option>
+                        <option value="SIN_CONTENEDOR"> Suelo / Almacén</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Capacidad / Unidad:</label>
+                    <select id="logTipoUnidad" class="u-select-glass" onchange="window.appLogistica?.actualizarUnidadActiva()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
+                </div>
+                <button class="btn btn-primary btn-small" style="width: 100%;" onclick="window.appLogistica?.agregarContenedor()"><i data-feather="help-circle" class="nav-feather"></i> Añadir Otra Unidad</button>
+            </div>
+
+            <!-- 2. COMERCIO EXTERIOR -->
+            <div class="logistica-box logistica-box-highlight" style="background: rgba(0,122,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(0,122,255,0.2);">
+                <h4 style="margin-bottom: 12px; color: #007AFF;">2. Comercio Exterior</h4>
+                
+                <div class="logistica-inline-inputs" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label style="font-size: 12px; color: #888;">País Origen:</label>
+                        <select id="logPaisOrigen" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label style="font-size: 12px; color: #888;">País Destino:</label>
+                        <select id="logPaisDestino" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Incoterm:</label>
+                    <select id="logIncoterm" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <option value="EXW">EXW - En Fábrica</option>
+                        <option value="FOB">FOB - Franco a Bordo</option>
+                        <option value="CFR">CFR - Costo y Flete</option>
+                        <option value="CIF" selected>CIF - Costo, Flete y Seguro</option>
+                        <option value="DDP">DDP - Entregado Derechos Pagados</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Valor Mercancía ($):</label>
+                    <input type="number" id="logValorMercancia" value="15000" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <small style="font-size: 10px; color: #666;"><i data-feather="help-circle" class="nav-feather"></i> Se actualiza automáticamente con los materiales asignados</small>
+                </div>
+                
+                <!-- RESUMEN DE VALOR DE MERCANCÍA -->
+                <div style="background: rgba(0,168,89,0.08); padding: 12px; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(0,168,89,0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 12px; color: var(--text-muted);"><i data-feather="dollar-sign" class="nav-feather"></i> Valor total de la mercancía:</span>
+                        <span id="valorMercanciaResumen" style="font-size: 16px; font-weight: bold; color: #00A859;">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                        <span id="resumenMaterialesCarga">0 materiales | 0 kg</span>
+                        <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.actualizarResumenMercanciaUI?.()" style="font-size: 10px; padding: 2px 8px;"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. CARGA PERSONALIZADA -->
+            <div class="logistica-box logistica-box-highlight" style="background: rgba(255,140,0,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(255,140,0,0.2);">
+                <h4 style="margin-bottom: 12px; color: #FF8C00;">3. Carga Personalizada</h4>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Tipo de Carga:</label>
+                    <select id="logTipoCarga" class="u-select-glass" onchange="window.appLogistica?.cargarTipoPredefinido()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <option value="caja"> Caja / Bulto</option>
+                        <option value="pallet_europeo"> Pallet Europeo</option>
+                        <option value="pallet_americano"> Pallet Americano</option>
+                        <option value="bidon"> Bidón / Tambor</option>
+                        <option value="saco"> Saco / Big Bag</option>
+                        <option value="tubo"> Tubo / Rollo</option>
+                        <option value="personalizado"> Personalizado</option>
+                    </select>
+                </div>
+
+                <div id="logDimensionesPersonalizadas">
+                    <div class="logistica-inline-inputs-3" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label style="font-size: 12px; color: #888;">Largo (m):</label>
+                            <input type="number" id="logCargaLargo" value="1.20" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label style="font-size: 12px; color: #888;">Ancho (m):</label>
+                            <input type="number" id="logCargaAncho" value="0.80" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label style="font-size: 12px; color: #888;">Altura (m):</label>
+                            <input type="number" id="logCargaAlto" value="1.00" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="logistica-preview-dim" id="logPreviewDimension" style="padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 12px; font-size: 12px; text-align: center;">
+                    <i data-feather="help-circle" class="nav-feather"></i> <strong>Caja</strong>: 1.20m × 0.80m × 1.00m | Volumen: 0.960 m³
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Referencia / Nombre:</label>
+                    <input type="text" id="logCargaTag" value="Mercancía" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                </div>
+
+                <div class="logistica-inline-inputs" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label style="font-size: 12px; color: #888;">Orientación:</label>
+                        <select id="logCargaOrientacion" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                            <option value="0"><i data-feather="help-circle" class="nav-feather"></i> Base estándar</option>
+                            <option value="90"><i data-feather="refresh-cw" class="nav-feather"></i> Girar 90°</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label style="font-size: 12px; color: #888;">Cantidad:</label>
+                        <input type="number" id="logCargaCantidad" value="1" min="1" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-small" style="width: 100%;" onclick="window.appLogistica?.crearCarga()">+ Ubicar Carga en Espacio</button>
+                <div style="font-size: 10px; color: #666; text-align: center; margin-top: 8px;"><i data-feather="help-circle" class="nav-feather"></i> Todos los campos son editables, incluida la ALTURA</div>
+            </div>
+
+            <!-- 4. MATERIALES -->
+            <div class="logistica-box logistica-box-selected" id="logSeccionMateriales" style="background: rgba(0,168,89,0.08); border-radius: 12px; padding: 16px; border: 1px solid rgba(0,168,89,0.2); opacity: 0.5; pointer-events: none; transition: all 0.3s;">
+                <h4 id="logTituloMateriales" style="margin-bottom: 12px; color: #00A859;">4. Materiales de: Ninguno Seleccionado</h4>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;"><i data-feather="shopping-bag" class="nav-feather"></i> Seleccionar material del proyecto:</label>
+                    <select id="logMatSelector" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <option value="">-- Seleccionar material --</option>
+                    </select>
+                    <small style="font-size: 10px; color: #666;"><i data-feather="help-circle" class="nav-feather"></i> Los materiales se toman del panel de materiales del proyecto</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #888;">Cantidad a asignar:</label>
+                    <input type="number" id="logMatCant" value="1" min="1" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                </div>
+
+                <div class="logistica-material-feedback" id="logMaterialFeedback" style="display: none; padding: 8px; background: rgba(255,140,0,0.15); border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #FF8C00;"></div>
+                
+                <button class="btn btn-primary btn-small" style="width: 100%;" id="logBtnGuardarMaterial" onclick="window.appLogistica?.guardarMaterial()">
+                    + Asignar Material al Bulto
+                </button>
+                
+                <div style="margin-top: 12px;">
+                    <div id="logListaMateriales" class="log-lista-materiales" style="max-height: 150px; overflow-y: auto;">
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Vacío. Selecciona materiales del desplegable.</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-danger btn-small" style="width: 100%; margin-top: 8px;" onclick="window.appLogistica?.eliminarUltimaCarga()"><i data-feather="help-circle" class="nav-feather"></i> Remover Última Carga</button>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PANEL DERECHO - VISOR 3D -->
+        <!-- ============================================================ -->
+        <div class="logistica-panel-derecho" style="flex: 2; min-width: 400px; display: flex; flex-direction: column;">
+            
+            <!-- Controles de cámara -->
+            <div class="logistica-camara-controls" style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cambiarVista('perspectiva')"><i data-feather="help-circle" class="nav-feather"></i> Isométrica</button>
+                <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cambiarVista('planta')"><i data-feather="help-circle" class="nav-feather"></i> Planta</button>
+                <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cambiarVista('frontal')"><i data-feather="help-circle" class="nav-feather"></i> Frente</button>
+                <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cambiarVista('reset')"><i data-feather="refresh-cw" class="nav-feather"></i> Reset</button>
+                <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.verificarEstadoVisor?.()"><i data-feather="help-circle" class="nav-feather"></i> Diagnóstico</button>
+                <button class="btn btn-success btn-small" onclick="window.appLogistica?.autoOrdenarCarga()" style="background:#00A859;border-color:#00A859;"><i data-feather="zap-off" class="nav-feather"></i> Auto-ordenar</button>
+            </div>
+            <div class="logistica-mover-controls" style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items:center;">
+                <span style="font-size:11px;color:#888;margin-right:4px;"><i data-feather="map-pin" class="nav-feather"></i> Mover selección:</span>
+                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('izquierda')"><i data-feather="chevron-left" class="nav-feather"></i></button>
+                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('derecha')"><i data-feather="chevron-right" class="nav-feather"></i></button>
+                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('adelante')"><i data-feather="chevron-up" class="nav-feather"></i></button>
+                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('atras')"><i data-feather="chevron-down" class="nav-feather"></i></button>
+                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('subir')"><i data-feather="chevron-up" class="nav-feather"></i><i data-feather="chevron-up" class="nav-feather"></i> Subir</button>
+                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('bajar')"><i data-feather="chevron-down" class="nav-feather"></i><i data-feather="chevron-down" class="nav-feather"></i> Bajar</button>
+                <button class="btn btn-danger btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('suelo')"><i data-feather="chevron-down" class="nav-feather"></i> Al suelo</button>
+            </div>
+
+            <!-- VISOR 3D -->
+            <div id="canvas3d-container" style="flex: 1; width: 100%; min-height: 500px; border-radius: 16px; overflow: hidden; position: relative;">
+                <!-- Instrucciones flotantes -->
+                <div class="logistica-instrucciones" style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 8px; font-size: 11px; color: #888; z-index: 10; pointer-events: none;">
+                    <strong><i data-feather="pen-tool" class="nav-feather"></i> Operaciones:</strong><br>
+                    • <span style="color: #f1c40f;">Click</span> para seleccionar carga<br>
+                    • <span style="color: #3498db;">Arrastrar</span> para mover carga<br>
+                    • Tecla <strong style="color: #e74c3c;">R</strong> para rotar carga<br>
+                    • <span style="color: #00A859;"><i data-feather="zap-off" class="nav-feather"></i> Auto-ordenar</span> coloca todo sin solapes
+                </div>
+                <div class="logistica-alerta" id="logBannerAlerta" style="display: none; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.3); color: white; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 20; border: 2px solid #FF3B30;">
+                    <i data-feather="alert-triangle" class="nav-feather"></i> Alerta
+                </div>
+                <div id="log3dTooltip" style="display:none; position:absolute; top:0; left:0; background:rgba(10,10,30,0.92); backdrop-filter:blur(8px); padding:10px 14px; border-radius:10px; font-size:12px; color:white; z-index:30; pointer-events:none; border:1px solid rgba(255,255,255,0.12); max-width:280px; box-shadow:0 4px 20px rgba(0,0,0,0.5); line-height:1.5;"></div>
+            </div>
+
+            <!-- Métricas -->
+            <div class="logistica-metricas" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px;">
+                <div class="logistica-metrica" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div class="valor" id="logMBultos" style="font-size: 20px; font-weight: bold; color: #007AFF;">0</div>
+                    <div class="etiqueta" style="font-size: 10px; color: #888;">Cargas</div>
+                </div>
+                <div class="logistica-metrica" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div class="valor" id="logMVol" style="font-size: 20px; font-weight: bold; color: #27ae60;">0.000 m³</div>
+                    <div class="etiqueta" style="font-size: 10px; color: #888;">Volumen Total</div>
+                </div>
+                <div class="logistica-metrica" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; text-align: center;">
+                    <div class="valor" id="logMPeso" style="font-size: 20px; font-weight: bold; color: #f1c40f;">0 / 0 kg</div>
+                    <div class="etiqueta" style="font-size: 10px; color: #888;">Peso / Máx</div>
+                </div>
+                <div class="logistica-metrica logistica-metrica--highlight" style="background: rgba(255,140,0,0.15); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,140,0,0.3);">
+                    <div class="valor" id="logMCostos" style="font-size: 20px; font-weight: bold; color: #FF8C00;">$0.00 USD</div>
+                    <div class="etiqueta" style="font-size: 10px; color: #888;">Costo Logístico</div>
+                    <div class="u-fs-10 u-color-muted" id="logMDesglose" style="font-size: 9px; color: #666;">Sin datos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. PACKING LIST -->
+    <div class="logistica-box" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; margin-top: 20px;">
+        <h4 style="margin-bottom: 12px; color: #AF52DE;">5. Packing List y Responsabilidades de Gastos</h4>
+        <div class="packing-btn-row" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <button class="btn btn-success btn-small" onclick="window.appLogistica?.exportarCSV()"><i data-feather="help-circle" class="nav-feather"></i> Exportar CSV</button>
+            <button class="btn btn-pdf btn-small" onclick="window.appLogistica?.exportarPDF()"><i data-feather="file-text" class="nav-feather"></i> Exportar PDF</button>
+            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.actualizarTablaPacking()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
+        </div>
+        <div class="u-overflow-x-auto packing-scroll" style="max-height: 300px; overflow-y: auto;">
+            <table class="data-table data-table--packing" style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                <thead>
+                    <tr style="background: rgba(0,122,255,0.15);">
+                        <th style="padding: 8px; text-align: left;">Unidad</th>
+                        <th style="padding: 8px; text-align: left;">ID</th>
+                        <th style="padding: 8px; text-align: left;">Etiqueta</th>
+                        <th style="padding: 8px; text-align: left;">Tipo</th>
+                        <th style="padding: 8px; text-align: left;">L×A×H (m)</th>
+                        <th style="padding: 8px; text-align: left;">Altura</th>
+                        <th style="padding: 8px; text-align: left;">Material</th>
+                        <th style="padding: 8px; text-align: left;">HS Code</th>
+                        <th style="padding: 8px; text-align: center;">Cant.</th>
+                        <th style="padding: 8px; text-align: center;">Peso (kg)</th>
+                        <th style="padding: 8px; text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="logPackingBody">
+                    <tr><td colspan="11" style="text-align: center; padding: 20px; color: #666;">No hay cargas registradas</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA CREAR BULTO -->
+<div class="modal u-hidden" id="modalCrearBulto">
+    <div class="modal-content modal-500">
+        <div class="modal-header">
+            <h3><i data-feather="shopping-bag" class="nav-feather"></i> Nuevo Bulto / Pallet</h3>
+            <span class="close-modal" onclick="cerrarModalCrearBulto()">&times;</span>
+        </div>
+        <div class="form-group">
+            <label>Nombre del bulto</label>
+            <input type="text" id="bultoNombre" placeholder="Ej: Pallet 1, Caja 1, etc.">
+        </div>
+        <div class="form-group">
+            <label>Tipo</label>
+            <select id="bultoTipo" onchange="actualizarMedidasPorTipo()" aria-label="Tipo de bulto">
+                <option value="pallet">Pallet estándar (1200x1000x150 mm)</option>
+                <option value="europallet">Europallet (1200x800x144 mm)</option>
+                <option value="caja">Caja de cartón</option>
+                <option value="bidon">Bidón / Tambor</option>
+                <option value="otro">Otro (medidas personalizadas)</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Largo (mm)</label><input type="number" id="bultoLargo" value="1200" aria-label="Largo del bulto en mm"></div>
+            <div class="form-group"><label>Ancho (mm)</label><input type="number" id="bultoAncho" value="1000" aria-label="Ancho del bulto en mm"></div>
+            <div class="form-group"><label>Alto (mm)</label><input type="number" id="bultoAlto" value="150" aria-label="Alto del bulto en mm"></div>
+        </div>
+        <div class="form-group">
+            <label>Tara (peso vacío en kg)</label>
+            <input type="number" id="bultoTara" value="25" aria-label="Tara del bulto en kg">
+        </div>
+        <button class="btn btn-primary" onclick="guardarNuevoBulto()"><i data-feather="check-circle" class="nav-feather"></i> Crear Bulto</button>
+    </div>
+</div>
+
+<!-- MODAL PARA ASIGNAR MATERIAL A BULTO -->
+<div class="modal u-hidden" id="modalAsignarMaterialBulto">
+    <div class="modal-content modal-500">
+        <div class="modal-header">
+            <h3><i data-feather="help-circle" class="nav-feather"></i> Asignar Material a Bulto</h3>
+            <span class="close-modal" onclick="cerrarModalAsignarMaterialBulto()">&times;</span>
+        </div>
+        <input type="hidden" id="asignarBultoId">
+        <div class="form-group">
+            <label>Material</label>
+            <select id="asignarMaterialId" class="u-select-glass" aria-label="Material a asignar"></select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Cantidad a asignar</label>
+                <input type="number" id="asignarCantidad" value="1" min="1" aria-label="Cantidad a asignar">
+            </div>
+            <div class="form-group">
+                <label>HS Code (opcional)</label>
+                <input type="text" id="asignarHsCode" placeholder="Ej: 8471.30.00">
+            </div>
+        </div>
+        <div id="infoMaterialDisponible" class="u-fs-11 u-color-muted u-mb-12"></div>
+        <button class="btn btn-primary" onclick="confirmarAsignarMaterialABulto()"><i data-feather="check-circle" class="nav-feather"></i> Asignar Material</button>
+    </div>
+</div>
+        
+        
+                        <!-- PANEL AVALES -->
+            <div id="panelAvales" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="shield-off" class="nav-feather"></i> Avales y Garantías Bancarias</span><button class="btn btn-primary btn-small" onclick="abrirModalAval()"><i data-feather="help-circle" class="nav-feather"></i> Añadir Aval</button></div>
+                <div id="avalesContent"></div>
+            </div>
+            <div id="panelSeguros" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="help-circle" class="nav-feather"></i> Seguros y Responsabilidad Civil</span><button class="btn btn-primary btn-small" onclick="abrirModalSeguro()"><i data-feather="help-circle" class="nav-feather"></i> Añadir Seguro</button></div>
+                <div class="info-card u-mb-16">
+                    <small><i data-feather="help-circle" class="nav-feather"></i> Registra aquí seguros del proyecto: transporte, RC, obras, etc. El coste se reflejará automáticamente en el cashflow del mes indicado.</small>
+                </div>
+                <div id="segurosContent"></div>
+            </div>
+            <div id="panelBeneficios" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="zap-off" class="nav-feather"></i> Seguimiento de Beneficios del Proyecto</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="registrarBeneficioReal()"><i data-feather="dollar-sign" class="nav-feather"></i> Registrar Beneficio Real</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarBeneficios()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+    
+
+    <!-- Tarjetas de resumen -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card vc-blue">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Beneficio Proyectado</div>
+            <div class="big" id="beneficioProyectadoValor">0 €</div>
+        </div>
+        <div class="value-card vc-green">
+            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Beneficio Real</div>
+            <div class="big" id="beneficioRealValor">0 €</div>
+        </div>
+        <div class="value-card vc-orange">
+            <div class="small"><i data-feather="trending-up" class="nav-feather"></i> Desviación</div>
+            <div class="big" id="beneficioDesviacion">0%</div>
+        </div>
+        <div class="value-card vc-red">
+            <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Estado</div>
+            <div class="big" id="beneficioEstado">-</div>
+        </div>
+    </div>
+
+    <!-- Gráfico de evolución -->
+    <div class="chart-container">
+        <canvas id="beneficiosChart"></canvas>
+    </div>
+
+    <!-- Registro de hitos de beneficio -->
+    <div class="info-card u-mt-20">
+        <h4><i data-feather="zap-off" class="nav-feather"></i> Hitos de Beneficio</h4>
+        <div id="hitosBeneficioList"></div>
+        <button class="btn btn-secondary btn-small u-mt-12" onclick="agregarHitoBeneficio()"><i data-feather="help-circle" class="nav-feather"></i> Agregar Hito</button>
+    </div>
+
+    <!-- Tabla de indicadores -->
+    <div class="info-card u-mt-20">
+        <h4><i data-feather="check-square" class="nav-feather"></i> Indicadores de Éxito</h4>
+        <table class="data-table">
+            <thead><tr><th>Indicador</th><th>Meta</th><th>Real</th><th>Cumplimiento</th></tr></thead>
+            <tbody id="indicadoresBeneficioBody"></tbody>
+        </table>
+    </div>
+</div>
+<div id="panelCambios" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="pen-tool" class="nav-feather"></i> Gestión de Solicitudes de Cambio (PMBOK 8)</span>
+        <button class="btn btn-primary btn-small" onclick="abrirModalNuevoCambio()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Solicitud</button>
+    </div>
+
+    <!-- Resumen -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card"><div class="small"><i data-feather="stop-circle" class="nav-feather"></i> Pendientes</div><div class="big" id="cambiosPendientes">0</div></div>
+        <div class="value-card"><div class="small"><i data-feather="check-circle" class="nav-feather"></i> Aprobados</div><div class="big" id="cambiosAprobados">0</div></div>
+        <div class="value-card"><div class="small"><i data-feather="x-circle" class="nav-feather"></i> Rechazados</div><div class="big" id="cambiosRechazados">0</div></div>
+        <div class="value-card"><div class="small"><i data-feather="refresh-cw" class="nav-feather"></i> Implementados</div><div class="big" id="cambiosImplementados">0</div></div>
+    </div>
+
+    <!-- Tabla de solicitudes -->
+    <table class="data-table" id="tablaCambios">
+        <thead>
+            <tr>
+                <th>ID</th><th>Fecha</th><th>Solicitante</th><th>Descripción</th>
+                <th>Impacto</th><th>Prioridad</th><th>Estado</th><th>Aprobado por</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="cambiosBody"></tbody>
+    </table>
+</div>
+    <div id="panelLecciones" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="help-circle" class="nav-feather"></i> Registro de Lecciones Aprendidas (PMBOK 8)</span>
+        <button class="btn btn-primary btn-small" onclick="abrirModalNuevaLeccion()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Lección</button>
+    </div>
+
+    <!-- Resumen de categorías -->
+    <div class="cards-grid u-mb-24" >
+        <div class="value-card">
+            <div class="small"><i data-feather="check-circle" class="nav-feather"></i> Éxitos</div>
+            <div class="big" id="totalExitos">0</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="alert-triangle" class="nav-feather"></i> Áreas de Mejora</div>
+            <div class="big" id="totalMejoras">0</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Recomendaciones</div>
+            <div class="big" id="totalRecomendaciones">0</div>
+        </div>
+    </div>
+    
+
+
+    <!-- Lista de lecciones -->
+    <div id="listaLecciones" class="cards-grid cards-grid--lecciones"></div>
+</div>
+<!-- ============================================
+     PANEL: INFORMES PMBOK 8
+     ============================================ -->
+<div id="panelInforme" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="help-circle" class="nav-feather"></i> Informes de Proyecto (PMBOK 8)</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="exportarInformePDF()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar Informe Completo</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarInformePDF()"><i data-feather="download-cloud" class="nav-feather"></i> Imprimir</button>
+        </div>
+    </div>
+
+    <div id="informeContent">
+
+        <!-- 1. INFORME DE ESTADO -->
+        <div class="info-card u-mb-24">
+            <h4><i data-feather="help-circle" class="nav-feather"></i> 1. INFORME DE ESTADO <span class="u-fs-12" style="color:var(--text-secondary)">(Semanal / Quincenal)</span></h4>
+            <div class="cards-grid cards-grid-2">
+                <div class="value-card">
+                    <div class="small"><i data-feather="check-circle" class="nav-feather"></i> Logrado</div>
+                    <div class="big" id="infEstadoLogrado">0%</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="refresh-cw" class="nav-feather"></i> En Curso</div>
+                    <div class="big" id="infEstadoCurso">0%</div>
+                </div>
+            </div>
+            <div class="info-card u-mt-16">
+                <h4><i data-feather="alert-triangle" class="nav-feather"></i> Problemas y Riesgos Clave</h4>
+                <div id="infEstadoProblemas" class="u-fs-14">Sin incidencias reportadas.</div>
+            </div>
+        </div>
+
+        <!-- 2. INFORME DE AVANCE -->
+        <div class="info-card u-mb-24">
+            <h4><i data-feather="trending-up" class="nav-feather"></i> 2. INFORME DE AVANCE <span class="u-fs-12" style="color:var(--text-secondary)">(Semanal)</span></h4>
+            <div class="cards-grid cards-grid-4" id="infoAvanceMetrics">
+                <div class="value-card">
+                    <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Progreso General</div>
+                    <div class="big" id="infAvanceProgreso">0%</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="fast-forward" class="nav-feather"></i> Desviación</div>
+                    <div class="big" id="infAvanceDesviacion">0</div>
+                    <div class="small">días</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Costo Real</div>
+                    <div class="big" id="infAvanceCostoReal">0</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="trending-up" class="nav-feather"></i> Costo Planificado</div>
+                    <div class="big" id="infAvanceCostoPlan">0</div>
+                </div>
+            </div>
+            <div class="chart-container u-mt-16">
+                <canvas id="chartAvance" class="u-canvas-250"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. INFORME DE VARIACIÓN -->
+        <div class="info-card u-mb-24">
+            <h4><i data-feather="trending-down" class="nav-feather"></i> 3. INFORME DE VARIACIÓN / DESVIACIÓN <span class="u-fs-12" style="color:var(--text-secondary)">(Quincenal / Mensual)</span></h4>
+            <table class="data-table" id="tablaVariacion">
+                <thead>
+                    <tr>
+                        <th>Área</th>
+                        <th>Planificado</th>
+                        <th>Real</th>
+                        <th>Desviación</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="variacionBody"></tbody>
+            </table>
+            <div class="chart-container u-mt-16">
+                <canvas id="chartVariacion" class="u-canvas-250"></canvas>
+            </div>
+        </div>
+
+        <!-- 4. INFORME DE PRONÓSTICO -->
+        <div class="info-card u-mb-24">
+            <h4><i data-feather="hard-drive" class="nav-feather"></i> 4. INFORME DE PRONÓSTICO <span class="u-fs-12" style="color:var(--text-secondary)">(Mensual)</span></h4>
+            <div class="cards-grid cards-grid-4">
+                <div class="value-card">
+                    <div class="small"><i data-feather="help-circle" class="nav-feather"></i> CPI Actual</div>
+                    <div class="big" id="infForecastCPI">0.00</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="trending-up" class="nav-feather"></i> SPI Actual</div>
+                    <div class="big" id="infForecastSPI">0.00</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> EAC</div>
+                    <div class="big" id="infForecastEAC">0</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Prob. Éxito</div>
+                    <div class="big" id="infForecastProb">0%</div>
+                </div>
+            </div>
+            <div class="chart-container u-mt-16">
+                <canvas id="chartForecast" class="u-canvas-250"></canvas>
+            </div>
+        </div>
+
+        <!-- 5. INFORME DE EXCEPCIÓN -->
+        <div class="info-card u-mb-24" id="infExceptionCard">
+            <h4><i data-feather="alert-triangle" class="nav-feather"></i> 5. INFORME DE EXCEPCIÓN <span class="u-fs-12" style="color:var(--text-secondary)">(Según sea necesario)</span></h4>
+            <div class="info-card info-card-center" id="infExceptionAlert" style="display:none;border-left:4px solid #ff4444;background:rgba(255,68,68,0.1)">
+                <h4 style="color:#ff4444"><i data-feather="alert-triangle" class="nav-feather"></i> INFORME DE EXCEPCIÓN - DESVIACIÓN CRÍTICA</h4>
+                <p id="infExceptionText" class="u-fs-14">Se ha detectado una desviación significativa que requiere atención inmediata.</p>
+                <div class="cards-grid cards-grid-3 u-mt-16">
+                    <div class="value-card">
+                        <div class="small">Umbral Superado</div>
+                        <div class="big" id="infExceptionUmbral">--</div>
+                    </div>
+                    <div class="value-card">
+                        <div class="small">Valor Actual</div>
+                        <div class="big" id="infExceptionValor">--</div>
+                    </div>
+                    <div class="value-card">
+                        <div class="small">Severidad</div>
+                        <div class="big" id="infExceptionSeveridad">--</div>
+                    </div>
+                </div>
+            </div>
+            <div id="infExceptionNoAlert" class="u-text-center u-fs-14" style="padding:20px;color:var(--text-secondary)">
+                <i data-feather="check-circle" class="nav-feather"></i> No se detectan desviaciones críticas en este momento. El proyecto se encuentra dentro de los umbrales aceptables.
+            </div>
+        </div>
+
+        <!-- 6. INFORME DE HITOS Y ENTREGABLES -->
+        <div class="info-card u-mb-24">
+            <h4><i data-feather="zap-off" class="nav-feather"></i> 6. INFORME DE HITOS Y ENTREGABLES <span class="u-fs-12" style="color:var(--text-secondary)">(Al alcanzar cada hito/entregable)</span></h4>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Nombre</th>
+                        <th>Fecha Prevista</th>
+                        <th>Fecha Real</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="infHitosBody">
+                    <tr><td colspan="5" class="u-text-center">No hay hitos ni entregables definidos.</td></tr>
+                </tbody>
+            </table>
+            <div class="chart-container u-mt-16">
+                <canvas id="chartHitos" class="u-canvas-200"></canvas>
+            </div>
+        </div>
+
+        <!-- 7. INFORME FINAL / CIERRE -->
+        <div class="info-card u-mb-24">
+            <h4><i data-feather="help-circle" class="nav-feather"></i> 7. INFORME FINAL / CIERRE <span class="u-fs-12" style="color:var(--text-secondary)">(Al cierre)</span></h4>
+            <div class="cards-grid cards-grid-2">
+                <div class="value-card">
+                    <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Rendimiento General</div>
+                    <div class="big" id="infFinalRendimiento">0%</div>
+                </div>
+                <div class="value-card">
+                    <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Beneficio Neto</div>
+                    <div class="big" id="infFinalBeneficio">0</div>
+                </div>
+            </div>
+            <div class="info-card u-mt-16">
+                <h4><i data-feather="help-circle" class="nav-feather"></i> Lecciones Aprendidas</h4>
+                <div id="infFinalLecciones" class="u-fs-14">Sin lecciones registradas.</div>
+            </div>
+            <div class="info-card u-mt-16">
+                <h4><i data-feather="help-circle" class="nav-feather"></i> Recomendaciones</h4>
+                <div id="infFinalRecomendaciones" class="u-fs-14">—</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!-- ============================================
+     PANELES SCRUM / ÁGIL
+     ============================================ -->
+
+<!-- PANEL: SPRINT BACKLOG -->
+<div id="panelSprintBacklog" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="entries" class="nav-feather"></i> Sprint Backlog - Gestión de Historias de Usuario</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="abrirModalHistoria()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Historia</button>
+            <button class="btn btn-success btn-small" onclick="iniciarSprint()"><i data-feather="play-circle" class="nav-feather"></i> Iniciar Sprint</button>
+            <button class="btn btn-secondary btn-small" onclick="finalizarSprint()"><i data-feather="help-circle" class="nav-feather"></i> Finalizar Sprint</button>
+        </div>
+    </div>
+
+    <!-- Información del Sprint Activo -->
+    <div class="info-card u-mb-20 vc-blue" id="sprintInfoCard">
+        <div class="u-flex-space-between">
+            <div>
+                <h4 id="sprintNombre"><i data-feather="fast-forward" class="nav-feather"></i> Sprint Actual: No iniciado</h4>
+                <div class="details" id="sprintDetalles">Inicia un sprint para comenzar a trabajar</div>
+            </div>
+            <div class="u-text-right">
+                <div><strong><i data-feather="zap-off" class="nav-feather"></i> Puntos Planificados:</strong> <span id="sprintPuntosPlanificados">0</span></div>
+                <div><strong><i data-feather="check-circle" class="nav-feather"></i> Puntos Completados:</strong> <span id="sprintPuntosCompletados">0</span></div>
+                <div><strong><i data-feather="help-circle" class="nav-feather"></i> Progreso:</strong> <span id="sprintProgreso">0</span>%</div>
+            </div>
+        </div>
+        <div class="progress-bar-container u-mt-12">
+            <div class="progress-fill" id="sprintProgresoBarra" class="progress-fill progress-fill--sprint"></div>
+        </div>
+    </div>
+
+    <!-- Tabla de Historias de Usuario (Backlog) -->
+    <div class="panel-title u-mt-8">
+        <span><i data-feather="help-circle" class="nav-feather"></i> Backlog del Producto</span>
+        <div>
+            <button class="btn btn-secondary btn-small" onclick="ordenarHistorias('prioridad')"><i data-feather="help-circle" class="nav-feather"></i> Por Prioridad</button>
+            <button class="btn btn-secondary btn-small" onclick="ordenarHistorias('puntos')"><i data-feather="zap-off" class="nav-feather"></i> Por Puntos</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarHistorias()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+
+    <div class="kanban-board">
+        <!-- TO DO -->
+        <div class="info-card kanban-col kanban-col--todo">
+            <h4 class="kanban-heading kanban-heading--todo"><i data-feather="help-circle" class="nav-feather"></i> TO DO (<span id="todoCount">0</span>)</h4>
+            <div id="todoList" class="u-scroll-400"></div>
+        </div>
+        <!-- IN PROGRESS -->
+        <div class="info-card kanban-col kanban-col--progress">
+            <h4 class="kanban-heading kanban-heading--progress"><i data-feather="help-circle" class="nav-feather"></i> IN PROGRESS (<span id="progressCount">0</span>)</h4>
+            <div id="progressList" class="u-scroll-400"></div>
+        </div>
+        <!-- DONE -->
+        <div class="info-card kanban-col kanban-col--done">
+            <h4 class="u-color-success"><i data-feather="check-circle" class="nav-feather"></i> DONE (<span id="doneCount">0</span>)</h4>
+            <div id="doneList" class="u-scroll-400"></div>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL: SPRINT BURNDOWN -->
+<div id="panelSprintBurndown" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="help-circle" class="nav-feather"></i> Sprint Burndown Chart</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="actualizarBurndown()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarBurndown()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+
+    <!-- Gráfico Burndown -->
+    <div class="chart-container">
+        <canvas id="burndownChartCanvas" style="max-height: 400px;"></canvas>
+    </div>
+
+    <!-- Tabla de datos diarios -->
+    <div class="info-card u-mt-20">
+        <h4><i data-feather="help-circle" class="nav-feather"></i> Registro Diario de Sprint</h4>
+        <table class="data-table" id="burndownTable">
+            <thead>
+                <tr><th>Día</th><th>Puntos Restantes</th><th>Puntos Completados Hoy</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="burndownBody"></tbody>
+        </table>
+        <button class="btn btn-secondary btn-small u-mt-12" onclick="registrarAvanceDiario()"><i data-feather="help-circle" class="nav-feather"></i> Registrar Avance Diario</button>
+    </div>
+</div>
+
+<!-- PANEL: VELOCITY TRACKING -->
+<div id="panelVelocityTracking" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="zap-off" class="nav-feather"></i> Velocity Tracking - Velocidad del Equipo</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="calcularVelocidadPromedio()">⟳ Calcular Velocidad</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarVelocity()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+
+    <!-- Tarjetas de velocidad -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card vc-blue">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Velocidad Promedio</div>
+            <div class="big" id="velocidadPromedio">0</div>
+            <div class="small">puntos/sprint</div>
+        </div>
+        <div class="value-card vc-green">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Mejor Sprint</div>
+            <div class="big" id="mejorSprint">0</div>
+            <div class="small" id="mejorSprintNum">-</div>
+        </div>
+        <div class="value-card vc-orange">
+            <div class="small"><i data-feather="trending-down" class="nav-feather"></i> Peor Sprint</div>
+            <div class="big" id="peorSprint">0</div>
+            <div class="small" id="peorSprintNum">-</div>
+        </div>
+        <div class="value-card vc-purple">
+            <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Predicción Próximo</div>
+            <div class="big" id="prediccionProximoSprint">0</div>
+            <div class="small">puntos estimados</div>
+        </div>
+    </div>
+
+    <!-- Gráfico de velocidad histórica -->
+    <div class="chart-container">
+        <canvas id="velocityChartCanvas" class="u-canvas-300"></canvas>
+    </div>
+
+    <!-- Historial de Sprints -->
+    <div class="info-card u-mt-20">
+        <h4><i data-feather="help-circle" class="nav-feather"></i> Historial de Sprints Completados</h4>
+        <table class="data-table" id="velocityHistoryTable">
+            <thead>
+                <tr><th>Sprint</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Puntos Planificados</th><th>Puntos Completados</th><th>Velocidad</th><th>Eficiencia</th></tr>
+            </thead>
+            <tbody id="velocityHistoryBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- PANEL: RETROSPECTIVES -->
+<div id="panelRetrospectives" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="refresh-cw" class="nav-feather"></i> Sprint Retrospectives</span>
+        <button class="btn btn-primary btn-small" onclick="abrirModalRetrospectiva()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Retrospectiva</button>
+    </div>
+
+    <!-- Resumen de retrospectivas -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card"><div class="small"><i data-feather="check-circle" class="nav-feather"></i> Cosas que salieron bien</div><div class="big" id="totalBien">0</div></div>
+        <div class="value-card"><div class="small"><i data-feather="alert-triangle" class="nav-feather"></i> Cosas a mejorar</div><div class="big" id="totalMejorar">0</div></div>
+        <div class="value-card"><div class="small"><i data-feather="help-circle" class="nav-feather"></i> Acciones comprometidas</div><div class="big" id="totalAcciones">0</div></div>
+        <div class="value-card"><div class="small"><i data-feather="check-circle" class="nav-feather"></i> Acciones completadas</div><div class="big" id="totalAccionesCompletadas">0</div></div>
+    </div>
+
+    <!-- Lista de retrospectivas -->
+    <div id="retrospectivesList" class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));"></div>
+</div>
+
+<!-- PANEL: AGILE METRICS -->
+<div id="panelAgileMetrics" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="trending-up" class="nav-feather"></i> Agile Metrics - Cuadro de Mando Ágil</span>
+        <div>
+            <button class="btn btn-success btn-small" onclick="actualizarAgileMetrics()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarAgileMetrics()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+
+    <!-- Tarjetas de métricas clave -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Lead Time</div>
+            <div class="big" id="leadTime">0</div>
+            <div class="small">días promedio</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="stop-circle" class="nav-feather"></i> Cycle Time</div>
+            <div class="big" id="cycleTime">0</div>
+            <div class="small">días por historia</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Throughput</div>
+            <div class="big" id="throughput">0</div>
+            <div class="small">historias/sprint</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="check-circle" class="nav-feather"></i> Predictibilidad</div>
+            <div class="big" id="predictibilidad">0%</div>
+            <div class="small">cumplimiento de meta</div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Cumulative Flow -->
+    <div class="chart-container">
+        <canvas id="cumulativeFlowChart" class="u-canvas-350"></canvas>
+    </div>
+
+    <!-- Tabla de métricas detalladas -->
+    <div class="info-card u-mt-20">
+        <h4><i data-feather="help-circle" class="nav-feather"></i> Métricas Detalladas por Sprint</h4>
+        <table class="data-table" id="agileMetricsTable">
+            <thead>
+                <tr><th>Sprint</th><th>Historias</th><th>Puntos</th><th>Lead Time</th><th>Cycle Time</th><th>Throughput</th><th>Predictibilidad</th></tr>
+            </thead>
+            <tbody id="agileMetricsBody"></tbody>
+        </table>
+    </div>
+</div>
+<!-- PANEL: CONTROL DE GASTOS ÁGIL -->
+<div id="panelAgileCostControl" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="dollar-sign" class="nav-feather"></i> Control de Gastos - Gestión Ágil (PMBOK 8)</span>
+        <div>
+            <button class="btn btn-success btn-small" onclick="actualizarCostesSprint()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
+            <button class="btn btn-primary btn-small" onclick="exportarCostesAgile()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+    
+    <!-- Tarjetas resumen -->
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card vc-blue">
+            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Coste Total Proyecto</div>
+            <div class="big" id="agileCosteTotal">0 €</div>
+        </div>
+        <div class="value-card vc-green">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Coste Medio por Sprint</div>
+            <div class="big" id="agileCosteMedioSprint">0 €</div>
+        </div>
+        <div class="value-card vc-orange">
+            <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Coste por Punto</div>
+            <div class="big" id="agileCostePorPunto">0 €</div>
+        </div>
+        <div class="value-card vc-red">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Burn Rate</div>
+            <div class="big" id="agileBurnRate">0 €/día</div>
+        </div>
+    </div>
+
+    <!-- Gráfico de evolución de costes por sprint -->
+    <div class="chart-container">
+        <canvas id="agileCostEvolutionChart" class="u-canvas-300"></canvas>
+    </div>
+
+    <!-- Tabla de costes por sprint -->
+    <div class="info-card u-mt-20">
+        <h4><i data-feather="help-circle" class="nav-feather"></i> Desglose de Costes por Sprint</h4>
+        <table class="data-table" id="tablaCostesSprint">
+            <thead>
+                <tr>
+                    <th>Sprint</th>
+                    <th>Puntos</th>
+                    <th>Coste Planif.</th>
+                    <th>Coste Real</th>
+                    <th>Desviación</th>
+                    <th>Coste/Punto</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="costesSprintBody">
+                <tr><td colspan="7" class="u-text-center">No hay sprints completados</th></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Alertas de desviación -->
+    <div class="info-card" style="margin-top: 20px; background: linear-gradient(135deg, rgba(255,59,48,0.1), rgba(204,47,37,0.05));">
+        <h4><i data-feather="alert-triangle" class="nav-feather"></i> Alertas de Desviación</h4>
+        <div id="alertasCostesContent"></div>
+    </div>
+
+    <!-- Indicadores PMBOK 8 -->
+    <div class="info-card" style="margin-top: 20px; background: linear-gradient(135deg, rgba(0,122,255,0.1), rgba(0,85,204,0.05));">
+        <h4><i data-feather="help-circle" class="nav-feather"></i> Indicadores PMBOK 8</h4>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div>
+                <div class="u-fs-11 u-color-888">CPI (Cost Performance)</div>
+                <div class="u-fs-18 u-bold" id="agileCPI">--</div>
+            </div>
+            <div>
+                <div class="u-fs-11 u-color-888">SPI (Schedule Performance)</div>
+                <div class="u-fs-18 u-bold" id="agileSPI">--</div>
+            </div>
+            <div>
+                <div class="u-fs-11 u-color-888">EAC (Estimate at Completion)</div>
+                <div class="u-fs-18 u-bold" id="agileEAC">--</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- PANEL COMUNICACIONES - ESTRUCTURA CORRECTA -->
+<div id="panelComunicaciones" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="message-circle" class="nav-feather"></i> Comunicaciones y Gestión de Reuniones</span>
+        <div>
+            <button class="btn btn-primary btn-small" onclick="abrirModalNuevaComunicacion()"><i data-feather="message-circle" class="nav-feather"></i> Nueva Comunicación</button>
+            <button class="btn btn-primary btn-small" onclick="abrirModalNuevaReunion()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Reunión</button>
+        </div>
+    </div>
+    
+    <!-- Pestañas -->
+    <div class="u-tab-bar" style="margin: 16px 0;">
+        <button class="btn-tab btn-tab-active" onclick="mostrarSubpanelComunicaciones('comunicaciones', this)"><i data-feather="message-circle" class="nav-feather"></i> Comunicaciones</button>
+        <button class="btn-tab" onclick="mostrarSubpanelComunicaciones('reuniones', this)"><i data-feather="help-circle" class="nav-feather"></i> Minutas de Reuniones</button>
+    </div>
+    
+    <!-- Subpanel: Comunicaciones -->
+    <div id="subpanelComunicaciones" class="subpanel-comunicaciones">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><i data-feather="fast-forward" class="nav-feather"></i> Fecha</th>
+                    <th><i data-feather="file-text" class="nav-feather"></i> Tipo</th>
+                    <th><i data-feather="help-circle" class="nav-feather"></i> Con</th>
+                    <th><i data-feather="help-circle" class="nav-feather"></i> Asunto</th>
+                    <th><i data-feather="help-circle" class="nav-feather"></i> Contenido</th>
+                    <th><i data-feather="help-circle" class="nav-feather"></i> Adjuntos</th>
+                    <th><i data-feather="pen-tool" class="nav-feather"></i> Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="comunicacionesBody">
+                <tr><td colspan="7" class="u-text-center">No hay comunicaciones registradas</th></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Subpanel: Reuniones -->
+    <div id="subpanelReuniones" class="subpanel-comunicaciones u-hidden">
+        <div id="listaReuniones" class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
+    </div>
+</div>
+
+<!-- MODAL VISOR PDF -->
+<div id="visorPdfModal" class="modal u-hidden" style="display: none;">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 id="visorPdfTitulo"><i data-feather="file-text" class="nav-feather"></i> Visor PDF</h3>
+            <span class="close-modal" onclick="cerrarVisorPdf()">&times;</span>
+        </div>
+        <iframe id="visorPdfFrame" src="" style="width: 100%; height: 600px; border: none;"></iframe>
+        <div class="u-flex-gap-12 u-mt-16">
+            <button class="btn btn-primary btn-small" onclick="descargarPdfActual()"><i data-feather="download-cloud" class="nav-feather"></i> Descargar PDF</button>
+            <button class="btn btn-secondary btn-small" onclick="cerrarVisorPdf()"><i data-feather="help-circle" class="nav-feather"></i> Cerrar</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- PANEL: LISTADO DE SPRINTS -->
+<div id="panelSprintList" class="panel hidden">
+    <div class="panel-title">
+        <span><i data-feather="entries" class="nav-feather"></i> Listado y Gestión de Sprints</span>
+        <div>
+            <button class="btn btn-success btn-small" onclick="renderizarListadoSprints()"><i data-feather="refresh-cw" class="nav-feather"></i> Refrescar</button>
+            <button class="btn btn-secondary btn-small" onclick="exportarSprints()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        </div>
+    </div>
+
+    <div class="cards-grid u-mb-24 cards-grid-4">
+        <div class="value-card">
+            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Total Sprints</div>
+            <div class="big" id="totalSprints">0</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="play-circle" class="nav-feather"></i> Activos</div>
+            <div class="big" id="totalSprintsActivos">0</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="check-circle" class="nav-feather"></i> Completados</div>
+            <div class="big" id="totalSprintsCompletados">0</div>
+        </div>
+        <div class="value-card">
+            <div class="small"><i data-feather="trending-up" class="nav-feather"></i> Velocidad Media</div>
+            <div class="big" id="velocidadMediaSprints">0</div>
+        </div>
+    </div>
+
+    <table class="data-table" id="tablaSprints">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Estado</th>
+                <th>Puntos Planif.</th>
+                <th>Puntos Comp.</th>
+                <th>Velocidad</th>
+                <th>Eficiencia</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="sprintsListBody">
+            <tr><td colspan="10" class="u-text-center">Cargando sprints...</th></tr>
+        </tbody>
+    </table>
+</div>
+
+    <!-- MODAL IA -->
+    <div class="modal u-hidden" id="modalIA">
+        <div class="modal-content modal-800">
+            <div class="modal-header">
+                <h3><i data-feather="hard-drive" class="nav-feather"></i> Asistente IA Predictivo - PMI Mind</h3>
+                <span class="close-modal" onclick="cerrarModalIA()">&times;</span>
+            </div>
+            <div class="ia-btn-row">
+                <button class="btn btn-primary btn-small" onclick="analizarPrediccionIA('riesgos')"><i data-feather="alert-triangle" class="nav-feather"></i> Predecir Riesgos</button>
+                <button class="btn btn-success btn-small" onclick="analizarPrediccionIA('costos')"><i data-feather="dollar-sign" class="nav-feather"></i> Predecir Costos</button>
+                <button class="btn btn-warning" onclick="analizarPrediccionIA('plazo')"><i data-feather="fast-forward" class="nav-feather"></i> Predecir Plazo</button>
+                <button class="btn btn-success-alt" onclick="analizarPrediccionIA('calidad')"><i data-feather="check-circle" class="nav-feather"></i> Predecir Calidad</button>
+                <button class="btn btn-secondary btn-small" onclick="analizarPrediccionIA('recomendaciones')"><i data-feather="help-circle" class="nav-feather"></i> Recomendaciones</button>
+                <button class="btn btn-secondary btn-small" onclick="analizarPrediccionIA('completo')"><i data-feather="help-circle" class="nav-feather"></i> Análisis Completo</button>
+            </div>
+            <div id="iaLoading" class="ia-loading">
+                <div class="ia-spinner"></div>
+                <p><i data-feather="hard-drive" class="nav-feather"></i> Analizando datos del proyecto con IA...</p>
+            </div>
+            <div id="iaResultado" class="ia-resultado"></div>
+            <div class="ia-footer">
+                <button class="btn btn-secondary btn-small" onclick="copiarResultadoIA()"><i data-feather="help-circle" class="nav-feather"></i> Copiar resultado</button>
+                <button class="btn btn-secondary btn-small" onclick="exportarIAPDF()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar a PDF</button>
+                <button class="btn btn-primary btn-small" onclick="configurarAPIKeyIA()"><i data-feather="help-circle" class="nav-feather"></i> Configurar API Key</button>
+            </div>
+            <div class="info-card u-mt-16">
+                <small><i data-feather="help-circle" class="nav-feather"></i> Los análisis se basan en los datos reales de tu proyecto. Para usar IA real, configura tu API Key de OpenAI.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANUAL DE USUARIO -->
+    <div class="modal u-hidden" id="modalManual">
+        <div class="modal-content" style="max-width:900px;max-height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+            <div class="modal-header" style="padding:18px 24px;border-bottom:1px solid var(--border-color);flex-shrink:0;">
+                <h3 style="font-size:16px;font-weight:600;"><i data-feather="help-circle" class="nav-feather"></i> Manual de Usuario</h3>
+                <span class="close-modal" onclick="cerrarModalManual()">&times;</span>
+            </div>
+            <div style="padding:16px 24px;border-bottom:1px solid var(--border-color);flex-shrink:0;">
+                <input type="text" id="manualBusqueda" placeholder="Buscar temas..." oninput="filtrarManual()" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-primary);font-size:13px;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;flex:1;overflow:hidden;min-height:0;">
+                <div id="manualIndice" style="width:220px;flex-shrink:0;overflow-y:auto;border-right:1px solid var(--border-color);padding:8px 0;background:var(--bg-secondary);"></div>
+                <div id="manualContenido" style="flex:1;overflow-y:auto;padding:24px;background:var(--bg-card);"></div>
+            </div>
+        </div>
+    </div>
+    <div id="modalContainer"></div>
+
+    <!-- MODAL NOTIFICACIONES -->
+    <div class="modal u-hidden" id="modalNotificaciones">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i data-feather="bell-off" class="nav-feather"></i> Notificaciones</h3>
+                <span class="close-modal" onclick="cerrarModalNotificaciones()">&times;</span>
+            </div>
+            <div style="padding:16px;">
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <button class="btn btn-secondary btn-small" onclick="marcarTodasNotifLeidas()"><i data-feather="check-square" class="nav-feather"></i> Marcar todas leídas</button>
+                    <button class="btn btn-secondary btn-small" onclick="recargarNotificaciones()"><i data-feather="refresh-cw" class="nav-feather"></i> Recargar</button>
+                </div>
+                <div id="notificacionesList" style="min-height:80px;max-height:400px;overflow-y:auto;">
+                    <p style="color:var(--text-muted);font-size:13px;">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERFIL DE USUARIO -->
+    <div class="modal u-hidden" id="modalPerfil">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i data-feather="help-circle" class="nav-feather"></i> Mi Perfil</h3>
+                <span class="close-modal" onclick="cerrarModalPerfil()">&times;</span>
+            </div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Nombre</label>
+                    <input type="text" id="perfilNombre" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Correo electrónico</label>
+                    <input type="email" id="perfilEmail" placeholder="email@ejemplo.com">
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Para cambiar el email necesitas introducir tu contraseña actual</div>
+                </div>
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Rol</label>
+                    <input type="text" id="perfilRol" readonly style="opacity:0.6;cursor:not-allowed;">
+                </div>
+                <hr style="border-color:rgba(255,255,255,0.05);">
+                <h4 style="font-size:14px;color:var(--text-muted);"><i data-feather="help-circle" class="nav-feather"></i> Cambiar contraseña</h4>
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Contraseña actual</label>
+                    <input type="password" id="perfilPasswordActual" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Nueva contraseña (mín. 6 caracteres)</label>
+                    <input type="password" id="perfilPasswordNueva" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Repetir nueva contraseña</label>
+                    <input type="password" id="perfilPasswordNueva2" placeholder="••••••••">
+                </div>
+                <div id="perfilError" class="login-error" style="display:none;"></div>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModalPerfil()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarPerfil()" id="btnGuardarPerfil"><i data-feather="download-cloud" class="nav-feather"></i> Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL COMPARTIR PROYECTO -->
+    <div class="modal u-hidden" id="modalCompartir">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i data-feather="user-plus" class="nav-feather"></i> Compartir Proyecto</h3>
+                <span class="close-modal" onclick="cerrarModalCompartir()">&times;</span>
+            </div>
+            <div style="padding:16px;">
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Correo electrónico del usuario</label>
+                    <input type="email" id="shareEmail" placeholder="ejemplo@empresa.com">
+                </div>
+                <div class="form-group">
+                    <label><i data-feather="help-circle" class="nav-feather"></i> Rol</label>
+                    <select id="shareRole" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-size:14px;">
+                        <option value="editor">Editor (puede modificar)</option>
+                        <option value="viewer">Visor (solo lectura)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="compartirProyecto()" id="btnCompartir" style="width:100%;">
+                    <i data-feather="help-circle" class="nav-feather"></i> Añadir usuario
+                </button>
+                <hr style="margin:20px 0;border-color:rgba(255,255,255,0.05);">
+                <h4 style="margin-bottom:12px;font-size:14px;color:var(--text-muted);">Usuarios con acceso</h4>
+                <div id="sharedUsersList" style="display:flex;flex-direction:column;gap:8px;">
+                    <p style="color:var(--text-muted);font-size:13px;">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CATÁLOGO - MATERIALES -->
+    <div class="modal u-hidden" id="modalCatalogoMaterial">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header">
+                <h3><i data-feather="shopping-bag" class="nav-feather"></i> Importar del Catálogo</h3>
+                <span class="close-modal" onclick="cerrarModalCatalogoMaterial()">&times;</span>
+            </div>
+            <div style="padding:16px;">
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Selecciona un material para importar al proyecto. Los datos se copiarán.</div>
+                <input type="text" id="catalogoMatFiltro" class="u-input" placeholder="Buscar..." style="width:100%;margin-bottom:12px;" oninput="filtrarCatalogoMateriales()">
+                <div style="max-height:360px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px;">
+                    <table class="data-table" style="width:100%;font-size:12px;">
+                        <thead><tr><th>Nombre</th><th>Proveedor</th><th>Part Number</th><th>Coste</th><th>Moneda</th><th>Origen</th><th></th></tr></thead>
+                        <tbody id="catalogoMatBody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalCatalogoMaterial()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CATÁLOGO - EQUIPO -->
+    <div class="modal u-hidden" id="modalCatalogoEquipo">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header">
+                <h3><i data-feather="user-plus" class="nav-feather"></i> Importar del Catálogo</h3>
+                <span class="close-modal" onclick="cerrarModalCatalogoEquipo()">&times;</span>
+            </div>
+            <div style="padding:16px;">
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Selecciona un miembro para importar al proyecto. Los datos se copiarán.</div>
+                <input type="text" id="catalogoEqFiltro" class="u-input" placeholder="Buscar..." style="width:100%;margin-bottom:12px;" oninput="filtrarCatalogoEquipo()">
+                <div style="max-height:360px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px;">
+                    <table class="data-table" style="width:100%;font-size:12px;">
+                        <thead><tr><th>Nombre</th><th>Rol</th><th>Email</th><th>Coste/h</th><th>Moneda</th><th>Origen</th><th></th></tr></thead>
+                        <tbody id="catalogoEqBody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cerrarModalCatalogoEquipo()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- Módulos base -->
+    <script src="js/config-global.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/services/DataService.js"></script>
+
+    <!-- Core modules (ES6, compatibles con scripts legacy via window.*) -->
+    <script src="js/core/dates.js"></script>
+    <script src="js/core/evm.js"></script>
+    <script src="js/core/finance.js"></script>
+    <script src="js/core/ui.js"></script>
+
+    <!-- Paneles de la aplicación -->
+    <script src="js/panels/acta-roles.js"></script>
+    <script src="js/panels/equipo-servicios.js"></script>
+    <script src="js/panels/comunicaciones.js"></script>
+    <script src="js/panels/gantt.js"></script>
+    <script src="js/panels/edt-panel.js"></script>
+    <script src="js/panels/materiales.js"></script>
+    <script src="js/panels/financiero-monedas.js"></script>
+    <script src="js/panels/grafico-monedas.js"></script>
+    <script src="js/panels/venta-cashflow.js"></script>
+    <script src="js/panels/stakeholders.js"></script>
+    <script src="js/panels/resumen-procesos.js"></script>
+    <script src="js/panels/riesgos.js"></script>
+    <script src="js/panels/garantia-viajes-avales.js"></script>
+    <script src="js/panels/import-export.js"></script>
+    <script src="js/panels/ia-analisis.js"></script>
+    <script src="js/panels/panel-salud.js"></script>
+    <script src="js/panels/panel-informe.js"></script>
+    <script src="js/panels/compartir.js"></script>
+    <script src="js/panels/beneficios-cambios-lecciones.js"></script>
+    <script src="js/panels/scrum.js"></script>
+    <script src="js/panels/logistica-3d.js"></script>
+    <script src="js/panels/agenda.js"></script>
+    <script src="js/panels/navegacion-auth.js"></script>
+    <script src="js/panels/montecarlo.js"></script>
+    <script src="js/panels/manual.js?v=2"></script>
+
+    <!-- Entry point (Vite bundle for production) -->
+    <!-- <script type="module" src="js/main.js"></script> -->
+
+<script>
+// ============================================================
+// CATÁLOGO - IMPORTAR DESDE API + LOCALSTORAGE
+// ============================================================
+
+let _catalogoMateriales = [];
+let _catalogoEquipo = [];
+let _proyectosLocal = [];
+
+function _cargarProyectosLocal() {
+    try {
+        _proyectosLocal = typeof cargarProyectosStorage === 'function' ? cargarProyectosStorage() : [];
+    } catch { _proyectosLocal = []; }
+}
+
+function _materialesUnicosDesdeLocal() {
+    _cargarProyectosLocal();
+    const vistos = new Set();
+    const resultado = [];
+    for (const p of _proyectosLocal) {
+        if (!p.materiales || !p.nombre || p.nombre === proyecto.nombre) continue;
+        for (const m of p.materiales) {
+            const clave = (m.nombre || '').trim().toLowerCase();
+            if (clave && !vistos.has(clave)) {
+                vistos.add(clave);
+                resultado.push({ ...m, _origen: p.nombre, _esCatalogo: false });
+            }
+        }
+    }
+    return resultado;
+}
+
+function _equipoUnicoDesdeLocal() {
+    _cargarProyectosLocal();
+    const vistos = new Set();
+    const resultado = [];
+    for (const p of _proyectosLocal) {
+        if (!p.equipo || !p.nombre || p.nombre === proyecto.nombre) continue;
+        for (const m of p.equipo) {
+            const clave = (m.nombre || '').trim().toLowerCase();
+            if (clave && !vistos.has(clave)) {
+                vistos.add(clave);
+                resultado.push({ ...m, _origen: p.nombre, _esCatalogo: false });
+            }
+        }
+    }
+    return resultado;
+}
+
+async function importarCatalogoMaterial() {
+    const modal = document.getElementById('modalCatalogoMaterial');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.classList.remove('u-hidden');
+    document.getElementById('catalogoMatFiltro').value = '';
+    const tbody = document.getElementById('catalogoMatBody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando...</td></tr>';
+    let combinados = _materialesUnicosDesdeLocal();
+    try {
+        const result = await DataService.getCatalogMaterials();
+        const apiMats = (result.materials || []).map(m => ({ ...m, _origen: ' Catálogo', _esCatalogo: true }));
+        const vistosApi = new Set(apiMats.map(m => (m.nombre || '').trim().toLowerCase()));
+        combinados = [...apiMats, ...combinados.filter(m => !vistosApi.has((m.nombre || '').trim().toLowerCase()))];
+    } catch(e) {
+        console.warn('Catálogo API no disponible, usando solo proyectos locales');
+    }
+    _catalogoMateriales = combinados;
+    renderCatalogoMateriales(combinados);
+}
+
+function renderCatalogoMateriales(lista) {
+    const tbody = document.getElementById('catalogoMatBody');
+    if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);"> No hay materiales disponibles. Añádelos primero en cualquier proyecto o en el Catálogo del Dashboard.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = lista.map(m => `<tr>
+        <td><strong>${escHtml(m.nombre)}</strong></td>
+        <td>${escHtml(m.proveedor || '')}</td>
+        <td style="font-family:monospace;font-size:11px;">${escHtml(m.partNumber || '')}</td>
+        <td>${parseFloat(m.costeUnitario || 0).toFixed(2)}</td>
+        <td>${escHtml(m.moneda || 'EUR')}</td>
+        <td style="font-size:10px;color:var(--text-muted);">${escHtml(m._origen || '')}</td>
+        <td><button class="btn btn-primary btn-small" onclick="importarMaterialDelCatalogo('${escHtml(String(m._esCatalogo ? 'api_' : 'local_') + (m._esCatalogo ? (m.id || '') : (m.nombre || '')))}')" style="padding:4px 12px;font-size:11px;"><i data-feather="download-cloud" class="nav-feather"></i> Importar</button></td>
+    </tr>`).join('');
+}
+
+function filtrarCatalogoMateriales() {
+    const q = (document.getElementById('catalogoMatFiltro').value || '').toLowerCase();
+    if (!q) { renderCatalogoMateriales(_catalogoMateriales); return; }
+    const filtrados = _catalogoMateriales.filter(m =>
+        (m.nombre || '').toLowerCase().includes(q) ||
+        (m.proveedor || '').toLowerCase().includes(q) ||
+        (m.partNumber || '').toLowerCase().includes(q)
+    );
+    renderCatalogoMateriales(filtrados);
+}
+
+function importarMaterialDelCatalogo(key) {
+    let mat;
+    if (key.startsWith('api_')) {
+        const id = parseInt(key.replace('api_', ''));
+        mat = _catalogoMateriales.find(m => m._esCatalogo && m.id == id);
+    } else {
+        const nombre = key.replace('local_', '');
+        mat = _catalogoMateriales.find(m => !m._esCatalogo && (m.nombre || '').trim().toLowerCase() === nombre.toLowerCase());
+    }
+    if (!mat) { mostrarToast(' Material no encontrado', 'error'); return; }
+    const nuevo = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        nombre: mat.nombre,
+        proveedor: mat.proveedor || '',
+        partNumber: mat.partNumber || '',
+        hsCode: mat.hsCode || '',
+        pesoUnitario: mat.pesoUnitario || 0,
+        costeUnitario: mat.costeUnitario || 0,
+        moneda: mat.moneda || 'EUR',
+        paisOrigen: mat.paisOrigen || '',
+        incoterm: mat.incoterm || 'CIF',
+        notas: mat.notas || '',
+        cantidad: 1,
+        condicionesPago: { tipo: 'contado' },
+        pagosRealizados: []
+    };
+    if (!proyecto.materiales) proyecto.materiales = [];
+    proyecto.materiales.push(nuevo);
+    guardarProyecto();
+    renderizarMateriales();
+    mostrarToast(` "${mat.nombre}" importado`, 'success');
+}
+
+function cerrarModalCatalogoMaterial() {
+    const el = document.getElementById('modalCatalogoMaterial');
+    if (el) { el.style.display = 'none'; el.classList.add('u-hidden'); }
+}
+
+async function importarCatalogoEquipo() {
+    const modal = document.getElementById('modalCatalogoEquipo');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.classList.remove('u-hidden');
+    document.getElementById('catalogoEqFiltro').value = '';
+    const tbody = document.getElementById('catalogoEqBody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Cargando...</td></tr>';
+    let combinados = _equipoUnicoDesdeLocal();
+    try {
+        const result = await DataService.getCatalogTeamMembers();
+        const apiMembers = (result.members || []).map(m => ({ ...m, _origen: ' Catálogo', _esCatalogo: true }));
+        const vistosApi = new Set(apiMembers.map(m => (m.nombre || '').trim().toLowerCase()));
+        combinados = [...apiMembers, ...combinados.filter(m => !vistosApi.has((m.nombre || '').trim().toLowerCase()))];
+    } catch(e) {
+        console.warn('Catálogo API no disponible, usando solo proyectos locales');
+    }
+    _catalogoEquipo = combinados;
+    renderCatalogoEquipo(combinados);
+}
+
+function renderCatalogoEquipo(lista) {
+    const tbody = document.getElementById('catalogoEqBody');
+    if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);"> No hay miembros disponibles. Añádelos primero en cualquier proyecto o en el Catálogo del Dashboard.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = lista.map(m => `<tr>
+        <td><strong>${escHtml(m.nombre)}</strong></td>
+        <td>${escHtml(m.rol || '')}</td>
+        <td>${escHtml(m.email || '')}</td>
+        <td>${parseFloat(m.costeHora || 0).toFixed(2)}</td>
+        <td>${escHtml(m.moneda || 'EUR')}</td>
+        <td style="font-size:10px;color:var(--text-muted);">${escHtml(m._origen || '')}</td>
+        <td><button class="btn btn-primary btn-small" onclick="importarMiembroDelCatalogo('${escHtml(String(m._esCatalogo ? 'api_' : 'local_') + (m._esCatalogo ? (m.id || '') : (m.nombre || '')))}')" style="padding:4px 12px;font-size:11px;"><i data-feather="download-cloud" class="nav-feather"></i> Importar</button></td>
+    </tr>`).join('');
+}
+
+function filtrarCatalogoEquipo() {
+    const q = (document.getElementById('catalogoEqFiltro').value || '').toLowerCase();
+    if (!q) { renderCatalogoEquipo(_catalogoEquipo); return; }
+    const filtrados = _catalogoEquipo.filter(m =>
+        (m.nombre || '').toLowerCase().includes(q) ||
+        (m.rol || '').toLowerCase().includes(q) ||
+        (m.email || '').toLowerCase().includes(q)
+    );
+    renderCatalogoEquipo(filtrados);
+}
+
+function importarMiembroDelCatalogo(key) {
+    let member;
+    if (key.startsWith('api_')) {
+        const id = parseInt(key.replace('api_', ''));
+        member = _catalogoEquipo.find(m => m._esCatalogo && m.id == id);
+    } else {
+        const nombre = key.replace('local_', '');
+        member = _catalogoEquipo.find(m => !m._esCatalogo && (m.nombre || '').trim().toLowerCase() === nombre.toLowerCase());
+    }
+    if (!member) { mostrarToast(' Miembro no encontrado', 'error'); return; }
+    const nuevo = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        nombre: member.nombre,
+        rol: member.rol || '',
+        email: member.email || '',
+        telefono: member.telefono || '',
+        foto: member.foto || null,
+        costeHora: member.costeHora || 0,
+        moneda: member.moneda || 'EUR',
+        horasMes: member.horasMes || 160
+    };
+    if (!proyecto.equipo) proyecto.equipo = [];
+    proyecto.equipo.push(nuevo);
+    guardarProyecto();
+    renderizarEquipo();
+    mostrarToast(` "${member.nombre}" importado`, 'success');
+}
+
+function cerrarModalCatalogoEquipo() {
+    const el = document.getElementById('modalCatalogoEquipo');
+    if (el) { el.style.display = 'none'; el.classList.add('u-hidden'); }
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js').then(r => console.log('SW registered:', r.scope)).catch(e => console.warn('SW failed:', e));
+}
+var _user = typeof AuthSystem !== 'undefined' ? AuthSystem.getCurrentUser() : null;
+if (_user && _user.nombre) {
+    var _nameEl = document.getElementById('userNameDisplay');
+    if (_nameEl) _nameEl.textContent = _user.nombre + (_user.role === 'admin' ? ' (Admin)' : '');
+}
+if (typeof feather !== 'undefined') { feather.replace(); }
+</script>
+</body>
+</html>
+
+
+

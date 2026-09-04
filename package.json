@@ -1,0 +1,19 @@
+{
+    "name": "pmi-mind",
+    "version": "2.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build && node scripts/copy-static.mjs",
+        "preview": "vite preview",
+        "test": "npx qunit test/tests.js"
+    },
+    "devDependencies": {
+        "playwright": "^1.62.1",
+        "vite": "^6.0.0"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.112.4"
+    }
+}

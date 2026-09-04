@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# Credenciales y secretos — NUNCA commitear
+.env
+.env.*
+!.env.example
+
+# Backups de base de datos (contienen datos reales)
+backups/
+backend/database.sqlite
+.vercel
+
+# Herramientas internas (OpenCode / CodeGraph)
+.omo/
+.opencode/
+.codegraph/
+
+# Archivos temporales y backups
+*.backup*
+Packing List.pdf
