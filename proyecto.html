@@ -77,10 +77,6 @@
                 <span>Volver a Cartera</span>
             </button>
             <div class="nav-group" data-fase="Inicio">
-                <div class="nav-group-header" onclick="toggleNavGroup(this)">
-                    <span class="nav-group-title">Inicio</span>
-                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
-                </div>
                 <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header" data-panel="acta"><span class="nav-icon"><i data-feather="file-text" class="nav-feather"></i></span><span class="nav-title">Acta de Inicio</span></div></div>
             <div class="nav-section"><div class="nav-header has-submenu" data-submenu="stakeholders"><span class="nav-icon"><i data-feather="user-plus" class="nav-feather"></i></span><span class="nav-title">Stakeholders</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
@@ -92,10 +88,6 @@
                 </div>
             </div>
             <div class="nav-group" data-fase="Planificación">
-                <div class="nav-group-header" onclick="toggleNavGroup(this)">
-                    <span class="nav-group-title">Planificación</span>
-                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
-                </div>
                 <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header has-submenu" data-submenu="finanzas"><span class="nav-icon"><i data-feather="dollar-sign" class="nav-feather"></i></span><span class="nav-title">Finanzas</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
             
@@ -126,10 +118,6 @@
                 </div>
             </div>
             <div class="nav-group" data-fase="Ejecución">
-                <div class="nav-group-header" onclick="toggleNavGroup(this)">
-                    <span class="nav-group-title">Ejecución</span>
-                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
-                </div>
                 <div class="nav-group-body">
             <div class="nav-section">
                 <div class="nav-header has-submenu" data-submenu="scrum">
@@ -150,10 +138,6 @@
                 </div>
             </div>
             <div class="nav-group" data-fase="Monitoreo y Control">
-                <div class="nav-group-header" onclick="toggleNavGroup(this)">
-                    <span class="nav-group-title">Monitoreo y Control</span>
-                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
-                </div>
                 <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header" data-panel="salud"><span class="nav-icon"><i data-feather="thumbs-up" class="nav-feather"></i></span><span class="nav-title">Salud del Proyecto</span></div></div>
             <div class="nav-section">
@@ -177,10 +161,6 @@
                 </div>
             </div>
             <div class="nav-group" data-fase="Cierre">
-                <div class="nav-group-header" onclick="toggleNavGroup(this)">
-                    <span class="nav-group-title">Cierre</span>
-                    <span class="nav-group-arrow"><i data-feather="chevron-down" class="nav-feather"></i></span>
-                </div>
                 <div class="nav-group-body">
             <div class="nav-section">
                 <div class="nav-header" data-panel="lecciones">
@@ -213,6 +193,14 @@
                 <button class="btn btn-secondary btn-small" id="languageToggleBtn" onclick="mostrarMenuIdiomaApp()"><i data-feather="external-link" class="nav-feather"></i> Cambiar idioma</button>
                 <button class="btn btn-help btn-small" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
                 <button class="btn btn-primary btn-small" onclick="exportarProyectoActual()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+            </div>
+
+            <div class="proceso-tabs" id="procesoTabs">
+                <button class="proceso-tab active" data-fase="Inicio" onclick="setActiveProceso('Inicio')" style="--fase-color:#E54D42">Inicio</button>
+                <button class="proceso-tab" data-fase="Planificación" onclick="setActiveProceso('Planificación')" style="--fase-color:#F59E0B">Planificación</button>
+                <button class="proceso-tab" data-fase="Ejecución" onclick="setActiveProceso('Ejecución')" style="--fase-color:#EAB308">Ejecución</button>
+                <button class="proceso-tab" data-fase="Monitoreo y Control" onclick="setActiveProceso('Monitoreo y Control')" style="--fase-color:#10B981">Monitoreo y Control</button>
+                <button class="proceso-tab" data-fase="Cierre" onclick="setActiveProceso('Cierre')" style="--fase-color:#065F46">Cierre</button>
             </div>
 
             <div id="panelActa" class="panel">

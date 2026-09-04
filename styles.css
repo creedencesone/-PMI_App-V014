@@ -675,6 +675,55 @@ body[data-theme="light"] .logo img.logo-light { content: url('LogosWIP/WIP_LOGO_
             background: #E2E8F0;
         }
 
+        /* ============================================
+           PESTAÑAS DE PROCESOS PMBOK (sidebar)
+        ============================================ */
+        .proceso-tabs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 24px 14px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .proceso-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .proceso-tab:hover {
+            background: rgba(128, 128, 128, 0.12);
+        }
+        .proceso-tab.active {
+            color: var(--fase-color, #007AFF);
+            border-color: var(--fase-color, #007AFF);
+            background: rgba(128, 128, 128, 0.08);
+        }
+
+        /* Tema claro */
+        [data-theme="light"] .proceso-tab:hover,
+        body[data-theme="light"] .proceso-tab:hover {
+            background: #F1F3F5;
+        }
+        [data-theme="light"] .proceso-tab.active,
+        body[data-theme="light"] .proceso-tab.active {
+            background: #F1F3F5;
+        }
+
         .submenu { padding-left: 48px; display: none; }
         .submenu.show { display: block; }
         .submenu-item {

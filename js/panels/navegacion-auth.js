@@ -487,6 +487,20 @@ function initNavegacion() {
     });
 }
 
+window.procesoActivo = 'Inicio';
+
+function setActiveProceso(fase) {
+    if (!fase) fase = 'Inicio';
+    window.procesoActivo = fase;
+    document.querySelectorAll('.proceso-tab').forEach(function(tab) {
+        tab.classList.toggle('active', tab.getAttribute('data-fase') === fase);
+    });
+    if (typeof actualizarVisibilidadGrupos === 'function') {
+        actualizarVisibilidadGrupos();
+    }
+}
+window.setActiveProceso = setActiveProceso;
+
 function toggleNavGroup(header) {
     if (!header) return;
     const group = header.closest('.nav-group');
@@ -1057,6 +1071,7 @@ function iniciarIndicadorSync() {
 }
  async function init() { 
     initNavegacion(); 
+    setActiveProceso('Inicio'); 
     await cargarProyecto(); 
     cargarTemaGuardado(); 
     cargarIdiomaApp(); 

@@ -530,9 +530,22 @@ function setNavSectionVisibility(selector, visible) {
 }
 
 function actualizarVisibilidadGrupos() {
+    const activo = window.procesoActivo || 'Inicio';
     document.querySelectorAll('.nav-group').forEach(group => {
         const body = group.querySelector('.nav-group-body');
         if (!body) return;
+        const fase = group.getAttribute('data-fase');
+        // Transversal siempre visible
+        if (fase === 'Transversal') {
+            group.style.display = '';
+            return;
+        }
+        // Solo el proceso activo puede estar visible
+        if (fase !== activo) {
+            group.style.display = 'none';
+            return;
+        }
+        // El proceso activo se muestra solo si tiene al menos una sección visible (metodología)
         let visible = false;
         body.querySelectorAll('.nav-section').forEach(s => {
             if (s.style.display !== 'none') visible = true;
