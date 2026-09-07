@@ -500,7 +500,7 @@ function setActiveProceso(fase, opts) {
     }
     const FASE_PANEL_INICIAL = {
         'Inicio': 'Acta',
-        'Planificación': 'Monedas',
+        'Planificación': 'Cronograma',
         'Ejecución': 'SprintBacklog',
         'Monitoreo y Control': 'Salud',
         'Cierre': 'Lecciones'
