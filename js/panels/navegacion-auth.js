@@ -498,6 +498,17 @@ function setActiveProceso(fase) {
     if (typeof actualizarVisibilidadGrupos === 'function') {
         actualizarVisibilidadGrupos();
     }
+    const FASE_PANEL_INICIAL = {
+        'Inicio': 'Stakeholders',
+        'Planificación': 'Monedas',
+        'Ejecución': 'SprintBacklog',
+        'Monitoreo y Control': 'Salud',
+        'Cierre': 'Lecciones'
+    };
+    const panelDestino = FASE_PANEL_INICIAL[fase];
+    if (panelDestino && typeof mostrarPanel === 'function') {
+        mostrarPanel(panelDestino);
+    }
 }
 window.setActiveProceso = setActiveProceso;
 
