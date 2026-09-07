@@ -180,7 +180,7 @@ class AuthSystem {
         viajes: { nombre: ' Viajes', icono: '' },
         avales: { nombre: ' Avales', icono: '' },
         garantia: { nombre: ' Garantía', icono: '' },
-        informe: { nombre: ' Informes PMBOK', icono: '' }
+        informe: { nombre: ' Informes', icono: '' }
     };
 
     // ============================================================

@@ -499,7 +499,7 @@ function exportarInformePDF() {
 
         var footer = document.createElement('div');
         footer.style.cssText = 'text-align:center;margin-top:30px;padding-top:15px;border-top:1px solid #ccc;font-size:11px;color:#999';
-        footer.innerHTML = tApp('informe_proyecto') + ': ' + escapeHtml(nombreProy) + ' — PMBOK 8 Reports — v1.0';
+        footer.innerHTML = tApp('informe_proyecto') + ': ' + escapeHtml(nombreProy) + ' — Reports — v1.0';
         clone.appendChild(footer);
 
         var inlineCss = document.createElement('style');
@@ -538,7 +538,7 @@ function exportarInformePDF() {
             var imgData = canvas.toDataURL('image/png');
             var win = window.open('', '_blank');
             if (win) {
-                win.document.write('<!DOCTYPE html><html><head><title>Informe PMBOK 8 - ' + escapeHtml(nombreProy) + '</title>');
+                win.document.write('<!DOCTYPE html><html><head><title>Informe - ' + escapeHtml(nombreProy) + '</title>');
                 win.document.write('<style>body{margin:0;padding:0;display:flex;justify-content:center;background:#666}img{max-width:100%;height:auto}@media print{body{margin:0;padding:0}img{page-break-inside:avoid}}</style>');
                 win.document.write('</head><body>');
                 win.document.write('<img src="' + imgData + '" onload="window.print()">');

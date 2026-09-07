@@ -551,7 +551,7 @@ async function exportarSaludPDF() {
     // Añadir pie de página
     const footer = document.createElement('div');
     footer.className = 'footer';
-    footer.innerHTML = '<p>Informe generado por PMI Mind - Basado en PMBOK 8ª Edición</p>';
+    footer.innerHTML = '<p>Informe generado por PMI Mind - Basado en la 8ª Edición</p>';
     clone.appendChild(footer);
     
     cloneContainer.appendChild(clone);
@@ -713,7 +713,7 @@ function diagnosticarProgreso() {
                     <td class="u-p-8">Aporta: ${(progEnt * 0.3 * 100).toFixed(0)}%</td>
                 </tr>
                 <tr class="u-border-bottom">
-                    <td class="u-p-8"><strong> Procesos PMBOK:</strong></td>
+                    <td class="u-p-8"><strong> Procesos:</strong></td>
                     <td class="u-p-8">${procesos.filter(p => p.completado).length}/${procesos.length}</td>
                     <td class="u-p-8">${(progProc * 100).toFixed(0)}%</td>
                     <td class="u-p-8">Aporta: ${(progProc * 0.2 * 100).toFixed(0)}%</td>

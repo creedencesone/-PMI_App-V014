@@ -8,7 +8,7 @@ const manualTemasES = [
         icon: '',
         titulo: 'Introducción',
         contenido: [
-            { tipo: 'texto', valor: 'La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (PMBOK 8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.' },
+            { tipo: 'texto', valor: 'La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.' },
             { tipo: 'texto', valor: 'Desde el panel principal (Dashboard) puedes crear, editar y supervisar todos tus proyectos. Cada proyecto contiene módulos especializados que cubren las áreas de conocimiento de la dirección de proyectos.' }
         ]
     },
@@ -135,9 +135,9 @@ const manualTemasES = [
     {
         id: 'procesos',
         icon: '',
-        titulo: 'Procesos PMBOK',
+        titulo: 'Procesos',
         contenido: [
-            { tipo: 'texto', valor: 'Los procesos PMBOK se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.' },
+            { tipo: 'texto', valor: 'Los procesos se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.' },
             { tipo: 'subtitulo', valor: 'Grupos de Procesos' },
             { tipo: 'lista', items: [
                 'Inicio: definir el proyecto y obtener autorización.',
@@ -151,9 +151,9 @@ const manualTemasES = [
     {
         id: 'informes',
         icon: '',
-        titulo: 'Informes PMBOK',
+        titulo: 'Informes',
         contenido: [
-            { tipo: 'texto', valor: 'Genera 7 tipos de informes basados en PMBOK 8ª Edición con datos reales del proyecto y gráficos profesionales.' },
+            { tipo: 'texto', valor: 'Genera 7 tipos de informes basados en la 8ª Edición con datos reales del proyecto y gráficos profesionales.' },
             { tipo: 'subtitulo', valor: 'Tipos de informe' },
             { tipo: 'lista', items: [
                 'Resumen Ejecutivo: visión general del estado del proyecto.',
@@ -338,8 +338,8 @@ var _enTitles = {
     cronograma: 'Schedule (Gantt)',
     riesgos: 'Risk Management',
     stakeholders: 'Stakeholders',
-    procesos: 'PMBOK Processes',
-    informes: 'PMBOK Reports',
+    procesos: 'Processes',
+    informes: 'Reports',
     comunicaciones: 'Communications',
     cambios: 'Change Requests',
     lecciones: 'Lessons Learned',
@@ -352,7 +352,7 @@ var _enTitles = {
     personalizar: 'Customization'
 };
 var _textMap = {
-    "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (PMBOK 8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "The PMI application is designed for comprehensive project management following the Project Management Institute standards (PMBOK 8th Edition). It allows you to manage the project portfolio, control costs, schedules, risks, stakeholders, and generate executive reports.",
+    "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "The PMI application is designed for comprehensive project management following the Project Management Institute standards (8th Edition). It allows you to manage the project portfolio, control costs, schedules, risks, stakeholders, and generate executive reports.",
     "Desde el panel principal (Dashboard) puedes crear, editar y supervisar todos tus proyectos. Cada proyecto contiene módulos especializados que cubren las áreas de conocimiento de la dirección de proyectos.": "From the main Dashboard you can create, edit, and supervise all your projects. Each project contains specialized modules that cover the knowledge areas of project management.",
     "El panel de cartera muestra todos los proyectos con sus indicadores clave: estado, presupuesto, fechas y progreso.": "The portfolio panel shows all projects with their key indicators: status, budget, dates, and progress.",
     "Haz clic en \" Nuevo Proyecto\" e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.": "Click \"New Project\" and enter name, scope, dates, country, and base currency. The project is created with an automatic project charter.",
@@ -384,8 +384,8 @@ var _textMap = {
     "Gestiona las partes interesadas del proyecto con una matriz poder/interés y una tabla detallada.": "Manage project stakeholders with a power/interest matrix and a detailed table.",
     "Clasifica a los stakeholders en cuatro cuadrantes: Gestionar de Cerca (alto poder, alto interés), Mantener Satisfechos (alto poder, bajo interés), Mantener Informados (bajo poder, alto interés) y Monitorear (bajo poder, bajo interés).": "Classifies stakeholders into four quadrants: Manage Closely (high power, high interest), Keep Satisfied (high power, low interest), Keep Informed (low power, high interest), and Monitor (low power, low interest).",
     "Asigna roles: Responsable (R), Aprobador (A), Consultado (C) e Informado (I) para cada actividad del proyecto.": "Assign roles: Responsible (R), Accountable (A), Consulted (C), and Informed (I) for each project activity.",
-    "Los procesos PMBOK se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.": "PMBOK processes are organized into 5 groups and 10 knowledge areas according to the PMI standard.",
-    "Genera 7 tipos de informes basados en PMBOK 8ª Edición con datos reales del proyecto y gráficos profesionales.": "Generates 7 types of reports based on PMBOK 8th Edition with real project data and professional charts.",
+    "Los procesos se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.": "Processes are organized into 5 groups and 10 knowledge areas according to the PMI standard.",
+    "Genera 7 tipos de informes basados en la 8ª Edición con datos reales del proyecto y gráficos profesionales.": "Generates 7 types of reports based on the 8th Edition with real project data and professional charts.",
     "Los informes usan Chart.js con estilo profesional: gráficos doughnut con cutout 55%, gradientes de color, hoverOffset 16, borderRadius 6 y tooltips redondeados. Los colores de texto (títulos, ejes, leyendas) se adaptan automáticamente: #e0e0e0 en modo oscuro, #1a1a2e en modo claro.": "Reports use Chart.js with a professional style: doughnut charts with cutout 55%, color gradients, hoverOffset 16, borderRadius 6, and rounded tooltips. Text colors (titles, axes, legends) adapt automatically: #e0e0e0 in dark mode, #1a1a2e in light mode.",
     "El AC (Actual Cost) se calcula como costeTotal × % tiempo transcurrido (prorrateo temporal). EAC se calcula siempre como BAC / CPI. Los EDTs se filtran del peso para EV. La desviación del cronograma usa sumarDiasHabiles() en lugar de setDate + duración.": "AC (Actual Cost) is calculated as totalCost × % elapsed time (temporal proration). EAC is always calculated as BAC / CPI. WBS codes are filtered from weight for EV. Schedule variance uses sumarDiasHabiles() instead of setDate + duration.",
     "Usa el botón \" Exportar PDF\" para descargar cualquier informe. Los gráficos Chart.js se capturan automáticamente como imágenes.": "Use the \"Export PDF\" button to download any report. Chart.js charts are automatically captured as images.",
@@ -552,8 +552,8 @@ var _frTitles = {
     cronograma: 'Calendrier (Gantt)',
     riesgos: 'Gestion des Risques',
     stakeholders: 'Parties Prenantes',
-    procesos: 'Processus PMBOK',
-    informes: 'Rapports PMBOK',
+    procesos: 'Processus',
+    informes: 'Rapports',
     comunicaciones: 'Communications',
     cambios: 'Demandes de Changement',
     lecciones: 'Leçons Apprises',
@@ -566,7 +566,7 @@ var _frTitles = {
     personalizar: 'Personnalisation'
 };
 var _frTextMap = {
-    "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (PMBOK 8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "L'application PMI est conçue pour la gestion intégrale de projets selon les normes du Project Management Institute (PMBOK 8e Édition). Elle permet de gérer le portefeuille de projets, contrôler les coûts, les calendriers, les risques, les parties prenantes et générer des rapports exécutifs.",
+    "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "L'application PMI est conçue pour la gestion intégrale de projets selon les normes du Project Management Institute (8e Édition). Elle permet de gérer le portefeuille de projets, contrôler les coûts, les calendriers, les risques, les parties prenantes et générer des rapports exécutifs.",
     "Desde el panel principal (Dashboard) puedes crear, editar y supervisar todos tus proyectos. Cada proyecto contiene módulos especializados que cubren las áreas de conocimiento de la dirección de proyectos.": "Depuis le tableau de bord principal, vous pouvez créer, modifier et superviser tous vos projets. Chaque projet contient des modules spécialisés couvrant les domaines de connaissance de la direction de projet.",
     "El panel de cartera muestra todos los proyectos con sus indicadores clave: estado, presupuesto, fechas y progreso.": "Le panneau de portefeuille affiche tous les projets avec leurs indicateurs clés : statut, budget, dates et progression.",
     "Haz clic en \" Nuevo Proyecto\" e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.": "Cliquez sur \"Nouveau Projet\" et saisissez le nom, la portée, les dates, le pays et la devise de base. Le projet est créé avec une charte de projet automatique.",
@@ -598,8 +598,8 @@ var _frTextMap = {
     "Gestiona las partes interesadas del proyecto con una matriz poder/interés y una tabla detallada.": "Gérez les parties prenantes du projet avec une matrice pouvoir/intérêt et un tableau détaillé.",
     "Clasifica a los stakeholders en cuatro cuadrantes: Gestionar de Cerca (alto poder, alto interés), Mantener Satisfechos (alto poder, bajo interés), Mantener Informados (bajo poder, alto interés) y Monitorear (bajo poder, bajo interés).": "Classez les parties prenantes en quatre quadrants : Gérer de près (pouvoir élevé, intérêt élevé), Maintenir Satisfaits (pouvoir élevé, intérêt faible), Tenir Informés (pouvoir faible, intérêt élevé) et Surveiller (pouvoir faible, intérêt faible).",
     "Asigna roles: Responsable (R), Aprobador (A), Consultado (C) e Informado (I) para cada actividad del proyecto.": "Attribuez les rôles : Responsable (R), Approbateur (A), Consulté (C) et Informé (I) pour chaque activité du projet.",
-    "Los procesos PMBOK se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.": "Les processus PMBOK sont organisés en 5 groupes et 10 domaines de connaissance selon la norme du PMI.",
-    "Genera 7 tipos de informes basados en PMBOK 8ª Edición con datos reales del proyecto y gráficos profesionales.": "Génère 7 types de rapports basés sur le PMBOK 8e Édition avec des données réelles du projet et des graphiques professionnels.",
+    "Los procesos se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.": "Les processus sont organisés en 5 groupes et 10 domaines de connaissance selon la norme du PMI.",
+    "Genera 7 tipos de informes basados en la 8ª Edición con datos reales del proyecto y gráficos profesionales.": "Génère 7 types de rapports basés sur la 8e Édition avec des données réelles du projet et des graphiques professionnels.",
     "Los informes usan Chart.js con estilo profesional: gráficos doughnut con cutout 55%, gradientes de color, hoverOffset 16, borderRadius 6 y tooltips redondeados. Los colores de texto (títulos, ejes, leyendas) se adaptan automáticamente: #e0e0e0 en modo oscuro, #1a1a2e en modo claro.": "Les rapports utilisent Chart.js avec un style professionnel : graphiques doughnut avec cutout 55%, dégradés de couleur, hoverOffset 16, borderRadius 6 et infobulles arrondies. Les couleurs du texte (titres, axes, légendes) s'adaptent automatiquement : #e0e0e0 en mode sombre, #1a1a2e en mode clair.",
     "El AC (Actual Cost) se calcula como costeTotal × % tiempo transcurrido (prorrateo temporal). EAC se calcula siempre como BAC / CPI. Los EDTs se filtran del peso para EV. La desviación del cronograma usa sumarDiasHabiles() en lugar de setDate + duración.": "L'AC (Coût Réel) est calculé comme coûtTotal × % temps écoulé (prorata temporel). L'EAC est toujours calculé comme BAC / CPI. Les codes WBS sont filtrés du poids pour l'EV. L'écart de calendrier utilise sumarDiasHabiles() au lieu de setDate + durée.",
     "Usa el botón \" Exportar PDF\" para descargar cualquier informe. Los gráficos Chart.js se capturan automáticamente como imágenes.": "Utilisez le bouton \"Exporter PDF\" pour télécharger n'importe quel rapport. Les graphiques Chart.js sont automatiquement capturés comme images.",
@@ -761,8 +761,8 @@ var _deTitles = {
     cronograma: 'Zeitplan (Gantt)',
     riesgos: 'Risikomanagement',
     stakeholders: 'Interessengruppen',
-    procesos: 'PMBOK-Prozesse',
-    informes: 'PMBOK-Berichte',
+    procesos: 'Prozesse',
+    informes: 'Berichte',
     comunicaciones: 'Kommunikation',
     cambios: 'Änderungsanträge',
     lecciones: 'Erfahrungen',
@@ -775,7 +775,7 @@ var _deTitles = {
     personalizar: 'Anpassung'
 };
 var _deTextMap = {
-    "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (PMBOK 8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "Die PMI-Anwendung ist für das umfassende Projektmanagement nach den Standards des Project Management Institute (PMBOK 8. Auflage) konzipiert. Sie ermöglicht die Verwaltung des Projektportfolios, die Kontrolle von Kosten, Zeitplänen, Risiken, Interessengruppen und die Erstellung von Führungsberichten.",
+    "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "Die PMI-Anwendung ist für das umfassende Projektmanagement nach den Standards des Project Management Institute (8. Auflage) konzipiert. Sie ermöglicht die Verwaltung des Projektportfolios, die Kontrolle von Kosten, Zeitplänen, Risiken, Interessengruppen und die Erstellung von Führungsberichten.",
     "Desde el panel principal (Dashboard) puedes crear, editar y supervisar todos tus proyectos. Cada proyecto contiene módulos especializados que cubren las áreas de conocimiento de la dirección de proyectos.": "Vom Haupt-Dashboard aus können Sie alle Ihre Projekte erstellen, bearbeiten und überwachen. Jedes Projekt enthält spezialisierte Module, die die Wissensbereiche des Projektmanagements abdecken.",
     "El panel de cartera muestra todos los proyectos con sus indicadores clave: estado, presupuesto, fechas y progreso.": "Das Portfolio-Panel zeigt alle Projekte mit ihren Schlüsselindikatoren: Status, Budget, Termine und Fortschritt.",
     "Haz clic en \" Nuevo Proyecto\" e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.": "Klicken Sie auf \"Neues Projekt\" und geben Sie Namen, Umfang, Daten, Land und Basiswährung ein. Das Projekt wird mit einer automatischen Projektcharta erstellt.",
@@ -807,8 +807,8 @@ var _deTextMap = {
     "Gestiona las partes interesadas del proyecto con una matriz poder/interés y una tabla detallada.": "Verwalten Sie die Interessengruppen des Projekts mit einer Macht/Interessen-Matrix und einer detaillierten Tabelle.",
     "Clasifica a los stakeholders en cuatro cuadrantes: Gestionar de Cerca (alto poder, alto interés), Mantener Satisfechos (alto poder, bajo interés), Mantener Informados (bajo poder, alto interés) y Monitorear (bajo poder, bajo interés).": "Klassifiziert Interessengruppen in vier Quadranten: Eng Führen (hohe Macht, hohes Interesse), Zufrieden Stellen (hohe Macht, geringes Interesse), Informiert Halten (geringe Macht, hohes Interesse) und Überwachen (geringe Macht, geringes Interesse).",
     "Asigna roles: Responsable (R), Aprobador (A), Consultado (C) e Informado (I) para cada actividad del proyecto.": "Weist Rollen zu: Verantwortlich (R), Genehmiger (A), Konsultiert (C) und Informiert (I) für jede Projektaktivität.",
-    "Los procesos PMBOK se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.": "PMBOK-Prozesse sind in 5 Prozessgruppen und 10 Wissensbereiche nach dem PMI-Standard organisiert.",
-    "Genera 7 tipos de informes basados en PMBOK 8ª Edición con datos reales del proyecto y gráficos profesionales.": "Generiert 7 Berichtsarten basierend auf PMBOK 8. Auflage mit echten Projektdaten und professionellen Diagrammen.",
+    "Los procesos se organizan en 5 grupos y 10 áreas de conocimiento según el estándar del PMI.": "Prozesse sind in 5 Prozessgruppen und 10 Wissensbereiche nach dem PMI-Standard organisiert.",
+    "Genera 7 tipos de informes basados en la 8ª Edición con datos reales del proyecto y gráficos profesionales.": "Generiert 7 Berichtsarten basierend auf der 8. Auflage mit echten Projektdaten und professionellen Diagrammen.",
     "Los informes usan Chart.js con estilo profesional: gráficos doughnut con cutout 55%, gradientes de color, hoverOffset 16, borderRadius 6 y tooltips redondeados. Los colores de texto (títulos, ejes, leyendas) se adaptan automáticamente: #e0e0e0 en modo oscuro, #1a1a2e en modo claro.": "Berichte verwenden Chart.js mit professionellem Stil: Donut-Diagramme mit Cutout 55%, Farbverläufen, hoverOffset 16, borderRadius 6 und abgerundeten Tooltips. Textfarben (Titel, Achsen, Legenden) passen sich automatisch an: #e0e0e0 im dunklen Modus, #1a1a2e im hellen Modus.",
     "El AC (Actual Cost) se calcula como costeTotal × % tiempo transcurrido (prorrateo temporal). EAC se calcula siempre como BAC / CPI. Los EDTs se filtran del peso para EV. La desviación del cronograma usa sumarDiasHabiles() en lugar de setDate + duración.": "Der AC (Actual Cost) wird berechnet als Gesamtkosten × % verstrichene Zeit (zeitliche Proportionale). EAC wird immer als BAC / CPI berechnet. PSP-Codes werden aus dem Gewicht für EV herausgefiltert. Die Zeitplanabweichung verwendet sumarDiasHabiles() anstelle von setDate + Dauer.",
     "Usa el botón \" Exportar PDF\" para descargar cualquier informe. Los gráficos Chart.js se capturan automáticamente como imágenes.": "Verwenden Sie die Schaltfläche \"PDF exportieren\", um einen Bericht herunterzuladen. Chart.js-Diagramme werden automatisch als Bilder erfasst.",

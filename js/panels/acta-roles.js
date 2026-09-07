@@ -166,7 +166,7 @@ function editarActa() {
         <div class="form-group">
             <label>${tApp('acta_metodologia_tipo')}</label>
             <select id="metodologiaTipo" onchange="toggleMetodologiaCampos()">
-                <option value="cascada" ${metodologia.tipo === 'cascada' ? 'selected' : ''}> Cascada / Tradicional (PMBOK)</option>
+                <option value="cascada" ${metodologia.tipo === 'cascada' ? 'selected' : ''}> Cascada / Tradicional</option>
                 <option value="agile" ${metodologia.tipo === 'agile' ? 'selected' : ''}> Ágil / Scrum</option>
                 <option value="mixto" ${metodologia.tipo === 'mixto' ? 'selected' : ''}> Mixto (Cascada + Ágil)</option>
             </select>

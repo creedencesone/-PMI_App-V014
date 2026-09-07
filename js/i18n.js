@@ -57,10 +57,10 @@
         sidebar_agileMetrics: "Agile Metrics",
         sidebar_sprintList: "Listado de Sprints",
         sidebar_agileCostControl: "Control de Gastos Ágil",
-        sidebar_informe: "Informes PMBOK",
+        sidebar_informe: "Informes",
         
-        // ========== INFORMES PMBOK ==========
-        informe_titulo: "Informes de Proyecto (PMBOK 8)",
+        // ========== INFORMES ==========
+        informe_titulo: "Informes de Proyecto",
         informe_exportar_pdf: "Exportar Informe Completo",
         informe_imprimir: "Imprimir",
         informe_status: "1. Informe de Estado",
@@ -164,7 +164,7 @@
         salud_velocidad: "Velocidad del Equipo",
         salud_satisfaccion: "Satisfacción Stakeholder",
         salud_huella: "Huella de Carbono",
-        salud_pmbok: "Salud General (PMBOK 8)",
+        salud_pmbok: "Salud General",
         salud_beneficio_proyectado: "Beneficio Proyectado",
         salud_indicadores: "INDICADORES CLAVE (KPIs)",
         salud_indicador: "Indicador",
@@ -272,7 +272,7 @@
         raci_actividad: "Actividad",
         raci_info: "R=Responsable, A=Accountable, C=Consultado, I=Informado",
         
-        // ========== PROCESOS PMBOK ==========
+        // ========== PROCESOS ==========
         procesos_titulo: "Procesos",
         procesos_resetear: "Resetear",
         
@@ -461,9 +461,9 @@
         sidebar_agileMetrics: "Agile Metrics",
         sidebar_sprintList: "Sprint List",
         sidebar_agileCostControl: "Agile Cost Control",
-        sidebar_informe: "PMBOK Reports",
+        sidebar_informe: "Reports",
         
-        informe_titulo: "Project Reports (PMBOK 8)",
+        informe_titulo: "Project Reports",
         informe_exportar_pdf: "Export Full Report",
         informe_imprimir: "Print",
         informe_status: "1. Status Report",
@@ -564,7 +564,7 @@
         salud_velocidad: "Team Velocity",
         salud_satisfaccion: "Stakeholder Satisfaction",
         salud_huella: "Carbon Footprint",
-        salud_pmbok: "Overall Health (PMBOK 8)",
+        salud_pmbok: "Overall Health",
         salud_beneficio_proyectado: "Projected Profit",
         salud_indicadores: "KEY PERFORMANCE INDICATORS (KPIs)",
         salud_indicador: "Indicator",
@@ -866,7 +866,7 @@
         beneficios_cumplimiento: "Compliance",
         
         // ========== CAMBIOS ==========
-        cambios_titulo: "Change Request Management (PMBOK 8)",
+        cambios_titulo: "Change Request Management",
         cambios_nuevo: "New Request",
         cambios_pendientes: "Pending",
         cambios_aprobados: "Approved",
@@ -883,7 +883,7 @@
         cambios_acciones: "Actions",
         
         // ========== LECCIONES ==========
-        lecciones_titulo: "Lessons Learned (PMBOK 8)",
+        lecciones_titulo: "Lessons Learned",
         lecciones_nuevo: "New Lesson",
         lecciones_exitos: "Successes",
         lecciones_mejora: "Improvement Areas",
@@ -983,7 +983,7 @@
         sprintList_acciones: "Actions",
         
         // ========== AGILE COST CONTROL ==========
-        agileCostControl_titulo: "Cost Control - Agile Management (PMBOK 8)",
+        agileCostControl_titulo: "Cost Control - Agile Management",
         agileCostControl_actualizar: "Update",
         agileCostControl_exportar: "Export",
         agileCostControl_coste_total: "Total Project Cost",
@@ -999,7 +999,7 @@
         agileCostControl_coste_punto_label: "Cost/Point",
         agileCostControl_estado: "Status",
         agileCostControl_alertas: "Deviation Alerts",
-        agileCostControl_pmbok: "PMBOK 8 Indicators",
+        agileCostControl_pmbok: "Agile Indicators",
         agileCostControl_cpi: "CPI (Cost Performance)",
         agileCostControl_spi: "SPI (Schedule Performance)",
         agileCostControl_eac: "EAC (Estimate at Completion)",
@@ -1171,9 +1171,9 @@
         sidebar_agileMetrics: "Métriques Agile",
         sidebar_sprintList: "Liste des Sprints",
         sidebar_agileCostControl: "Contrôle des Coûts Agile",
-        sidebar_informe: "Rapports PMBOK",
+        sidebar_informe: "Rapports",
         
-        informe_titulo: "Rapports de Projet (PMBOK 8)",
+        informe_titulo: "Rapports de Projet",
         informe_exportar_pdf: "Exporter Rapport Complet",
         informe_imprimir: "Imprimer",
         informe_status: "1. Rapport d'État",
@@ -1275,7 +1275,7 @@
         salud_velocidad: "Vélocité de l'Équipe",
         salud_satisfaccion: "Satisfaction des Parties Prenantes",
         salud_huella: "Empreinte Carbone",
-        salud_pmbok: "Santé Générale (PMBOK 8)",
+        salud_pmbok: "Santé Générale",
         salud_beneficio_proyectado: "Bénéfice Projeté",
         salud_indicadores: "INDICATEURS CLÉS (KPI)",
         salud_indicador: "Indicateur",
@@ -1383,7 +1383,7 @@
         raci_actividad: "Activité",
         raci_info: "R=Responsable, A=Accountable, C=Consulté, I=Informé",
         
-        // ========== PROCESSUS PMBOK ==========
+        // ========== PROCESSUS ==========
         procesos_titulo: "Processus",
         procesos_resetear: "Réinitialiser",
         
@@ -1577,7 +1577,7 @@
         benefices_conformite: "Conformité",
         
         // ========== DEMANDES DE MODIFICATION ==========
-        demandes_titre: "Gestion des Demandes de Modification (PMBOK 8)",
+        demandes_titre: "Gestion des Demandes de Modification",
         demandes_nouvelle: "Nouvelle Demande",
         demandes_en_attente: "En Attente",
         demandes_approuvees: "Approuvées",
@@ -1594,7 +1594,7 @@
         demandes_actions: "Actions",
         
         // ========== LEÇONS APPRISES ==========
-        lecons_titre: "Leçons Apprises (PMBOK 8)",
+        lecons_titre: "Leçons Apprises",
         lecons_nouvelle: "Nouvelle Leçon",
         lecons_succes: "Succès",
         lecons_amelioration: "Axes d'Amélioration",
@@ -1694,7 +1694,7 @@
         sprintList_actions: "Actions",
         
         // ========== CONTRÔLE DES COÛTS AGILE ==========
-        agileCostControl_titre: "Contrôle des Coûts - Gestion Agile (PMBOK 8)",
+        agileCostControl_titre: "Contrôle des Coûts - Gestion Agile",
         agileCostControl_actualiser: "Mettre à jour",
         agileCostControl_exporter: "Exporter",
         agileCostControl_cout_total: "Coût Total du Projet",
@@ -1710,7 +1710,7 @@
         agileCostControl_cout_point_label: "Coût/Point",
         agileCostControl_statut: "Statut",
         agileCostControl_alertes: "Alertes de Déviation",
-        agileCostControl_pmbok: "Indicateurs PMBOK 8",
+        agileCostControl_pmbok: "Indicateurs",
         agileCostControl_cpi: "CPI (Coût Performance)",
         agileCostControl_spi: "SPI (Calendrier Performance)",
         agileCostControl_eac: "EAC (Estimation à l'Achèvement)",
@@ -1889,9 +1889,9 @@
         sidebar_agileMetrics: "Agile Kennzahlen",
         sidebar_sprintList: "Sprint-Liste",
         sidebar_agileCostControl: "Agile Kostenkontrolle",
-        sidebar_informe: "PMBOK Berichte",
+        sidebar_informe: "Berichte",
         
-        informe_titulo: "Projektberichte (PMBOK 8)",
+        informe_titulo: "Projektberichte",
         informe_exportar_pdf: "Vollständigen Bericht exportieren",
         informe_imprimir: "Drucken",
         informe_status: "1. Statusbericht",
@@ -2000,7 +2000,7 @@
         salud_velocidad: "Team Geschwindigkeit",
         salud_satisfaccion: "Stakeholder Zufriedenheit",
         salud_huella: "CO2-Fußabdruck",
-        salud_pmbok: "Allgemeine Gesundheit (PMBOK 8)",
+        salud_pmbok: "Allgemeine Gesundheit",
         salud_beneficio_proyectado: "Prognostizierter Gewinn",
         salud_indicadores: "KEY PERFORMANCE INDIKATOREN (KPIs)",
         salud_indicador: "Indikator",
@@ -2108,7 +2108,7 @@
         raci_actividad: "Aktivität",
         raci_info: "R=Verantwortlich, A=Rechenschaftspflichtig, C=Konsultiert, I=Informiert",
 
-        // ========== PROCESOS PMBOK ==========
+        // ========== PROCESOS ==========
         procesos_titulo: "Prozesse",
         procesos_resetear: "Zurücksetzen",
 
@@ -2302,7 +2302,7 @@
         beneficios_cumplimiento: "Erfüllung",
 
         // ========== CAMBIOS ==========
-        cambios_titulo: "Änderungsmanagement (PMBOK 8)",
+        cambios_titulo: "Änderungsmanagement",
         cambios_nuevo: "Neuer Antrag",
         cambios_pendientes: "Ausstehend",
         cambios_aprobados: "Genehmigt",
@@ -2319,7 +2319,7 @@
         cambios_acciones: "Aktionen",
 
         // ========== LECCIONES ==========
-        lecciones_titulo: "Erfahrungsberichte (PMBOK 8)",
+        lecciones_titulo: "Erfahrungsberichte",
         lecciones_nuevo: "Neue Lektion",
         lecciones_exitos: "Erfolge",
         lecciones_mejora: "Verbesserungsbereiche",
@@ -2419,7 +2419,7 @@
         sprintList_acciones: "Aktionen",
 
         // ========== AGILE COST CONTROL ==========
-        agileCostControl_titulo: "Kostenkontrolle - Agiles Management (PMBOK 8)",
+        agileCostControl_titulo: "Kostenkontrolle - Agiles Management",
         agileCostControl_actualizar: "Aktualisieren",
         agileCostControl_exportar: "Exportieren",
         agileCostControl_coste_total: "Gesamtprojektkosten",
@@ -2435,7 +2435,7 @@
         agileCostControl_coste_punto_label: "Kosten/Punkt",
         agileCostControl_estado: "Status",
         agileCostControl_alertas: "Abweichungswarnungen",
-        agileCostControl_pmbok: "PMBOK 8 Indikatoren",
+        agileCostControl_pmbok: "Indikatoren",
         agileCostControl_cpi: "CPI (Kostenleistung)",
         agileCostControl_spi: "SPI (Zeitplanleistung)",
         agileCostControl_eac: "EAC (Schätzung bei Abschluss)",
