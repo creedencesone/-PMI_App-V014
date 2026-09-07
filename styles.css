@@ -559,7 +559,7 @@ body[data-theme="light"] .ia-toggle-sidebar:hover {
         /* Sidebar */
         .sidebar {
             width: 280px;
-            background: rgba(30, 30, 40, 0.7);
+            background: rgba(45, 45, 45, 0.7);
             -webkit-backdrop-filter: blur(25px);
             backdrop-filter: blur(25px);
             position: fixed;
