@@ -73,6 +73,9 @@
                 <button class="theme-toggle-sidebar" onclick="DataService.stopAutoSync(); window.location.href='dashboard.html'" title="Volver a Cartera">
                     <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
                 </button>
+                <button class="theme-toggle-sidebar" onclick="mostrarMenuIdiomaApp()" title="Cambiar idioma">
+                    <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+                </button>
             </div>
             <div class="nav-group" data-fase="Transversal">
                 <div class="nav-group-header" onclick="toggleNavGroup(this)">
@@ -188,7 +191,6 @@
                     <h2 id="projectName">Cargando proyecto...</h2>
                     <p id="projectDesc"></p>
                 </div>
-                <button class="btn btn-secondary btn-small" id="languageToggleBtn" onclick="mostrarMenuIdiomaApp()"><i data-feather="external-link" class="nav-feather"></i> Cambiar idioma</button>
                 <button class="btn btn-help btn-small" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
                 <button class="btn btn-primary btn-small" onclick="exportarProyectoActual()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
             </div>
