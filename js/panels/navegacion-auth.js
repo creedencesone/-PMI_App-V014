@@ -489,7 +489,7 @@ function initNavegacion() {
 
 window.procesoActivo = 'Inicio';
 
-function setActiveProceso(fase) {
+function setActiveProceso(fase, opts) {
     if (!fase) fase = 'Inicio';
     window.procesoActivo = fase;
     document.querySelectorAll('.proceso-tab').forEach(function(tab) {
@@ -499,13 +499,14 @@ function setActiveProceso(fase) {
         actualizarVisibilidadGrupos();
     }
     const FASE_PANEL_INICIAL = {
-        'Inicio': 'Stakeholders',
+        'Inicio': 'Acta',
         'Planificación': 'Monedas',
         'Ejecución': 'SprintBacklog',
         'Monitoreo y Control': 'Salud',
         'Cierre': 'Lecciones'
     };
-    const panelDestino = FASE_PANEL_INICIAL[fase];
+    const procedeNavegar = !opts || opts.navegar !== false;
+    const panelDestino = procedeNavegar ? FASE_PANEL_INICIAL[fase] : null;
     if (panelDestino && typeof mostrarPanel === 'function') {
         mostrarPanel(panelDestino);
     }
@@ -1082,7 +1083,7 @@ function iniciarIndicadorSync() {
 }
  async function init() { 
     initNavegacion(); 
-    setActiveProceso('Inicio'); 
+    setActiveProceso('Inicio', { navegar: false }); 
     await cargarProyecto(); 
     cargarTemaGuardado(); 
     cargarIdiomaApp(); 
