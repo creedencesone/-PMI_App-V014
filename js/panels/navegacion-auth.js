@@ -1192,23 +1192,20 @@ function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
     const btn = document.getElementById('themeToggleBtn');
-    const themeIcon = document.querySelector('#themeToggleBtn span:first-child');
-    const themeText = document.querySelector('#themeToggleBtn span:last-child');
+    const themeIcon = document.getElementById('themeIcon');
     
     if (currentTheme === 'light') {
         html.setAttribute('data-theme', 'dark');
         localStorage.setItem('pmi_theme', 'dark');
         if (btn) {
-            if (themeIcon) themeIcon.innerHTML = '';
-            if (themeText) themeText.innerHTML = 'Modo Oscuro';
+            if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
         }
         mostrarToast(" Tema oscuro activado", 'info');
     } else {
         html.setAttribute('data-theme', 'light');
         localStorage.setItem('pmi_theme', 'light');
         if (btn) {
-            if (themeIcon) themeIcon.innerHTML = '';
-            if (themeText) themeText.innerHTML = 'Modo Claro';
+            if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
         }
         mostrarToast(" Tema claro activado", 'info');
     }
@@ -1233,17 +1230,14 @@ function toggleTheme() {
         function cargarTemaGuardado() {
             const temaGuardado = localStorage.getItem('pmi_theme');
             const html = document.documentElement;
-            const themeIcon = document.querySelector('#themeToggleBtn span:first-child');
-            const themeText = document.querySelector('#themeToggleBtn span:last-child');
+            const themeIcon = document.getElementById('themeIcon');
             
             if (temaGuardado === 'light') {
                 html.setAttribute('data-theme', 'light');
-                if (themeIcon) themeIcon.innerHTML = '';
-                if (themeText) themeText.innerHTML = 'Modo Claro';
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
             } else {
                 html.setAttribute('data-theme', 'dark');
-                if (themeIcon) themeIcon.innerHTML = '';
-                if (themeText) themeText.innerHTML = 'Modo Oscuro';
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
             }
         }
 
@@ -1255,20 +1249,17 @@ function toggleTheme() {
          window.toggleTheme = function() {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme');
-            const themeIcon = document.querySelector('#themeToggleBtn span:first-child');
-            const themeText = document.querySelector('#themeToggleBtn span:last-child');
+            const themeIcon = document.getElementById('themeIcon');
             
             if (current === 'light') {
                 html.setAttribute('data-theme', 'dark');
                 localStorage.setItem('pmi_theme', 'dark');
-                if (themeIcon) themeIcon.innerHTML = '';
-                if (themeText) themeText.innerHTML = 'Modo Oscuro';
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
                 if (typeof mostrarToast === 'function') mostrarToast(" Tema oscuro", 'info');
             } else {
                 html.setAttribute('data-theme', 'light');
                 localStorage.setItem('pmi_theme', 'light');
-                if (themeIcon) themeIcon.innerHTML = '';
-                if (themeText) themeText.innerHTML = 'Modo Claro';
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
                 if (typeof mostrarToast === 'function') mostrarToast(" Tema claro", 'info');
             }
         };
@@ -1277,17 +1268,14 @@ function toggleTheme() {
         (function initTheme() {
             const temaGuardado = localStorage.getItem('pmi_theme');
             const html = document.documentElement;
-            const themeIcon = document.querySelector('#themeToggleBtn span:first-child');
-            const themeText = document.querySelector('#themeToggleBtn span:last-child');
+            const themeIcon = document.getElementById('themeIcon');
             
             if (temaGuardado === 'light') {
                 html.setAttribute('data-theme', 'light');
-                if (themeIcon) themeIcon.innerHTML = '';
-                if (themeText) themeText.innerHTML = 'Modo Claro';
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
             } else {
                 html.setAttribute('data-theme', 'dark');
-                if (themeIcon) themeIcon.innerHTML = '';
-                if (themeText) themeText.innerHTML = 'Modo Oscuro';
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
             }
         })();
 

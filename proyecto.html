@@ -63,19 +63,17 @@
 </div>
 
             <!-- <i data-feather="check-circle" class="nav-feather"></i> BOTÓN DE TEMA EN EL SIDEBAR -->
-            <button class="theme-toggle-sidebar" onclick="toggleTheme()" id="themeToggleBtn">
-                <span id="themeIcon"><i data-feather="help-circle" class="nav-feather"></i></span>
-                <span id="themeText">Modo Oscuro</span>
-            </button>
-            <!-- <i data-feather="check-circle" class="nav-feather"></i> BOTÓN DE IA - JUSTO DEBAJO -->
-            <button class="ia-toggle-sidebar" onclick="configurarAPIKeyIA()">
-                <i data-feather="hard-drive" class="nav-feather"></i>
-                <span>Asistente IA</span>
-            </button>
-            <button class="theme-toggle-sidebar" onclick="DataService.stopAutoSync(); window.location.href='dashboard.html'">
-                <i data-feather="chevron-left" class="nav-feather"></i>
-                <span>Volver a Cartera</span>
-            </button>
+            <div class="sidebar-actions">
+                <button class="theme-toggle-sidebar" onclick="toggleTheme()" id="themeToggleBtn" title="Cambiar tema claro/oscuro">
+                    <span id="themeIcon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
+                </button>
+                <button class="ia-toggle-sidebar" onclick="configurarAPIKeyIA()" title="Asistente IA">
+                    <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
+                </button>
+                <button class="theme-toggle-sidebar" onclick="DataService.stopAutoSync(); window.location.href='dashboard.html'" title="Volver a Cartera">
+                    <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                </button>
+            </div>
             <div class="nav-group" data-fase="Inicio">
                 <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header" data-panel="acta"><span class="nav-icon"><i data-feather="file-text" class="nav-feather"></i></span><span class="nav-title">Acta de Inicio</span></div></div>

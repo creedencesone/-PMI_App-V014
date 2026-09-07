@@ -1177,6 +1177,7 @@ body[data-theme="light"] .logo img.logo-light {
             .acta-grid { grid-template-columns: 1fr; }
             .matrix-container { flex-direction: column; }
             .gantt-task, .gantt-task-name { width: 180px; }
+            .sidebar-actions { flex-direction: column; }
             .boton-ia-flotante { width: 48px; height: 48px; font-size: 24px; bottom: 20px; left: 20px; }
         }
 
@@ -1869,63 +1870,49 @@ body[data-theme="light"] .logo img.logo-light {
             transform: translateX(4px);
         }
         /* Botón de tema en el sidebar */
-.theme-toggle-sidebar {
-    width: calc(100% - 40px);
-    margin: 8px 20px;
-    padding: 10px 16px;
-    background: var(--card-bg, var(--bg-card));
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 0.5px solid var(--border-color);
-    border-radius: 12px;
-    cursor: pointer;
+.sidebar-actions {
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     gap: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    color: var(--text-primary);
+    padding: 8px 0;
+    margin: 8px 0;
 }
 
-.theme-toggle-sidebar:hover {
-    background: var(--card-bg-hover, var(--bg-card-hover));
-    transform: translateY(-2px);
-}
-
-.theme-toggle {
-    display: none;
-}
-
+.theme-toggle-sidebar,
 .ia-toggle-sidebar {
-    width: calc(100% - 40px);
-    margin: 8px 20px;
-    padding: 10px 16px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin: 0;
     background: var(--card-bg, var(--bg-card));
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border: 0.5px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    font-size: 14px;
-    font-weight: 500;
     transition: all 0.3s ease;
     color: var(--text-primary);
+    flex-shrink: 0;
 }
 
+.theme-toggle-sidebar:hover,
 .ia-toggle-sidebar:hover {
     background: var(--card-bg-hover, var(--bg-card-hover));
     transform: translateY(-2px);
 }
 
-.theme-toggle-sidebar:hover span:first-child,
-.ia-toggle-sidebar:hover span:first-child {
-    transform: scale(1.1);
+.theme-toggle-sidebar svg,
+.ia-toggle-sidebar svg {
+    width: 20px;
+    height: 20px;
+}
+
+.theme-toggle {
+    display: none;
 }
 
 .theme-toggle, .boton-ia-flotante {
