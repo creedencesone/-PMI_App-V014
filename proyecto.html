@@ -186,21 +186,22 @@
         <div class="main-content">
                         <!-- Botón de cambio de tema -->
             <div class="theme-toggle" onclick="toggleTheme()" id="themeToggleBtn"><i data-feather="help-circle" class="nav-feather"></i></div>
-            <div class="header">
-                <div class="project-title">
-                    <h2 id="projectName">Cargando proyecto...</h2>
-                    <p id="projectDesc"></p>
-                </div>
-                <button class="btn btn-help btn-small" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
-                <button class="btn btn-primary btn-small" onclick="exportarProyectoActual()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
-            </div>
-
             <div class="proceso-tabs" id="procesoTabs">
                 <button class="proceso-tab active" data-fase="Inicio" onclick="setActiveProceso('Inicio')" style="--fase-color:#E54D42">Inicio</button>
                 <button class="proceso-tab" data-fase="Planificación" onclick="setActiveProceso('Planificación')" style="--fase-color:#F59E0B">Planificación</button>
                 <button class="proceso-tab" data-fase="Ejecución" onclick="setActiveProceso('Ejecución')" style="--fase-color:#EAB308">Ejecución</button>
                 <button class="proceso-tab" data-fase="Monitoreo y Control" onclick="setActiveProceso('Monitoreo y Control')" style="--fase-color:#10B981">Monitoreo y Control</button>
                 <button class="proceso-tab" data-fase="Cierre" onclick="setActiveProceso('Cierre')" style="--fase-color:#065F46">Cierre</button>
+                <span class="proceso-tabs-spacer" aria-hidden="true"></span>
+                <button class="proceso-tab action-tab" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
+                <button class="proceso-tab action-tab" onclick="exportarProyectoActual()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+            </div>
+
+            <div class="header">
+                <div class="project-title">
+                    <h2 id="projectName">Cargando proyecto...</h2>
+                    <p id="projectDesc"></p>
+                </div>
             </div>
 
             <div id="panelActa" class="panel">

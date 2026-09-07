@@ -684,12 +684,16 @@ body[data-theme="light"] .logo img.logo-light {
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 0 24px 14px;
+            padding: 0 0 14px;
+            margin-bottom: 24px;
             overflow-x: auto;
             border-bottom: 1px solid var(--border-color);
             flex-wrap: nowrap;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
+        }
+        .proceso-tabs-spacer {
+            flex: 1 1 auto;
         }
         .proceso-tab {
             display: inline-flex;
@@ -714,6 +718,19 @@ body[data-theme="light"] .logo img.logo-light {
             color: var(--fase-color, #007AFF);
             border-color: var(--fase-color, #007AFF);
             background: rgba(128, 128, 128, 0.08);
+        }
+        .proceso-tab.action-tab {
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .proceso-tab.action-tab:hover {
+            background: rgba(128, 128, 128, 0.15);
+        }
+        .proceso-tab.action-tab .nav-feather,
+        .proceso-tab.action-tab i {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
         }
 
         /* Tema claro */
