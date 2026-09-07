@@ -36,7 +36,7 @@
         sidebar_stakeholders: "Stakeholders",
         sidebar_lista: "Lista y Matriz",
         sidebar_raci: "Matriz RACI",
-        sidebar_procesos: "Procesos PMBOK",
+        sidebar_procesos: "Procesos",
         sidebar_recursos: "Recursos",
         sidebar_roles: "Roles",
         sidebar_equipo: "Equipo",
@@ -273,7 +273,7 @@
         raci_info: "R=Responsable, A=Accountable, C=Consultado, I=Informado",
         
         // ========== PROCESOS PMBOK ==========
-        procesos_titulo: "Procesos PMBOK",
+        procesos_titulo: "Procesos",
         procesos_resetear: "Resetear",
         
         // ========== COMUNICACIONES ==========
@@ -440,7 +440,7 @@
         sidebar_stakeholders: "Stakeholders",
         sidebar_lista: "List & Matrix",
         sidebar_raci: "RACI Matrix",
-        sidebar_procesos: "PMBOK Processes",
+        sidebar_procesos: "Processes",
         sidebar_recursos: "Resources",
         sidebar_roles: "Roles",
         sidebar_equipo: "Team",
@@ -667,7 +667,7 @@
         raci_actividad: "Activity",
         raci_info: "R=Responsible, A=Accountable, C=Consulted, I=Informed",
         
-        procesos_titulo: "PMBOK Processes",
+        procesos_titulo: "Processes",
         procesos_resetear: "Reset",
         
         comunicaciones_titulo: "Communications & Meeting Management",
@@ -1150,7 +1150,7 @@
         sidebar_stakeholders: "Parties Prenantes",
         sidebar_lista: "Liste et Matrice",
         sidebar_raci: "Matrice RACI",
-        sidebar_procesos: "Processus PMBOK",
+        sidebar_procesos: "Processus",
         sidebar_recursos: "Ressources",
         sidebar_roles: "Rôles",
         sidebar_equipo: "Équipe",
@@ -1384,7 +1384,7 @@
         raci_info: "R=Responsable, A=Accountable, C=Consulté, I=Informé",
         
         // ========== PROCESSUS PMBOK ==========
-        procesos_titulo: "Processus PMBOK",
+        procesos_titulo: "Processus",
         procesos_resetear: "Réinitialiser",
         
         // ========== COMMUNICATIONS ==========
@@ -1868,7 +1868,7 @@
         sidebar_stakeholders: "Stakeholder",
         sidebar_lista: "Liste & Matrix",
         sidebar_raci: "RACI-Matrix",
-        sidebar_procesos: "PMBOK Prozesse",
+        sidebar_procesos: "Prozesse",
         sidebar_recursos: "Ressourcen",
         sidebar_roles: "Rollen",
         sidebar_equipo: "Team",
@@ -2109,7 +2109,7 @@
         raci_info: "R=Verantwortlich, A=Rechenschaftspflichtig, C=Konsultiert, I=Informiert",
 
         // ========== PROCESOS PMBOK ==========
-        procesos_titulo: "PMBOK Prozesse",
+        procesos_titulo: "Prozesse",
         procesos_resetear: "Zurücksetzen",
 
         // ========== COMUNICACIONES ==========

@@ -169,7 +169,7 @@ class AuthSystem {
         cronograma: { nombre: ' Cronograma Gantt', icono: '' },
         riesgos: { nombre: ' Gestión de Riesgos', icono: '' },
         stakeholders: { nombre: ' Stakeholders', icono: '' },
-        procesos: { nombre: ' Procesos PMBOK', icono: '' },
+        procesos: { nombre: ' Procesos', icono: '' },
         recursos: { nombre: ' Recursos', icono: '' },
         comunicaciones: { nombre: ' Comunicaciones', icono: '' },
         beneficios: { nombre: ' Beneficios', icono: '' },
