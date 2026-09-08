@@ -974,6 +974,11 @@ body[data-theme="light"] .logo img.logo-light {
             gap: 8px;
             margin-bottom: 4px;
         }
+        .pm-col-header-top svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
         .pm-col-icon {
             width: 18px;
             height: 18px;
