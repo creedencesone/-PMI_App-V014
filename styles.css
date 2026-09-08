@@ -4016,6 +4016,11 @@ body[data-theme="light"] .cashflow-negative {
     flex-shrink: 0;
 }
 
+.pmbok-col-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
 .pmbok-col-title {
     font-weight: 700;
     font-size: 13px;
