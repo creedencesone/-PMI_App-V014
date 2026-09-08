@@ -71,7 +71,7 @@ const INCOTERMS = [
     { codigo: "DDP", nombre: "Delivered Duty Paid", descripcion: "Entregado derechos pagados" }
 ];
 
-// Procesos PMBOK (37 procesos, 7 dominios)
+// Procesos PMBOK (40 procesos, 7 dominios)
 const PROCESOS_PMBOK = [
     // Inicio
     {id:1, grupo:"Inicio", dominio:"Dirección", codigo:"A.1", nombre:"Inicio del proyecto (Acta)", completado:false},
@@ -107,14 +107,17 @@ const PROCESOS_PMBOK = [
     {id:29, grupo:"Ejecución", dominio:"Riesgos", codigo:"G.5", nombre:"Implementar las respuestas a los riesgos", completado:false},
     // Monitoreo y Control
     {id:30, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.7", nombre:"Seguimiento y control del desarrollo del proyecto", completado:false},
-    {id:31, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.5", nombre:"Seguimiento y Control del alcance", completado:false},
-    {id:32, grupo:"Monitoreo y Control", dominio:"Cronograma", codigo:"C.3", nombre:"Seguimiento y Control del cronograma", completado:false},
-    {id:33, grupo:"Monitoreo y Control", dominio:"Finanzas", codigo:"D.4", nombre:"Seguimiento y Control de las finanzas", completado:false},
-    {id:34, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.6", nombre:"Seguimiento de la participación de los interesados", completado:false},
-    {id:35, grupo:"Monitoreo y Control", dominio:"Recursos", codigo:"F.5", nombre:"Seguimiento y Control de la asignación de recursos", completado:false},
-    {id:36, grupo:"Monitoreo y Control", dominio:"Riesgos", codigo:"G.6", nombre:"Seguimiento de los riesgos", completado:false},
+    {id:31, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.8", nombre:"Evaluar e implementar cambios", completado:false},
+    {id:32, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.5", nombre:"Seguimiento y Control del alcance", completado:false},
+    {id:33, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.6", nombre:"Validar el alcance", completado:false},
+    {id:34, grupo:"Monitoreo y Control", dominio:"Cronograma", codigo:"C.3", nombre:"Seguimiento y Control del cronograma", completado:false},
+    {id:35, grupo:"Monitoreo y Control", dominio:"Finanzas", codigo:"D.4", nombre:"Seguimiento y Control de las finanzas", completado:false},
+    {id:36, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.6", nombre:"Seguimiento de la participación de los interesados", completado:false},
+    {id:37, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.7", nombre:"Seguimiento de las comunicaciones", completado:false},
+    {id:38, grupo:"Monitoreo y Control", dominio:"Recursos", codigo:"F.5", nombre:"Seguimiento y Control de la asignación de recursos", completado:false},
+    {id:39, grupo:"Monitoreo y Control", dominio:"Riesgos", codigo:"G.6", nombre:"Seguimiento de los riesgos", completado:false},
     // Cierre
-    {id:37, grupo:"Cierre", dominio:"Dirección", codigo:"A.9", nombre:"Cierre de proyecto", completado:false}
+    {id:40, grupo:"Cierre", dominio:"Dirección", codigo:"A.9", nombre:"Cierre de proyecto", completado:false}
 ];
 
 const PROCESOS_RESUMIDOS = PROCESOS_PMBOK;
