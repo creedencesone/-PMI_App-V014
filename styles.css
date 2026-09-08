@@ -607,6 +607,11 @@ body[data-theme="light"] .logo img.logo-light {
 }
 
         .nav-section { margin-bottom: 4px; }
+        #navProcesosFijo {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
         .nav-header {
             padding: 10px 20px;
             margin: 4px 12px;
@@ -675,6 +680,10 @@ body[data-theme="light"] .logo img.logo-light {
         [data-theme="light"] .nav-group-header:hover,
         body[data-theme="light"] .nav-group-header:hover {
             background: #E2E8F0;
+        }
+        [data-theme="light"] #navProcesosFijo,
+        body[data-theme="light"] #navProcesosFijo {
+            border-bottom: 1px solid #E2E8F0;
         }
 
         /* ============================================
