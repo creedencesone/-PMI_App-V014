@@ -359,6 +359,12 @@ function exportarResumenGastos() {
             const grid = document.getElementById('procesosGrid');
             if (!proyecto.procesos) proyecto.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
 
+            const expandidos = new Set();
+            document.querySelectorAll('.pmbok-col.expanded').forEach(col => {
+                const titulo = col.querySelector('.pmbok-col-title');
+                if (titulo) expandidos.add(titulo.textContent.trim());
+            });
+
             const grupos = {};
             proyecto.procesos.forEach(p => { if (!grupos[p.grupo]) grupos[p.grupo] = []; grupos[p.grupo].push(p); });
 
@@ -405,6 +411,16 @@ function exportarResumenGastos() {
             });
             html += '</div>';
             grid.innerHTML = html;
+            grid.querySelectorAll('.pmbok-col').forEach(col => {
+                const titulo = col.querySelector('.pmbok-col-title');
+                if (titulo && expandidos.has(titulo.textContent.trim())) {
+                    col.classList.add('expanded');
+                    const label = col.querySelector('.pmbok-more-label');
+                    const caret = col.querySelector('.pmbok-more-caret');
+                    if (label) label.textContent = 'Ver menos';
+                    if (caret) caret.textContent = '▴';
+                }
+            });
         }
 
         function renderTarjetaProceso(p, faseColor) {
