@@ -1,7 +1,7 @@
         function renderizarStakeholders() {
             const container = document.getElementById('stakeholdersContent');
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
-                container.innerHTML = '<div class="info-card u-mb-20"><div class="u-text-center" style="padding:24px"> No hay stakeholders registrados. Haz clic en " Añadir" para crear uno.</div></div>';
+                container.innerHTML = '<div class="info-card u-mb-20"><div class="u-text-center" style="padding:24px"> No hay interesados registrados. Haz clic en " Añadir" para crear uno.</div></div>';
                 return;
             }
             proyecto.stakeholders.forEach(s => {
@@ -32,7 +32,7 @@
                     </div>
                 </div>
                 <div class="info-card">
-                    <h4 style="margin-bottom:16px"> Lista de Stakeholders</h4>
+                    <h4 style="margin-bottom:16px"> Lista de Interesados</h4>
                     <table class="data-table"><thead><tr><th>Nombre</th><th>Empresa</th><th>Puesto</th><th>Rol</th><th>Email</th><th>Teléfono</th><th>País</th><th>Poder</th><th>Interés</th><th>Acciones</th></tr></thead><tbody>
                         ${proyecto.stakeholders.map(s => `
                             <tr>
@@ -56,9 +56,9 @@
         function abrirModalStakeholder() {
     // Crear modal con inputs editables y forzar z-index/focus
     const modalHtml = `
-      <div class="modal-content" role="dialog" aria-modal="true" aria-label="Añadir stakeholder">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-label="Añadir interesado">
         <div class="modal-header">
-          <h3> ${tApp('stakeholders_nuevo') || 'Añadir stakeholder'}</h3>
+          <h3> ${tApp('stakeholders_nuevo') || 'Añadir interesado'}</h3>
           <span class="close-modal" onclick="cerrarModalGeneric()" aria-label="Cerrar">&times;</span>
         </div>
         <div class="modal-body">
@@ -180,7 +180,7 @@ function guardarStakeholder() {
     guardarProyecto && guardarProyecto();
     renderizarStakeholders && renderizarStakeholders();
     cerrarModalGeneric();
-    mostrarToast(` Stakeholder "${nombre}" añadido`, 'success');
+    mostrarToast(` Interesado "${nombre}" añadido`, 'success');
 }
         
         
@@ -231,13 +231,13 @@ function guardarStakeholder() {
         }
 
         function eliminarStakeholder(id) {
-            if (confirm('¿Eliminar este stakeholder?')) {
+            if (confirm('¿Eliminar este interesado?')) {
                 const s = proyecto.stakeholders.find(s => s.id === id);
                 proyecto.stakeholders = proyecto.stakeholders.filter(s => s.id !== id);
                 if (proyecto.raci) proyecto.raci = proyecto.raci.filter(r => r.stakeholderId !== id);
                 guardarProyecto();
                 renderizarStakeholders();
-                mostrarToast(` Stakeholder "${s?.nombre}" eliminado`, 'success');
+                mostrarToast(` Interesado "${s?.nombre}" eliminado`, 'success');
             }
         }
         
@@ -249,7 +249,7 @@ function guardarStakeholder() {
         function renderizarRACI() {
             const container = document.getElementById('raciContent');
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
-                container.innerHTML = '<div class="info-card">No hay stakeholders registrados. Agrega stakeholders primero.</div>';
+                container.innerHTML = '<div class="info-card">No hay interesados registrados. Agrega interesados primero.</div>';
                 return;
             }
             
@@ -281,7 +281,7 @@ function guardarStakeholder() {
             if (!informeContainer) return;
             
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
-                mostrarToast(" No hay stakeholders registrados. Agrega stakeholders primero.", 'error');
+                mostrarToast(" No hay interesados registrados. Agrega interesados primero.", 'error');
                 return;
             }
             
@@ -305,7 +305,7 @@ function guardarStakeholder() {
             // 2. DETECTAR SOBRECARGA (personas con muchas R)
             const cargaPorStakeholder = {};
             stakeholders.forEach(s => {
-                cargaPorStakeholder[s.id] = { nombre: s.nombre, rol: s.rol || 'Stakeholder', countR: 0, countA: 0, actividadesR: [], actividadesA: [] };
+                cargaPorStakeholder[s.id] = { nombre: s.nombre, rol: s.rol || 'Interesado', countR: 0, countA: 0, actividadesR: [], actividadesA: [] };
             });
             
             raciData.forEach(r => {
@@ -390,7 +390,7 @@ function guardarStakeholder() {
                     <div style="margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap;">
                         <div> Actividades totales: ${actividades.length}</div>
                         <div> Asignaciones RACI: ${raciData.length}</div>
-                        <div> Stakeholders: ${stakeholders.length}</div>
+                        <div> Interesados: ${stakeholders.length}</div>
                     </div>
                 </div>
             `;
@@ -449,18 +449,18 @@ function guardarStakeholder() {
                 `;
             }
             
-            // SECCIÓN 3: STAKEHOLDERS SIN PARTICIPACIÓN
+            // SECCIÓN 3: INTERESADOS SIN PARTICIPACIÓN
             if (sinActividades.length > 0) {
                 html += `
                     <div class="raci-report-section raci-info">
-                        <h4> STAKEHOLDERS SIN PARTICIPACIÓN</h4>
-                        <p class="u-fs-12 u-mb-12">Los siguientes stakeholders no tienen ningún rol asignado en la matriz RACI:</p>
+<h4> INTERESADOS SIN PARTICIPACIÓN</h4>
+<p class="u-fs-12 u-mb-12">Los siguientes interesados no tienen ningún rol asignado en la matriz RACI:</p>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                             ${sinActividades.map(s => `
                                 <span style="background: rgba(0,122,255,0.2); padding: 4px 12px; border-radius: 16px; font-size: 12px;">${escapeHtml(s.nombre)}</span>
                             `).join('')}
                         </div>
-                        <p class="u-fs-12 u-mt-12"> <strong>Recomendación:</strong> Considera si estos stakeholders deberían tener algún rol (R, A, C o I) según su nivel de poder/interés.</p>
+                        <p class="u-fs-12 u-mt-12"> <strong>Recomendación:</strong> Considera si estos interesados deberían tener algún rol (R, A, C o I) según su nivel de poder/interés.</p>
                     </div>
                 `;
             }
@@ -514,7 +514,7 @@ function guardarStakeholder() {
                         <div>
                             <div> <strong>Puntos fuertes:</strong></div>
                             <ul style="font-size: 12px; margin-left: 20px;">
-                                <li>Hay ${stakeholders.length} stakeholders identificados</li>
+                                <li>Hay ${stakeholders.length} interesados identificados</li>
                                 <li>Se han definido ${raciData.length} asignaciones RACI</li>
                                 ${brechas.length === 0 ? '<li>Todas las actividades tienen responsable y accountable</li>' : ''}
                             </ul>
@@ -524,7 +524,7 @@ function guardarStakeholder() {
                             <ul style="font-size: 12px; margin-left: 20px;">
                                 ${brechas.length > 0 ? `<li>${brechas.length} brecha(s) sin responsable</li>` : ''}
                                 ${sobrecargados.length > 0 ? `<li>${sobrecargados.length} persona(s) sobrecargadas</li>` : ''}
-                                ${sinActividades.length > 0 ? `<li>${sinActividades.length} stakeholder(s) sin participación</li>` : ''}
+                                ${sinActividades.length > 0 ? `<li>${sinActividades.length} interesado(s) sin participación</li>` : ''}
                                 ${brechas.length === 0 && sobrecargados.length === 0 && sinActividades.length === 0 ? '<li>No se detectaron problemas - Matriz saludable</li>' : ''}
                             </ul>
                         </div>

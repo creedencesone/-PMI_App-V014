@@ -325,7 +325,7 @@
         toast_sponsor_actualizado: "Sponsor actualizado",
         toast_cliente_actualizado: "Cliente actualizado",
         toast_venta_actualizada: "Datos de venta actualizados",
-        toast_stakeholder_actualizado: "Stakeholder actualizado",
+        toast_stakeholder_actualizado: "Interesado actualizado",
         toast_procesos_reseteados: "Procesos reseteados",
         toast_elemento_creado: "Elemento creado: ",
         toast_sin_desviaciones: "No hay desviaciones registradas. ¡Todo va según lo planificado!",
