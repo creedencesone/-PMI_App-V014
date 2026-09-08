@@ -429,7 +429,7 @@ function exportarResumenGastos() {
         }
 
         function renderTarjetaProcesoInner(p, faseColor) {
-            const check = p.completado ? '<span class="pmbok-card-check">✓</span>' : '';
+            const check = p.completado ? '<span class="pmbok-card-check"></span>' : '';
             const codigo = p.codigo ? `<span class="pmbok-card-code">${escapeHtml(p.codigo)}</span>` : '';
             return `${codigo}<span class="pmbok-card-name">${escapeHtml(p.nombre)}</span>${check}`;
         }
