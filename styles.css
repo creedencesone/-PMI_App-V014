@@ -1574,6 +1574,17 @@ body[data-theme="light"] .logo img.logo-light {
         .raci-badge-a { background: rgba(255, 59, 48, 0.3); color: #FF5F57; }
         .raci-badge-c { background: rgba(255, 140, 0, 0.3); color: #FF8C00; }
         .raci-badge-i { background: rgba(52, 199, 89, 0.3); color: #81C784; }
+        .raci-legend {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 24px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .raci-legend-text { color: rgba(255, 255, 255, 0.92); font-weight: 500; }
+        [data-theme="light"] .raci-legend-text { color: #1F2933; }
+        .raci-legend .raci-badge { font-size: 13px; padding: 3px 12px; margin-right: 0; }
         .raci-warning { background: rgba(255, 140, 0, 0.2); border-left: 3px solid #FF8C00; }
         .raci-critical { background: rgba(255, 59, 48, 0.2); border-left: 3px solid #FF3B30; }
         .raci-success { background: rgba(52, 199, 89, 0.2); border-left: 3px solid #81C784; }

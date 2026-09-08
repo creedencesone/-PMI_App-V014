@@ -719,8 +719,11 @@ function obtenerCodigoElemento(elemento, elementos) {
             });
             
             html += `</tbody></table>
-            <div class="info-card u-mt-16">
-                <small> <strong>R</strong> = Responsable (quien ejecuta) | <strong>A</strong> = Accountable (quien responde/aprueba) | <strong>C</strong> = Consultado | <strong>I</strong> = Informado</small>
+            <div class="info-card u-mt-16 raci-legend">
+                <span class="raci-badge raci-badge-r">R</span><span class="raci-legend-text">Responsable (quien ejecuta)</span>
+                <span class="raci-badge raci-badge-a">A</span><span class="raci-legend-text">Accountable (quien responde/aprueba)</span>
+                <span class="raci-badge raci-badge-c">C</span><span class="raci-legend-text">Consultado</span>
+                <span class="raci-badge raci-badge-i">I</span><span class="raci-legend-text">Informado</span>
             </div></div>`;
             
             container.innerHTML = html;
