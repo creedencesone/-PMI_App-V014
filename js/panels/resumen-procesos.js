@@ -410,7 +410,6 @@ function exportarResumenGastos() {
                         ${cardsHtml}
                     </div>
                     ${moreHtml}
-                    <button class="pmbok-add-btn" onclick="agregarProceso('${grupo.replace(/'/g, "\\'")}')">+ Añadir proceso</button>
                 </div>`;
             });
             html += '</div>';
@@ -439,16 +438,6 @@ function exportarResumenGastos() {
             if (caret) caret.textContent = expanded ? '▴' : '▾';
         }
 
-        function agregarProceso(grupo) {
-            const nombre = prompt(tApp('nombre_nuevo_proceso') || 'Nombre del proceso:');
-            if (!nombre) return;
-            const maxId = proyecto.procesos.reduce((m, p) => Math.max(m, p.id), 0);
-            proyecto.procesos.push({ id: maxId + 1, grupo: grupo, dominio: 'Dirección', nombre: nombre, completado: false });
-            guardarProyecto();
-            renderizarProcesos();
-            mostrarToast(tApp('toast_proceso_creado') || 'Proceso añadido', 'success');
-        }
-        
         function toggleProceso(id) {
             let p = proyecto.procesos.find(p => p.id === id);
             if (p) { p.completado = !p.completado; guardarProyecto(); renderizarProcesos(); calcularCashflow(); mostrarToast(`${p.nombre}: ${p.completado ? 'Completado' : 'Pendiente'}`, 'success'); }

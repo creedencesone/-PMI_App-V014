@@ -4127,25 +4127,6 @@ body[data-theme="light"] .cashflow-negative {
     font-size: 10px;
 }
 
-.pmbok-add-btn {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--fase-color, #007AFF);
-    color: var(--fase-color, #007AFF);
-    border-radius: 8px;
-    padding: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: auto;
-    transition: background 0.2s, color 0.2s;
-}
-
-.pmbok-add-btn:hover {
-    background: var(--fase-color, #007AFF);
-    color: #FFFFFF;
-}
-
 @media (max-width: 1100px) {
     .pmbok-board {
         flex-wrap: nowrap;
