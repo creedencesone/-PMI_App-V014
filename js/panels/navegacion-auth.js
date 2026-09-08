@@ -649,8 +649,7 @@ function obtenerCodigoElemento(elemento, elementos) {
         }
 
         function getActividadesRACI() {
-            const fijas = ['Acta Constitución', 'Planificación', 'Ejecución', 'Monitoreo', 'Cierre', 'Aprobaciones', 'Comunicaciones', 'Riesgos'];
-            const filas = fijas.map((nombre, i) => ({ key: 'fija:' + i, nombre, grupo: 'FIJAS' }));
+            const filas = [];
 
             const elementos = proyecto.elementosGantt || [];
             const tareas = elementos.filter(e => e.tipo === 'actividad').sort((a, b) => a.id - b.id);
@@ -676,6 +675,17 @@ function obtenerCodigoElemento(elemento, elementos) {
             
             const actividades = getActividadesRACI();
             if (!proyecto.raci) proyecto.raci = [];
+            const actKeys = {};
+            const actNames = {};
+            actividades.forEach(a => { actKeys[a.key] = true; actNames[a.nombre] = true; });
+            const raciLen = proyecto.raci.length;
+            proyecto.raci = proyecto.raci.filter(r => (r.actividadKey && actKeys[r.actividadKey]) || (!r.actividadKey && actNames[r.actividad]));
+            if (proyecto.raci.length !== raciLen) guardarProyecto();
+
+            if (actividades.length === 0) {
+                container.innerHTML = '<div class="info-card"> No hay actividades en el cronograma. Añade actividades o entregables desde el panel Cronograma para empezar a asignar roles RACI.</div>';
+                return;
+            }
             
             let html = '<div class="raci-table u-overflow-x-auto"><table class="data-table" style="min-width: 500px;"><thead><tr><th>Actividad</th>';
             
@@ -688,7 +698,7 @@ function obtenerCodigoElemento(elemento, elementos) {
             actividades.forEach(act => {
                 if (act.grupo !== grupoActual) {
                     grupoActual = act.grupo;
-                    const label = grupoActual === 'CRONOGRAMA' ? ' Tareas del Cronograma' : (grupoActual === 'ENTREGABLES' ? ' Entregables' : ' Actividades Fijas');
+                    const label = grupoActual === 'CRONOGRAMA' ? ' Tareas del Cronograma' : ' Entregables';
                     html += `<tr class="raci-seccion"><td colspan="${proyecto.stakeholders.length + 1}">${label}</td></tr>`;
                 }
                 html += `<tr><td class="u-bold">${escapeHtml(act.nombre)}</td>`;
