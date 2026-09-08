@@ -71,7 +71,7 @@ const INCOTERMS = [
     { codigo: "DDP", nombre: "Delivered Duty Paid", descripcion: "Entregado derechos pagados" }
 ];
 
-// Procesos PMBOK (33 procesos, 7 dominios)
+// Procesos PMBOK (37 procesos, 7 dominios)
 const PROCESOS_PMBOK = [
     // Inicio
     {id:1, grupo:"Inicio", dominio:"Dirección", codigo:"A.1", nombre:"Inicio del proyecto (Acta)", completado:false},
@@ -98,19 +98,23 @@ const PROCESOS_PMBOK = [
     {id:21, grupo:"Planificación", dominio:"Riesgos", codigo:"G.4", nombre:"Planificar las respuestas a los riesgos", completado:false},
     // Ejecución
     {id:22, grupo:"Ejecución", dominio:"Dirección", codigo:"A.4", nombre:"Gestionar la ejecución del proyecto", completado:false},
-    {id:23, grupo:"Ejecución", dominio:"Interesados", codigo:"E.4", nombre:"Gestionar la participación de los interesados", completado:false},
-    {id:24, grupo:"Ejecución", dominio:"Recursos", codigo:"F.3", nombre:"Adquirir los recursos", completado:false},
-    {id:25, grupo:"Ejecución", dominio:"Riesgos", codigo:"G.5", nombre:"Implementar las respuestas a los riesgos", completado:false},
+    {id:23, grupo:"Ejecución", dominio:"Dirección", codigo:"A.5", nombre:"Gestionar el aseguramiento de la calidad", completado:false},
+    {id:24, grupo:"Ejecución", dominio:"Dirección", codigo:"A.6", nombre:"Gestionar el conocimiento del proyecto", completado:false},
+    {id:25, grupo:"Ejecución", dominio:"Interesados", codigo:"E.4", nombre:"Gestionar la participación de los interesados", completado:false},
+    {id:26, grupo:"Ejecución", dominio:"Interesados", codigo:"E.5", nombre:"Gestionar las comunicaciones", completado:false},
+    {id:27, grupo:"Ejecución", dominio:"Recursos", codigo:"F.3", nombre:"Adquirir los recursos", completado:false},
+    {id:28, grupo:"Ejecución", dominio:"Recursos", codigo:"F.4", nombre:"Liderar el equipo", completado:false},
+    {id:29, grupo:"Ejecución", dominio:"Riesgos", codigo:"G.5", nombre:"Implementar las respuestas a los riesgos", completado:false},
     // Monitoreo y Control
-    {id:26, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.7", nombre:"Seguimiento y control del desarrollo del proyecto", completado:false},
-    {id:27, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.5", nombre:"Seguimiento y Control del alcance", completado:false},
-    {id:28, grupo:"Monitoreo y Control", dominio:"Cronograma", codigo:"C.3", nombre:"Seguimiento y Control del cronograma", completado:false},
-    {id:29, grupo:"Monitoreo y Control", dominio:"Finanzas", codigo:"D.4", nombre:"Seguimiento y Control de las finanzas", completado:false},
-    {id:30, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.6", nombre:"Seguimiento de la participación de los interesados", completado:false},
-    {id:31, grupo:"Monitoreo y Control", dominio:"Recursos", codigo:"F.5", nombre:"Seguimiento y Control de la asignación de recursos", completado:false},
-    {id:32, grupo:"Monitoreo y Control", dominio:"Riesgos", codigo:"G.6", nombre:"Seguimiento de los riesgos", completado:false},
+    {id:30, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.7", nombre:"Seguimiento y control del desarrollo del proyecto", completado:false},
+    {id:31, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.5", nombre:"Seguimiento y Control del alcance", completado:false},
+    {id:32, grupo:"Monitoreo y Control", dominio:"Cronograma", codigo:"C.3", nombre:"Seguimiento y Control del cronograma", completado:false},
+    {id:33, grupo:"Monitoreo y Control", dominio:"Finanzas", codigo:"D.4", nombre:"Seguimiento y Control de las finanzas", completado:false},
+    {id:34, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.6", nombre:"Seguimiento de la participación de los interesados", completado:false},
+    {id:35, grupo:"Monitoreo y Control", dominio:"Recursos", codigo:"F.5", nombre:"Seguimiento y Control de la asignación de recursos", completado:false},
+    {id:36, grupo:"Monitoreo y Control", dominio:"Riesgos", codigo:"G.6", nombre:"Seguimiento de los riesgos", completado:false},
     // Cierre
-    {id:33, grupo:"Cierre", dominio:"Dirección", codigo:"A.9", nombre:"Cierre de proyecto", completado:false}
+    {id:37, grupo:"Cierre", dominio:"Dirección", codigo:"A.9", nombre:"Cierre de proyecto", completado:false}
 ];
 
 const PROCESOS_RESUMIDOS = PROCESOS_PMBOK;
