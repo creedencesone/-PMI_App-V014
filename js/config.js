@@ -71,56 +71,36 @@ const INCOTERMS = [
     { codigo: "DDP", nombre: "Delivered Duty Paid", descripcion: "Entregado derechos pagados" }
 ];
 
-// Procesos PMBOK (41 procesos, 7 dominios)
+// Procesos PMBOK (23 procesos, 7 dominios)
 const PROCESOS_PMBOK = [
-    // Dirección (A)
-    {id:1, grupo:"Inicio", dominio:"Dirección", codigo:"A.1", nombre:"Inicio (Acta)", completado:false},
-    {id:2, grupo:"Planificación", dominio:"Dirección", codigo:"A.2", nombre:"Integrar planes", completado:false},
-    {id:3, grupo:"Planificación", dominio:"Dirección", codigo:"A.3", nombre:"Estrategia suministros", completado:false},
-    {id:4, grupo:"Ejecución", dominio:"Dirección", codigo:"A.4", nombre:"Gestionar ejecución", completado:false},
-    {id:5, grupo:"Ejecución", dominio:"Dirección", codigo:"A.5", nombre:"Asegurar calidad", completado:false},
-    {id:6, grupo:"Ejecución", dominio:"Dirección", codigo:"A.6", nombre:"Gestionar conocimiento", completado:false},
-    {id:7, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.7", nombre:"Seguimiento y control", completado:false},
-    {id:8, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.8", nombre:"Gestionar cambios (integrado)", completado:false},
-    {id:9, grupo:"Cierre", dominio:"Dirección", codigo:"A.9", nombre:"Cierre proyecto", completado:false},
-    {id:10, grupo:"Cierre", dominio:"Dirección", codigo:"A.10", nombre:"Cierre adquisiciones", completado:false},
-    // Alcance (B)
-    {id:11, grupo:"Planificación", dominio:"Alcance", codigo:"B.1", nombre:"Planificar alcance", completado:false},
-    {id:12, grupo:"Planificación", dominio:"Alcance", codigo:"B.2", nombre:"Recopilar requisitos", completado:false},
-    {id:13, grupo:"Planificación", dominio:"Alcance", codigo:"B.3", nombre:"Definir alcance", completado:false},
-    {id:14, grupo:"Planificación", dominio:"Alcance", codigo:"B.4", nombre:"Crear EDT/WBS", completado:false},
-    {id:15, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.5", nombre:"Controlar alcance", completado:false},
-    {id:16, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.6", nombre:"Validar alcance", completado:false},
-    // Cronograma (C)
-    {id:17, grupo:"Planificación", dominio:"Cronograma", codigo:"C.1", nombre:"Planificar cronograma", completado:false},
-    {id:18, grupo:"Planificación", dominio:"Cronograma", codigo:"C.2", nombre:"Desarrollar cronograma", completado:false},
-    {id:19, grupo:"Monitoreo y Control", dominio:"Cronograma", codigo:"C.3", nombre:"Controlar cronograma", completado:false},
-    // Finanzas (D)
-    {id:20, grupo:"Planificación", dominio:"Finanzas", codigo:"D.1", nombre:"Planificar finanzas", completado:false},
-    {id:21, grupo:"Planificación", dominio:"Finanzas", codigo:"D.2", nombre:"Estimar costes", completado:false},
-    {id:22, grupo:"Planificación", dominio:"Finanzas", codigo:"D.3", nombre:"Desarrollar presupuesto", completado:false},
-    {id:23, grupo:"Monitoreo y Control", dominio:"Finanzas", codigo:"D.4", nombre:"Controlar costes", completado:false},
-    // Interesados (E)
-    {id:24, grupo:"Inicio", dominio:"Interesados", codigo:"E.1", nombre:"Identificar interesados", completado:false},
-    {id:25, grupo:"Planificación", dominio:"Interesados", codigo:"E.2", nombre:"Planificar participación", completado:false},
-    {id:26, grupo:"Planificación", dominio:"Interesados", codigo:"E.3", nombre:"Planificar comunicaciones", completado:false},
-    {id:27, grupo:"Ejecución", dominio:"Interesados", codigo:"E.4", nombre:"Gestionar participación", completado:false},
-    {id:28, grupo:"Ejecución", dominio:"Interesados", codigo:"E.5", nombre:"Gestionar comunicaciones", completado:false},
-    {id:29, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.6", nombre:"Monitorear participación", completado:false},
-    {id:30, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.7", nombre:"Monitorear comunicaciones", completado:false},
-    // Recursos (F)
-    {id:31, grupo:"Planificación", dominio:"Recursos", codigo:"F.1", nombre:"Planificar recursos", completado:false},
-    {id:32, grupo:"Planificación", dominio:"Recursos", codigo:"F.2", nombre:"Estimar recursos", completado:false},
-    {id:33, grupo:"Ejecución", dominio:"Recursos", codigo:"F.3", nombre:"Adquirir recursos", completado:false},
-    {id:34, grupo:"Ejecución", dominio:"Recursos", codigo:"F.4", nombre:"Liderar equipo", completado:false},
-    {id:35, grupo:"Monitoreo y Control", dominio:"Recursos", codigo:"F.5", nombre:"Controlar recursos", completado:false},
-    // Riesgos (G)
-    {id:36, grupo:"Planificación", dominio:"Riesgos", codigo:"G.1", nombre:"Planificar riesgos", completado:false},
-    {id:37, grupo:"Planificación", dominio:"Riesgos", codigo:"G.2", nombre:"Identificar riesgos", completado:false},
-    {id:38, grupo:"Planificación", dominio:"Riesgos", codigo:"G.3", nombre:"Análisis (cual/cuant)", completado:false},
-    {id:39, grupo:"Planificación", dominio:"Riesgos", codigo:"G.4", nombre:"Planificar respuestas", completado:false},
-    {id:40, grupo:"Ejecución", dominio:"Riesgos", codigo:"G.5", nombre:"Implementar respuestas", completado:false},
-    {id:41, grupo:"Monitoreo y Control", dominio:"Riesgos", codigo:"G.6", nombre:"Monitorear riesgos", completado:false}
+    // Inicio
+    {id:1, grupo:"Inicio", dominio:"Dirección", codigo:"A.1", nombre:"Inicio del proyecto (Acta)", completado:false},
+    {id:2, grupo:"Inicio", dominio:"Interesados", codigo:"E.1", nombre:"Interesados del Proyecto", completado:false},
+    // Planificación
+    {id:3, grupo:"Planificación", dominio:"Dirección", codigo:"A.2", nombre:"Integrar y alinear los planes del proyecto", completado:false},
+    {id:4, grupo:"Planificación", dominio:"Alcance", codigo:"B.1", nombre:"Definir la gestión del alcance", completado:false},
+    {id:5, grupo:"Planificación", dominio:"Cronograma", codigo:"C.1", nombre:"Planificar la gestión del cronograma", completado:false},
+    {id:6, grupo:"Planificación", dominio:"Finanzas", codigo:"D.1", nombre:"Planificar la gestión financiera", completado:false},
+    {id:7, grupo:"Planificación", dominio:"Finanzas", codigo:"D.2", nombre:"Estimar los costes", completado:false},
+    {id:8, grupo:"Planificación", dominio:"Finanzas", codigo:"D.3", nombre:"Desarrollar el presupuesto", completado:false},
+    {id:9, grupo:"Planificación", dominio:"Interesados", codigo:"E.2", nombre:"Planificar la participación de los interesados", completado:false},
+    {id:10, grupo:"Planificación", dominio:"Recursos", codigo:"F.1", nombre:"Planificar la gestión de los recursos", completado:false},
+    {id:11, grupo:"Planificación", dominio:"Riesgos", codigo:"G.1", nombre:"Planificar la gestión de riesgos", completado:false},
+    // Ejecución
+    {id:12, grupo:"Ejecución", dominio:"Dirección", codigo:"A.4", nombre:"Gestionar la ejecución del proyecto", completado:false},
+    {id:13, grupo:"Ejecución", dominio:"Interesados", codigo:"E.4", nombre:"Gestionar la participación de los interesados", completado:false},
+    {id:14, grupo:"Ejecución", dominio:"Recursos", codigo:"F.3", nombre:"Adquirir los recursos", completado:false},
+    {id:15, grupo:"Ejecución", dominio:"Riesgos", codigo:"G.5", nombre:"Implementar las respuestas a los riesgos", completado:false},
+    // Monitoreo y Control
+    {id:16, grupo:"Monitoreo y Control", dominio:"Dirección", codigo:"A.7", nombre:"Seguimiento y control del desarrollo del proyecto", completado:false},
+    {id:17, grupo:"Monitoreo y Control", dominio:"Alcance", codigo:"B.5", nombre:"Seguimiento y Control del alcance", completado:false},
+    {id:18, grupo:"Monitoreo y Control", dominio:"Cronograma", codigo:"C.3", nombre:"Seguimiento y Control del cronograma", completado:false},
+    {id:19, grupo:"Monitoreo y Control", dominio:"Finanzas", codigo:"D.4", nombre:"Seguimiento y Control de las finanzas", completado:false},
+    {id:20, grupo:"Monitoreo y Control", dominio:"Interesados", codigo:"E.6", nombre:"Seguimiento de la participación de los interesados", completado:false},
+    {id:21, grupo:"Monitoreo y Control", dominio:"Recursos", codigo:"F.5", nombre:"Seguimiento y Control de la asignación de recursos", completado:false},
+    {id:22, grupo:"Monitoreo y Control", dominio:"Riesgos", codigo:"G.6", nombre:"Seguimiento de los riesgos", completado:false},
+    // Cierre
+    {id:23, grupo:"Cierre", dominio:"Dirección", codigo:"A.9", nombre:"Cierre de proyecto", completado:false}
 ];
 
 const PROCESOS_RESUMIDOS = PROCESOS_PMBOK;
