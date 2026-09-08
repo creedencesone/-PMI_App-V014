@@ -892,7 +892,7 @@ body[data-theme="light"] .logo img.logo-light {
 .info-card:hover {
             transform: translateY(-4px) scale(1.01);
             box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.35), 0 6px 12px -6px rgba(0, 0, 0, 0.25);
-            background: rgba(255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
         }
         /* Large modal cap: only on mobile, !important to beat inline style= */
         @media (max-width: 768px) {
