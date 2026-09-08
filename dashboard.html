@@ -109,7 +109,6 @@
             border-right: 0.5px solid var(--border-color);
             z-index: 100;
             transition: background 0.3s ease;
-            padding: 20px 0;
         }
 
         /* Floating hamburger — hidden on desktop, shown only <=768px */
@@ -132,22 +131,21 @@
         }
 
         .logo {
-            padding: 0 20px 20px 20px;
+            padding: 24px 20px;
             border-bottom: 0.5px solid var(--border-color);
             text-align: center;
         }
 
         .logo img {
-            width: 160px;
+            width: 208px;
             height: auto;
-            margin-bottom: 12px;
-            border-radius: 18px;
-            transition: transform 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            margin-bottom: 16px;
+            display: inline-block;
+            aspect-ratio: 348 / 79;
         }
+        .logo img.logo-light { content: url('LogosWIP/WIP_LOGO_TRANSPARENT.png'); }
         [data-theme="light"] .logo img.logo-light,
         body[data-theme="light"] .logo img.logo-light { content: url('LogosWIP/WIP_LOGO_02.png'); }
-        .logo img:hover { transform: scale(1.02); }
 
         .logo h1 {
             font-size: 26px;
@@ -168,7 +166,7 @@
            USUARIO EN SIDEBAR
            ============================================ */
         .sidebar-user {
-            padding: 12px 20px;
+            padding: 16px 20px;
             border-bottom: 0.5px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -176,15 +174,15 @@
         }
 
         .sidebar-user .avatar {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--color-primary), var(--color-success));
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 18px;
             color: white;
             flex-shrink: 0;
         }
@@ -221,45 +219,88 @@
            BOTONES DE NAVEGACIÓN
            ============================================ */
         .nav-button {
-            width: calc(100% - 40px);
-            margin: 6px 20px;
-            padding: 10px 16px;
-            background: var(--card-bg);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border: 0.5px solid var(--border-color);
-            border-radius: 12px;
-            cursor: pointer;
+            width: calc(100% - 24px);
+            padding: 10px 20px;
+            margin: 4px 12px;
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 14px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            color: rgba(255, 255, 255, 0.8);
             font-weight: 500;
-            transition: all 0.3s ease;
-            color: var(--text-primary);
-            text-align: left;
-            width: calc(100% - 40px);
+            font-size: 13px;
+            background: transparent;
+            border: none;
             font-family: inherit;
+            text-align: left;
         }
 
         .nav-button:hover {
-            background: var(--card-bg-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
         }
 
         .nav-button.active {
-            background: linear-gradient(135deg, #007AFF, #0055CC);
+            background: rgba(0, 122, 255, 0.3);
             color: white;
-            border: none;
         }
 
-        .nav-button.active:hover {
+        .nav-button .nav-icon { font-size: 18px; width: 28px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+        .nav-title { flex: 1; display: inline-flex; align-items: center; gap: 8px; }
+        .nav-feather { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.5; fill: none; vertical-align: middle; }
+
+        /* Botones circulares de acciones (igual que sidebar del proyecto) */
+        .sidebar-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            margin: 8px 0;
+        }
+
+        .theme-toggle-sidebar,
+        .ia-toggle-sidebar {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            margin: 0;
+            background: var(--card-bg, var(--bg-card));
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid var(--border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+            flex-shrink: 0;
+            font-family: inherit;
+        }
+
+        .theme-toggle-sidebar:hover,
+        .ia-toggle-sidebar:hover {
+            background: var(--card-bg-hover, var(--bg-card-hover));
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
         }
 
-        .nav-button .nav-icon { font-size: 18px; display: inline-flex; align-items: center; justify-content: center; width: 24px; }
+        .theme-toggle-sidebar svg,
+        .ia-toggle-sidebar svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Overrides tema claro (igual que styles.css del proyecto) */
+        [data-theme="light"] .nav-button,
+        body[data-theme="light"] .nav-button { color: #6B7280 !important; }
+        [data-theme="light"] .nav-button:hover,
+        body[data-theme="light"] .nav-button:hover { background-color: #F1F3F5 !important; color: #2563EB !important; }
+        [data-theme="light"] .nav-button.active,
+        body[data-theme="light"] .nav-button.active { background-color: #111827 !important; color: #FFFFFF !important; }
 
         /* ============================================
            MAIN CONTENT
@@ -1173,10 +1214,10 @@
                 display: block;
             }
             .sidebar .nav-button {
-                padding: 10px 16px;
+                padding: 10px 20px;
                 justify-content: flex-start;
-                width: calc(100% - 40px);
-                margin: 6px 20px;
+                width: calc(100% - 24px);
+                margin: 4px 12px;
             }
             .sidebar .sidebar-user { justify-content: flex-start; }
             .sidebar .sidebar-user .avatar { width: 36px; height: 36px; font-size: 16px; }
@@ -1361,16 +1402,19 @@
             <span id="migrateProgress" style="margin-left:6px; color:var(--text-muted); font-size:10px; display:none;"></span>
         </div>
 
-        <!-- Botón de tema -->
-        <button class="nav-button" onclick="toggleTheme()" id="themeToggleBtn">
-            <span class="nav-icon" id="themeIcon"><i data-feather="sun" class="nav-feather"></i></span>
-            <span id="themeText">Modo Oscuro</span>
-        </button>
+        <div class="sidebar-actions">
+            <button class="theme-toggle-sidebar" onclick="toggleTheme()" id="themeToggleBtn" title="Cambiar tema claro/oscuro">
+                <span id="themeIcon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span>
+            </button>
+            <button class="theme-toggle-sidebar" onclick="mostrarMenuIdiomaAppDashboard()" title="Cambiar idioma">
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+            </button>
+        </div>
 
         <!-- Navegación -->
         <button class="nav-button" onclick="location.reload()">
             <span class="nav-icon"><i data-feather="bar-chart" class="nav-feather"></i></span>
-            <span id="sidebarDashboardText">Dashboard</span>
+            <span id="sidebarDashboardText" class="nav-title">Dashboard</span>
         </button>
         
 
@@ -1379,11 +1423,11 @@
             <div style="padding: 4px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px;"><i data-feather="shopping-bag" class="nav-feather"></i> <span id="sidebarCatalogoText">Catálogo</span></div>
             <button class="nav-button" onclick="mostrarPanelCatalogo()">
                 <span class="nav-icon"><i data-feather="entries" class="nav-feather"></i></span>
-                <span id="sidebarMaterialesText">Gestionar Materiales</span>
+                <span id="sidebarMaterialesText" class="nav-title">Gestionar Materiales</span>
             </button>
             <button class="nav-button" onclick="mostrarPanelCatalogoEquipo()">
                 <span class="nav-icon"><i data-feather="user-plus" class="nav-feather"></i></span>
-                <span id="sidebarEquipoText">Gestionar Equipo</span>
+                <span id="sidebarEquipoText" class="nav-title">Gestionar Equipo</span>
             </button>
         </div>
 
@@ -1391,15 +1435,15 @@
         <div id="adminSection" style="display: none; border-top: 0.5px solid var(--border-color); margin-top: 12px; padding-top: 12px;">
             <button class="nav-button" onclick="mostrarGestionUsuarios()">
                 <span class="nav-icon"><i data-feather="user-plus" class="nav-feather"></i></span>
-                <span id="sidebarUsuariosLocalText">Usuarios (Local)</span>
+                <span id="sidebarUsuariosLocalText" class="nav-title">Usuarios (Local)</span>
             </button>
             <button class="nav-button" onclick="mostrarApiUsers()">
                 <span class="nav-icon"><i data-feather="external-link" class="nav-feather"></i></span>
-                <span id="sidebarUsuariosApiText">Usuarios (API)</span>
+                <span id="sidebarUsuariosApiText" class="nav-title">Usuarios (API)</span>
             </button>
             <button class="nav-button" onclick="mostrarGestionPermisos()">
                 <span class="nav-icon"><i data-feather="shield-off" class="nav-feather"></i></span>
-                <span id="sidebarPermisosText">Permisos (Local)</span>
+                <span id="sidebarPermisosText" class="nav-title">Permisos (Local)</span>
             </button>
         </div>
 
@@ -2379,22 +2423,19 @@
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('themeIcon');
-            const themeText = document.getElementById('themeText');
             const isLight = body.classList.contains('light-mode');
             
             if (isLight) {
                 body.classList.remove('light-mode');
                 document.documentElement.removeAttribute('data-theme');
                 localStorage.setItem('pmi_theme', 'dark');
-                if (themeIcon) themeIcon.textContent = '';
-                if (themeText) themeText.textContent = t('sidebar_tema');
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
                 mostrarToast(' Tema oscuro activado', 'info');
             } else {
                 body.classList.add('light-mode');
                 document.documentElement.setAttribute('data-theme', 'light');
                 localStorage.setItem('pmi_theme', 'light');
-                if (themeIcon) themeIcon.textContent = '';
-                if (themeText) themeText.textContent = t('sidebar_tema_claro');
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
                 mostrarToast(' Tema claro activado', 'info');
             }
         }
@@ -2402,18 +2443,15 @@
         function loadThemePreference() {
             const savedTheme = localStorage.getItem('pmi_theme');
             const themeIcon = document.getElementById('themeIcon');
-            const themeText = document.getElementById('themeText');
             
             if (savedTheme === 'light') {
                 document.body.classList.add('light-mode');
                 document.documentElement.setAttribute('data-theme', 'light');
-                if (themeIcon) themeIcon.textContent = '';
-                if (themeText) themeText.textContent = t('sidebar_tema_claro');
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
             } else {
                 document.body.classList.remove('light-mode');
                 document.documentElement.removeAttribute('data-theme');
-                if (themeIcon) themeIcon.textContent = '';
-                if (themeText) themeText.textContent = t('sidebar_tema');
+                if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
             }
         }
 
@@ -4180,7 +4218,6 @@
             const sidebarUsuariosLocalText = document.getElementById('sidebarUsuariosLocalText');
             const sidebarUsuariosApiText = document.getElementById('sidebarUsuariosApiText');
             const sidebarPermisosText = document.getElementById('sidebarPermisosText');
-            const sidebarThemeText = document.getElementById('themeText');
             
             if (sidebarDashboardText) sidebarDashboardText.textContent = t('sidebar_dashboard');
             if (sidebarCatalogoText) sidebarCatalogoText.textContent = t('sidebar_catalogo');
@@ -4189,7 +4226,6 @@
             if (sidebarUsuariosLocalText) sidebarUsuariosLocalText.textContent = t('sidebar_usuarios_local');
             if (sidebarUsuariosApiText) sidebarUsuariosApiText.textContent = t('sidebar_usuarios_api');
             if (sidebarPermisosText) sidebarPermisosText.textContent = t('sidebar_permisos');
-            if (sidebarThemeText) sidebarThemeText.textContent = document.body.classList.contains('light-mode') ? t('sidebar_tema_claro') : t('sidebar_tema');
             
             actualizarDashboard();
             renderizarProyectos();
@@ -4835,7 +4871,7 @@
 
         // Cerrar el drawer al pulsar cualquier elemento de navegación
         document.addEventListener('click', function (e) {
-            if (e.target.closest('.nav-button')) {
+            if (e.target.closest('.nav-button') || e.target.closest('.theme-toggle-sidebar')) {
                 cerrarMenuMobile();
             }
         });
