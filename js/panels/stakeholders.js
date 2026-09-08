@@ -20,6 +20,7 @@
             const bajoPoderBajoInteres = proyecto.stakeholders.filter(s => s.poder < 3 && s.interes < 3);
             
             function pmDerivarTipo(s) {
+                if (s.tipo === 'interno' || s.tipo === 'externo') return s.tipo;
                 var p = (s.pais || '').toLowerCase();
                 var r = (s.rol || '').toLowerCase();
                 var e = (s.empresa || '').toLowerCase();
@@ -38,12 +39,13 @@
                 interno: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
                 cliente: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
                 proveedor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
-                institucional: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
+                institucional: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+                externo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
             };
             function pmCardHtml(s) {
                 var tipo = pmDerivarTipo(s);
                 var inic = pmIniciales(s.nombre);
-                var tagLabel = {interno:'Interno',cliente:'Cliente',proveedor:'Proveedor',institucional:'Institucional'}[tipo];
+                var tagLabel = {interno:'Interno',cliente:'Cliente',proveedor:'Proveedor',institucional:'Institucional',externo:'Externo'}[tipo];
                 return '<div class="pm-card" draggable="true" data-id="' + s.id + '">'
                     + '<div class="pm-avatar pm-avatar-' + tipo + '">' + escapeHtml(inic) + '</div>'
                     + '<div class="pm-card-body">'
@@ -193,9 +195,18 @@
               <input id="stkTelefono" type="tel" class="u-w-full" />
             </div>
           </div>
-          <div class="form-group">
-            <label for="stkPais">País</label>
-            <input id="stkPais" type="text" class="u-w-full" />
+          <div class="form-row">
+            <div class="form-group u-flex-1">
+              <label for="stkPais">País</label>
+              <input id="stkPais" type="text" class="u-w-full" />
+            </div>
+            <div class="form-group u-flex-1">
+              <label for="stkTipo">Tipo</label>
+              <select id="stkTipo" class="select-full">
+                <option value="interno" selected>Interno</option>
+                <option value="externo">Externo</option>
+              </select>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group u-flex-1">
@@ -274,6 +285,7 @@ function guardarStakeholder() {
       email: document.getElementById('stkEmail')?.value || '',
       telefono: document.getElementById('stkTelefono')?.value || '',
       pais: document.getElementById('stkPais')?.value || '',
+      tipo: document.getElementById('stkTipo')?.value || 'interno',
       poder: parseInt(document.getElementById('stkPoder')?.value) || 3,
       interes: parseInt(document.getElementById('stkInteres')?.value) || 3,
       expectativas: document.getElementById('stkExpectativas')?.value || ''
@@ -290,6 +302,7 @@ function guardarStakeholder() {
         function editarStakeholder(id) {
             let s = proyecto.stakeholders.find(s => s.id === id);
             if (!s) return;
+            const tipoActual = (s.tipo === 'externo') ? 'externo' : 'interno';
             const modalHtml = `<div class="modal-content"><div class="modal-header"><h3> Editar</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
                 <input type="hidden" id="stakeId" value="${s.id}">
                 <div class="form-group"><label>Nombre</label><input type="text" id="stakeNombre" value="${escapeHtml(s.nombre)}"></div>
@@ -298,7 +311,8 @@ function guardarStakeholder() {
                 <div class="form-group"><label>Rol en el proyecto</label><input type="text" id="stakeRol" value="${escapeHtml(s.rol || '')}"></div>
                 <div class="form-row"><div class="form-group u-flex-1"><label>Email</label><input type="email" id="stakeEmail" value="${escapeHtml(s.email || '')}"></div>
                 <div class="form-group u-flex-1"><label>Teléfono</label><input type="tel" id="stakeTelefono" value="${escapeHtml(s.telefono || '')}"></div></div>
-                <div class="form-group"><label>País</label><input type="text" id="stakePais" value="${escapeHtml(s.pais || '')}"></div>
+                <div class="form-row"><div class="form-group u-flex-1"><label>País</label><input type="text" id="stakePais" value="${escapeHtml(s.pais || '')}"></div>
+                <div class="form-group u-flex-1"><label>Tipo</label><select id="stakeTipo" class="select-full"><option value="interno" ${tipoActual === 'interno' ? 'selected' : ''}>Interno</option><option value="externo" ${tipoActual === 'externo' ? 'selected' : ''}>Externo</option></select></div></div>
                 <div class="form-row"><div class="form-group"><label>Poder</label><input type="range" id="stakePoder" min="1" max="5" value="${s.poder}" oninput="document.getElementById('poderVal').innerText=this.value"><span id="poderVal">${s.poder}</span></div>
                 <div class="form-group"><label>Interés</label><input type="range" id="stakeInteres" min="1" max="5" value="${s.interes}" oninput="document.getElementById('interesVal').innerText=this.value"><span id="interesVal">${s.interes}</span></div></div>
                 <div class="form-group"><label>Expectativas</label><textarea rows="2" id="stakeExpectativas">${escapeHtml(s.expectativas || '')}</textarea></div>
@@ -321,6 +335,7 @@ function guardarStakeholder() {
                     email: document.getElementById('stakeEmail').value,
                     telefono: document.getElementById('stakeTelefono').value,
                     pais: document.getElementById('stakePais').value,
+                    tipo: document.getElementById('stakeTipo')?.value || 'interno',
                     poder: parseInt(document.getElementById('stakePoder').value),
                     interes: parseInt(document.getElementById('stakeInteres').value),
                     expectativas: document.getElementById('stakeExpectativas').value

@@ -1132,6 +1132,7 @@ body[data-theme="light"] .logo img.logo-light {
         .pm-avatar-cliente       { background: #B54708; }
         .pm-avatar-proveedor     { background: #6941C6; }
         .pm-avatar-institucional { background: #027A48; }
+        .pm-avatar-externo       { background: #475467; }
 
         /* Card content */
         .pm-card-body {
@@ -1180,12 +1181,14 @@ body[data-theme="light"] .logo img.logo-light {
         .pm-tag-cliente       { background: #FEF0C7; color: #B54708; }
         .pm-tag-proveedor     { background: #F4EBFF; color: #6941C6; }
         .pm-tag-institucional { background: #ECFDF3; color: #027A48; }
+        .pm-tag-externo        { background: #F2F4F7; color: #475467; }
 
         /* Light theme tag overrides (darken bg slightly) */
         [data-theme="light"] .pm-tag-interno       { background: #DBEAFE; color: #1E40AF; }
         [data-theme="light"] .pm-tag-cliente       { background: #FDE68A; color: #92400E; }
         [data-theme="light"] .pm-tag-proveedor     { background: #EDE9FE; color: #5B21B6; }
         [data-theme="light"] .pm-tag-institucional { background: #D1FAE5; color: #065F46; }
+        [data-theme="light"] .pm-tag-externo        { background: #E4E7EC; color: #344054; }
 
         /* Add button at bottom of column */
         .pm-add-btn {
