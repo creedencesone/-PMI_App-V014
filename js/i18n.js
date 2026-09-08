@@ -33,7 +33,7 @@
         sidebar_financiero: "Módulo Financiero",
         sidebar_cronograma: "Cronograma Gantt",
         sidebar_riesgos: "Gestión de Riesgos",
-        sidebar_stakeholders: "Stakeholders",
+        sidebar_stakeholders: "Interesados",
         sidebar_lista: "Lista y Matriz",
         sidebar_raci: "Matriz RACI",
         sidebar_procesos: "Procesos",
