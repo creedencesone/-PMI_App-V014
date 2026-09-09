@@ -1141,6 +1141,8 @@ body[data-theme="light"] .logo img.logo-light {
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .pm-card-name-inline { display: inline-flex; align-items: center; gap: 6px; }
+        .pm-card-name-inline svg { width: 12px; height: 12px; flex-shrink: 0; color: #175CD3; }
         .pm-card-role {
             font-size: 11px;
             color: var(--text-primary, rgba(255,255,255,0.55));
