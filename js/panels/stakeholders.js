@@ -1,5 +1,6 @@
         function renderizarStakeholders() {
-            const container = document.getElementById('stakeholdersContent');
+            var container = document.getElementById('stakeholdersContent');
+            var estiloActual = localStorage.getItem('pm_stakeholder_style') || 'v1';
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
                 container.innerHTML = '<div class="info-card u-mb-20"><div class="u-text-center" style="padding:24px"> No hay interesados registrados. Haz clic en " Añadir" para crear uno.</div></div>';
                 return;
@@ -42,11 +43,27 @@
                 institucional: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
                 externo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
             };
-            function pmCardHtml(s) {
+            function pmCardHtml(s, estilo, paleta) {
                 var tipo = pmDerivarTipo(s);
                 var inic = pmIniciales(s.nombre);
+                if (estilo === 'v2') {
+                    var tagLabel = {interno:'Interno',externo:'Externo',cliente:'Cliente',proveedor:'Proveedor',institucional:'Institucional'}[tipo] || tipo;
+                    return '<div class="pm-card pm-card-v2" draggable="true" data-id="' + s.id + '" style="border-left:4px solid var(--v2-' + paleta + '-accent, #999);">'
+                        + '<div class="pm-card-inner" style="display:flex;align-items:flex-start;gap:10px;width:100%;">'
+                        + '<div class="pm-avatar pm-avatar-v2" style="background:var(--v2-' + paleta + '-accent, #999);width:40px;height:40px;min-width:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;">' + escapeHtml(inic) + '</div>'
+                        + '<div class="pm-card-body" style="flex:1;min-width:0;">'
+                        + '<div class="pm-card-name" style="font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(s.nombre) + '</div>'
+                        + (s.rol ? '<div class="pm-card-role" style="font-size:12px;color:var(--text-secondary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(s.rol) + '</div>' : '')
+                        + (s.email ? '<div class="pm-card-email" style="font-size:11px;color:var(--text-tertiary,var(--text-secondary));margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(s.email) + '</div>' : '')
+                        + '</div>'
+                        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">'
+                        + '<span class="pm-type-pill">' + escapeHtml(tagLabel) + '</span>'
+                        + '<span class="pm-card-menu" title="M\u00e1s opciones">&#8942;</span>'
+                        + '</div>'
+                        + '</div></div>';
+                }
                 var conIconoLateral = (tipo === 'interno' || tipo === 'externo');
-                var tagLabel = {interno:'Interno',cliente:'Cliente',proveedor:'Proveedor',institucional:'Institucional',externo:'Externo'}[tipo];
+                var tagLabel2 = {interno:'Interno',cliente:'Cliente',proveedor:'Proveedor',institucional:'Institucional',externo:'Externo'}[tipo];
                 var nameLine = conIconoLateral
                     ? '<div class="pm-card-name pm-card-name-inline"><span class="pm-ico-tipo pm-ico-' + tipo + '">' + pmTagIcons[tipo] + '</span><span>' + escapeHtml(s.nombre) + '</span></div>'
                     : '<div class="pm-card-name">' + escapeHtml(s.nombre) + '</div>';
@@ -56,31 +73,58 @@
                     + nameLine
                     + (s.rol ? '<div class="pm-card-role">' + escapeHtml(s.rol) + '</div>' : '')
                     + (s.email ? '<div class="pm-card-email">' + escapeHtml(s.email) + '</div>' : '')
-                    + (conIconoLateral ? '' : '<div class="pm-tag pm-tag-' + tipo + '">' + pmTagIcons[tipo] + tagLabel + '</div>')
+                    + (conIconoLateral ? '' : '<div class="pm-tag pm-tag-' + tipo + '">' + pmTagIcons[tipo] + tagLabel2 + '</div>')
                     + '</div></div>';
             }
 
             var pmSvgInfo = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
             var pmSvgUsers = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
 
-            function pmColHtml(id, title, subtitle, cssClass, items) {
+            var pmBannerIcons = {
+                gc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+                ms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>',
+                mi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+                mo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+            };
+
+            var pmDescripciones = {
+                gc: 'Mantener una comunicaci\u00f3n constante, involucrarlos en la toma de decisiones y gestionar sus expectativas de forma proactiva.',
+                ms: 'Mantenerlos informados sobre los avances clave, asegurar su satisfacci\u00f3n y consultarles en decisiones importantes.',
+                mi: 'Mantenenerlos informados de forma regular sobre el progreso, hitos y cambios relevantes del proyecto.',
+                mo: 'Realizar un seguimiento per\u00f3dico, mantenerlos informados con informaci\u00f3n general y vigilar posibles cambios en su nivel de inter\u00e9s o poder.'
+            };
+
+            function pmColHtml(id, title, subtitle, cssClass, items, estilo, bannerNum) {
                 var count = items.length;
+                if (estilo === 'v2') {
+                    var body = items.map(function (item) { return pmCardHtml(item, 'v2', cssClass); }).join('');
+                    return '<div class="pm-col pm-col-v2 ' + cssClass + '" data-quadrant="' + id + '">'
+                        + '<div class="pm-col-banner pm-banner-' + id + '">'
+                        + '<span class="pm-banner-num">' + bannerNum + '</span>'
+                        + '<div class="pm-banner-text"><div class="pm-banner-title">' + title + '</div><div class="pm-banner-subtitle">' + subtitle + '</div></div>'
+                        + '<div class="pm-banner-icon">' + pmBannerIcons[id] + '</div>'
+                        + '</div>'
+                        + '<div class="pm-col-desc">' + (pmDescripciones[id] || '') + '</div>'
+                        + '<div class="pm-col-count"><span class="pm-icon-people">' + pmSvgUsers + '</span> Stakeholders (' + count + ')</div>'
+                        + '<div class="pm-col-body pm-col-body-v2" data-quadrant="' + id + '">' + body + '</div>'
+                        + '</div>';
+                }
                 var badgeNum = '<div class="pm-col-badge">' + count + '</div>';
-                var body = items.map(pmCardHtml).join('');
+                var bodyV1 = items.map(function (item) { return pmCardHtml(item, 'v1', cssClass); }).join('');
                 return '<div class="pm-col ' + cssClass + '" data-quadrant="' + id + '">'
                     + '<div class="pm-col-header"><div class="pm-col-header-top">' + pmSvgUsers + '<span class="pm-col-title">' + title + '</span></div><div class="pm-col-subtitle">' + subtitle + '</div>' + badgeNum + '</div>'
-                    + '<div class="pm-col-body" data-quadrant="' + id + '">' + body + '</div>'
+                    + '<div class="pm-col-body" data-quadrant="' + id + '">' + bodyV1 + '</div>'
                     + '</div>';
             }
 
-            var pmMatrixHtml = '<div class="pm-matrix">'
-                + pmColHtml('gc', 'Gestionar Cerca', 'Alto Poder / Alto Interés', 'pm-col-red', altaPoderAltoInteres)
-                + pmColHtml('ms', 'Mantener Satisfecho', 'Alto Poder / Bajo Interés', 'pm-col-yellow', altaPoderBajoInteres)
-                + pmColHtml('mi', 'Mantener Informado', 'Bajo Poder / Alto Interés', 'pm-col-orange', bajoPoderAltoInteres)
-                + pmColHtml('mo', 'Monitorear', 'Bajo Poder / Bajo Interés', 'pm-col-green', bajoPoderBajoInteres)
+            var pmMatrixHtml = '<div class="pm-matrix' + (estiloActual === 'v2' ? ' pm-matrix-v2' : '') + '">'
+                + pmColHtml('gc', 'Gestionar Cerca', 'Alto Poder / Alto Inter\u00e9s', 'pm-col-red', altaPoderAltoInteres, estiloActual, '01')
+                + pmColHtml('ms', 'Mantener Satisfecho', 'Alto Poder / Bajo Inter\u00e9s', 'pm-col-yellow', altaPoderBajoInteres, estiloActual, '02')
+                + pmColHtml('mi', 'Mantener Informado', 'Bajo Poder / Alto Inter\u00e9s', 'pm-col-orange', bajoPoderAltoInteres, estiloActual, '03')
+                + pmColHtml('mo', 'Monitorear', 'Bajo Poder / Bajo Inter\u00e9s', 'pm-col-green', bajoPoderBajoInteres, estiloActual, '04')
                 + '</div>'
                 + '<div class="pm-matrix-footer">'
-                + '<div class="pm-matrix-hint">' + pmSvgInfo + ' Arrastra y suelta interesados entre columnas para cambiar su clasificación.</div>'
+                + '<div class="pm-matrix-hint">' + pmSvgInfo + ' Arrastra y suelta interesados entre columnas para cambiar su clasificaci\u00f3n.</div>'
                 + '<div class="pm-legend">'
                 + '<div class="pm-legend-item"><span class="pm-legend-dot" style="background:#F04438"></span> Gestionar Cerca</div>'
                 + '<div class="pm-legend-item"><span class="pm-legend-dot" style="background:#F5C518"></span> Mantener Satisfecho</div>'
@@ -90,7 +134,12 @@
 
             container.innerHTML = `
                 <div class="info-card u-mb-20">
-                    <h4 style="margin-bottom:16px"> Matriz Poder / Interés</h4>
+                    <h4 style="margin-bottom:16px"> Matriz Poder / Inter\u00e9s
+                        <span class="pm-style-toggle">
+                            <button type="button" class="pm-style-opt${estiloActual === 'v1' ? ' active' : ''}" data-estilo="v1">Cl\u00e1sico</button>
+                            <button type="button" class="pm-style-opt${estiloActual === 'v2' ? ' active' : ''}" data-estilo="v2">Moderno</button>
+                        </span>
+                    </h4>
                     ${pmMatrixHtml}
                 </div>
                 <div class="info-card">
@@ -113,6 +162,13 @@
                     </tbody></table>
                 </div>
             `;
+
+            container.querySelectorAll('.pm-style-opt').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    localStorage.setItem('pm_stakeholder_style', b.getAttribute('data-estilo'));
+                    renderizarStakeholders();
+                });
+            });
 
             var pmQuadrantMap = {
                 gc: { poder: 4, interes: 4 },
