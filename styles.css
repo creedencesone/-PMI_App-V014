@@ -1185,28 +1185,29 @@ body[data-theme="light"] .logo img.logo-light {
         [data-theme="light"] .pm-tag-externo        { background: #E4E7EC; color: #344054; }
 
         .panel-add-btn {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 8px;
-            background: var(--bg-card, rgba(255,255,255,0.06));
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 0.5px solid var(--border-color, rgba(255,255,255,0.1));
-            border-radius: 12px;
-            padding: 8px 14px;
             color: var(--text-primary);
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 20px;
+            line-height: 1;
+            padding: 0;
             cursor: pointer;
             font-family: inherit;
             transition: all 0.2s ease;
         }
         .panel-add-btn:hover {
-            background: var(--bg-card-hover, rgba(255,255,255,0.1));
+            background: rgba(255, 255, 255, 0.06);
             transform: translateY(-1px);
         }
-        .panel-add-btn .nav-feather { width: 16px; height: 16px; }
-        [data-theme="light"] .panel-add-btn { color: #6B7280; }
+        [data-theme="light"] .panel-add-btn { background: #FFFFFF; border: 1px solid #E2E8F0; color: #1F2937; }
         [data-theme="light"] .panel-add-btn:hover { background-color: #F1F3F5; color: #2563EB; }
 
         /* Matrix footer */
