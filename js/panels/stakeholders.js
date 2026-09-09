@@ -45,10 +45,10 @@
             function pmCardHtml(s) {
                 var tipo = pmDerivarTipo(s);
                 var inic = pmIniciales(s.nombre);
-                var esInterno = (tipo === 'interno');
+                var conIconoLateral = (tipo === 'interno' || tipo === 'externo');
                 var tagLabel = {interno:'Interno',cliente:'Cliente',proveedor:'Proveedor',institucional:'Institucional',externo:'Externo'}[tipo];
-                var nameLine = esInterno
-                    ? '<div class="pm-card-name pm-card-name-inline">' + pmTagIcons[tipo] + '<span>' + escapeHtml(s.nombre) + '</span></div>'
+                var nameLine = conIconoLateral
+                    ? '<div class="pm-card-name pm-card-name-inline"><span class="pm-ico-tipo pm-ico-' + tipo + '">' + pmTagIcons[tipo] + '</span><span>' + escapeHtml(s.nombre) + '</span></div>'
                     : '<div class="pm-card-name">' + escapeHtml(s.nombre) + '</div>';
                 return '<div class="pm-card" draggable="true" data-id="' + s.id + '">'
                     + '<div class="pm-avatar pm-avatar-' + tipo + '">' + escapeHtml(inic) + '</div>'
@@ -56,7 +56,7 @@
                     + nameLine
                     + (s.rol ? '<div class="pm-card-role">' + escapeHtml(s.rol) + '</div>' : '')
                     + (s.email ? '<div class="pm-card-email">' + escapeHtml(s.email) + '</div>' : '')
-                    + (esInterno ? '' : '<div class="pm-tag pm-tag-' + tipo + '">' + pmTagIcons[tipo] + tagLabel + '</div>')
+                    + (conIconoLateral ? '' : '<div class="pm-tag pm-tag-' + tipo + '">' + pmTagIcons[tipo] + tagLabel + '</div>')
                     + '</div></div>';
             }
 

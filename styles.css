@@ -1141,8 +1141,12 @@ body[data-theme="light"] .logo img.logo-light {
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .pm-card-name-inline { display: inline-flex; align-items: center; gap: 6px; }
-        .pm-card-name-inline svg { width: 12px; height: 12px; flex-shrink: 0; color: #175CD3; }
+        .pm-card-name-inline { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+        .pm-card-name-inline > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pm-card-name-inline .pm-ico-tipo { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; color: #fff; }
+        .pm-card-name-inline .pm-ico-tipo svg { width: 14px; height: 14px; }
+        .pm-card-name-inline .pm-ico-interno { background: #175CD3; }
+        .pm-card-name-inline .pm-ico-externo { background: #3D4A5C; }
         .pm-card-role {
             font-size: 11px;
             color: var(--text-primary, rgba(255,255,255,0.55));
