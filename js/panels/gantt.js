@@ -112,6 +112,16 @@ function sumarDiasHabiles(fechaStr, dias) {
     }
     return formatLocalDate(dt);
 }
+function contarDiasHabiles(inicio, fin) {
+    if (!inicio || !fin) return 0;
+    let n = 0;
+    const d = new Date(inicio);
+    while (d < fin) {
+        if (!esFinDeSemana(d)) n++;
+        d.setDate(d.getDate() + 1);
+    }
+    return n;
+}
 
 // ─── EDT AUTO-CALC ──────────────────────────────────────────────
 
@@ -156,7 +166,7 @@ function recalcularEdtAuto() {
             const m = String(minInicio.getMonth() + 1).padStart(2, '0');
             const d = String(minInicio.getDate()).padStart(2, '0');
             edt.inicio = `${y}-${m}-${d}`;
-            edt.duracion = Math.round((maxFinDate - minInicio) / 86400000);
+            edt.duracion = contarDiasHabiles(minInicio, maxFinDate);
         }
         // EDT progress: weighted average of children progress (by duration)
         let totalWeight = 0, totalProgress = 0;
@@ -298,8 +308,8 @@ function renderizarCronograma() {
         _cronogramaOriginalHTML = container.innerHTML;
     }
 
-    recalcularEdtAuto();
     autoScheduler();
+    recalcularEdtAuto();
     const elementos = [...(proyecto.elementosGantt || [])];
     ejecutarCPM(elementos);
 
@@ -781,7 +791,6 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         const startDate = parseLocalDate(elem.inicio);
         const startOffset = Math.max(0, Math.round((startDate - fechaInicio) / 86400000));
         const w = Math.max(elem.duracion > 0 ? (() => {
-            if (elem.tipo === 'edt') return elem.duracion * anchoDia;
             const endStr = sumarDiasHabiles(elem.inicio, elem.duracion);
             const endDate = parseLocalDate(endStr);
             const calDays = endDate ? Math.round((endDate - startDate) / 86400000) : elem.duracion;
@@ -823,7 +832,7 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         }
 
         // Fecha fin planificada
-        const fechaFin = elem.duracion > 0 ? (elem.tipo === 'edt' ? sumarDias(elem.inicio, elem.duracion) : sumarDiasHabiles(elem.inicio, elem.duracion)) : elem.inicio;
+        const fechaFin = elem.duracion > 0 ? sumarDiasHabiles(elem.inicio, elem.duracion) : elem.inicio;
 
         // Barra real (fechas reales)
         if (elem.inicioReal) {
@@ -1644,6 +1653,7 @@ function guardarNuevoElementoGantt() {
         if (!proyecto.elementosGantt) proyecto.elementosGantt = [];
         proyecto.elementosGantt.push(nuevo);
         console.debug('[gantt] NUEVO elemento añadido:', nuevo.nombre, '| tipo:', nuevo.tipo, '| inicio:', JSON.stringify(nuevo.inicio), '| dependeDe:', nuevo.dependeDe, '| duracion:', nuevo.duracion);
+        autoScheduler();
         recalcularEdtAuto();
         guardarProyecto();
         renderizarCronograma();
@@ -1747,6 +1757,7 @@ function guardarEdicionElementoGantt() {
         elem.costeEstimado = 0;
     }
     elem.dependeDe = parseInt(document.getElementById('editDependeDe').value) || null;
+    autoScheduler();
     recalcularEdtAuto();
     guardarProyecto();
     renderizarCronograma();
@@ -1769,6 +1780,7 @@ function eliminarElementoGantt(id) {
         proyecto.elementosGantt.forEach(e => {
             if (e.predecesores) e.predecesores = e.predecesores.filter(p => p.id !== id);
         });
+        autoScheduler();
         recalcularEdtAuto();
         guardarProyecto();
         renderizarCronograma();
@@ -1801,6 +1813,7 @@ function aplicarEdicionMultiple(ids) {
         if (d && !isNaN(parseInt(d))) e.duracion = parseInt(d);
         if (des && e.inicio) e.inicio = sumarDias(e.inicio, des);
     });
+    autoScheduler();
     recalcularEdtAuto();
     guardarProyecto();
     renderizarCronograma();
