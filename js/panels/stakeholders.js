@@ -117,6 +117,7 @@
                 mo: { poder: 2, interes: 2 }
             };
             var pmDraggedId = null;
+            var pmDragJustEnded = false;
             container.querySelectorAll('.pm-card').forEach(function (card) {
                 card.addEventListener('dragstart', function (e) {
                     pmDraggedId = card.getAttribute('data-id');
@@ -128,6 +129,13 @@
                     card.classList.remove('pm-dragging');
                     container.querySelectorAll('.pm-col').forEach(function (c) { c.classList.remove('pm-drag-over'); });
                     pmDraggedId = null;
+                    pmDragJustEnded = true;
+                    setTimeout(function () { pmDragJustEnded = false; }, 100);
+                });
+                card.addEventListener('click', function () {
+                    if (pmDragJustEnded) return; // un arrastre no debe abrir el modal
+                    var id = card.getAttribute('data-id');
+                    if (id) editarStakeholder(parseInt(id, 10));
                 });
             });
             container.querySelectorAll('.pm-col').forEach(function (col) {
