@@ -586,7 +586,7 @@ body[data-theme="light"] .ia-toggle-sidebar:hover {
 .logo img.logo-light { content: url('LogosWIP/WIP_LOGO_TRANSPARENT.png'); }
 [data-theme="light"] .logo img.logo-light,
 body[data-theme="light"] .logo img.logo-light {
-    content: url('LogosWIP/WIP_LOGO_02.png');
+    content: url('LogosWIP/WIP_LOGO.png');
     aspect-ratio: 325 / 70;
 }
 
