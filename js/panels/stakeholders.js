@@ -105,7 +105,7 @@
                         + '<div class="pm-banner-icon">' + pmBannerIcons[id] + '</div>'
                         + '</div>'
                         + '<div class="pm-col-desc">' + (pmDescripciones[id] || '') + '</div>'
-                        + '<div class="pm-col-count"><span class="pm-icon-people">' + pmSvgUsers + '</span> Stakeholders (' + count + ')</div>'
+                        + '<div class="pm-col-count"><span class="pm-icon-people">' + pmSvgUsers + '</span> Interesados (' + count + ')</div>'
                         + '<div class="pm-col-body pm-col-body-v2" data-quadrant="' + id + '">' + body + '</div>'
                         + '</div>';
                 }
