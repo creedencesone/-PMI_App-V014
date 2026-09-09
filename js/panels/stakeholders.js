@@ -62,7 +62,7 @@
 
             function pmColHtml(id, title, subtitle, cssClass, items) {
                 var count = items.length;
-                var badgeNum = '<div class="pm-col-badge">' + count + '<small>stakeholder' + (count !== 1 ? 's' : '') + '</small></div>';
+                var badgeNum = '<div class="pm-col-badge">' + count + '</div>';
                 var body = items.map(pmCardHtml).join('');
                 var addBtn = '<button class="pm-add-btn" onclick="abrirModalStakeholder()">' + pmSvgPlus + ' Añadir interesado</button>';
                 return '<div class="pm-col ' + cssClass + '" data-quadrant="' + id + '">'

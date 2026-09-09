@@ -1002,18 +1002,12 @@ body[data-theme="light"] .logo img.logo-light {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            font-size: 16px;
+            font-size: 19.2px;
             font-weight: 700;
             line-height: 1;
-        }
-        .pm-col-badge small {
-            font-size: 8px;
-            font-weight: 500;
-            opacity: 0.7;
-            margin-top: 1px;
         }
 
         /* Header color variants (dark) */
