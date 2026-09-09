@@ -54,9 +54,33 @@
                 costeHora: parseFloat(document.getElementById('eqCosteHora').value), moneda: document.getElementById('eqMoneda').value,
                 horasMes: parseFloat(document.getElementById('eqHorasMes').value)
             };
-            if (id) { let idx = proyecto.equipo.findIndex(m => m.id === parseInt(id)); if (idx >= 0) proyecto.equipo[idx] = miembro; }
+            if (id) { let idx = proyecto.equipo.findIndex(m => m.id === parseInt(id)); if (idx >= 0) {
+                const previo = proyecto.equipo[idx];
+                const cambiaPrecio = previo.costeHora !== miembro.costeHora || previo.moneda !== miembro.moneda;
+                proyecto.equipo[idx] = miembro;
+                if (cambiaPrecio) {
+                    (proyecto.elementosGantt || []).forEach(e => {
+                        if (e.recursoAsignado && e.recursoAsignado.id === miembro.id) {
+                            e.recursoAsignado.costeHora = miembro.costeHora;
+                            e.recursoAsignado.moneda = miembro.moneda;
+                            if (e.tipo && e.tipo !== 'edt' && e.tipo !== 'hito') {
+                                const hTot = e.tipoDuracion === 'horas' ? (e.duracionHoras || e.duracion * (e.horasDia || 8)) : e.duracion * (e.horasDia || 8);
+                                e.costeEstimado = hTot * miembro.costeHora;
+                            }
+                        }
+                    });
+                    (proyecto.scrum?.historias || []).forEach(h => {
+                        if (h.recursoAsignado && h.recursoAsignado.id === miembro.id) {
+                            h.recursoAsignado.costeHora = miembro.costeHora;
+                            h.recursoAsignado.moneda = miembro.moneda;
+                            h.costeEstimado = (h.diasEstimados || 5) * (h.horasPorDia || 8) * miembro.costeHora;
+                        }
+                    });
+                    if (proyecto.scrum?.sprintActivo && typeof recalcularCostesSprint === 'function') recalcularCostesSprint(proyecto.scrum.sprintActivo.id);
+                }
+            } }
             else { if (!proyecto.equipo) proyecto.equipo = []; proyecto.equipo.push(miembro); }
-            guardarProyecto(); renderizarEquipo(); cerrarModalGeneric(); mostrarToast(` Miembro guardado`, 'success');
+            guardarProyecto(); renderizarEquipo(); renderizarCronograma(); renderizarSprintBacklog(); cerrarModalGeneric(); mostrarToast(` Miembro guardado`, 'success');
         }
 
         function editarEquipo(id) {
