@@ -382,7 +382,10 @@ function guardarStakeholder() {
                 <div class="form-row"><div class="form-group"><label>Poder</label><input type="range" id="stakePoder" min="1" max="5" value="${s.poder}" oninput="document.getElementById('poderVal').innerText=this.value"><span id="poderVal">${s.poder}</span></div>
                 <div class="form-group"><label>Interés</label><input type="range" id="stakeInteres" min="1" max="5" value="${s.interes}" oninput="document.getElementById('interesVal').innerText=this.value"><span id="interesVal">${s.interes}</span></div></div>
                 <div class="form-group"><label>Expectativas</label><textarea rows="2" id="stakeExpectativas">${escapeHtml(s.expectativas || '')}</textarea></div>
-                <button class="btn btn-primary" onclick="actualizarStakeholder()">Actualizar</button>
+                <div class="u-action-row">
+                    <button class="btn btn-danger" onclick="eliminarStakeholder(${s.id})">Eliminar</button>
+                    <button class="btn btn-primary" onclick="actualizarStakeholder()">Actualizar</button>
+                </div>
             </div>`;
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
@@ -421,6 +424,7 @@ function guardarStakeholder() {
                 if (proyecto.raci) proyecto.raci = proyecto.raci.filter(r => r.stakeholderId !== id);
                 guardarProyecto();
                 renderizarStakeholders();
+                cerrarModalGeneric();
                 mostrarToast(` Interesado "${s?.nombre}" eliminado`, 'success');
             }
         }
