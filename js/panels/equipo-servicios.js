@@ -80,7 +80,18 @@
                 }
             } }
             else { if (!proyecto.equipo) proyecto.equipo = []; proyecto.equipo.push(miembro); }
-            guardarProyecto(); renderizarEquipo(); renderizarCronograma(); renderizarSprintBacklog(); cerrarModalGeneric(); mostrarToast(` Miembro guardado`, 'success');
+            guardarProyecto(); renderizarEquipo(); renderizarCronograma(); renderizarSprintBacklog();
+            const _toastBackup = window.mostrarToast;
+            window.mostrarToast = function(){};
+            try {
+                const pSalud = document.getElementById('panelSalud');
+                if (pSalud && !pSalud.classList.contains('hidden') && typeof actualizarPanelSalud === 'function') actualizarPanelSalud();
+                const pResumen = document.getElementById('panelResumenGastos');
+                if (pResumen && !pResumen.classList.contains('hidden') && typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
+                const pFin = document.getElementById('panelFinanciero');
+                if (pFin && !pFin.classList.contains('hidden') && typeof calcularAnalisisEquipo === 'function') calcularAnalisisEquipo();
+            } finally { window.mostrarToast = _toastBackup; }
+            cerrarModalGeneric(); mostrarToast(` Miembro guardado`, 'success');
         }
 
         function editarEquipo(id) {
