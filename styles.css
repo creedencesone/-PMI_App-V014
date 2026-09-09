@@ -1184,30 +1184,30 @@ body[data-theme="light"] .logo img.logo-light {
         [data-theme="light"] .pm-tag-institucional { background: #D1FAE5; color: #065F46; }
         [data-theme="light"] .pm-tag-externo        { background: #E4E7EC; color: #344054; }
 
-        /* Add button at bottom of column */
-        .pm-add-btn {
-            display: flex;
+        .panel-add-btn {
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
-            padding: 10px;
-            border: 2px dashed var(--border-color, rgba(255,255,255,0.12));
-            border-radius: 10px;
-            background: transparent;
-            color: var(--text-primary, rgba(255,255,255,0.45));
-            font-size: 12px;
+            gap: 8px;
+            background: var(--bg-card, rgba(255,255,255,0.06));
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid var(--border-color, rgba(255,255,255,0.1));
+            border-radius: 12px;
+            padding: 8px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            transition: border-color 0.15s, color 0.15s, background 0.15s;
-            margin: 8px;
+            font-family: inherit;
+            transition: all 0.2s ease;
         }
-        .pm-add-btn:hover {
-            border-color: rgba(99, 102, 241, 0.5);
-            color: rgba(99, 102, 241, 0.85);
-            background: rgba(99, 102, 241, 0.05);
+        .panel-add-btn:hover {
+            background: var(--bg-card-hover, rgba(255,255,255,0.1));
+            transform: translateY(-1px);
         }
-        .pm-add-btn svg { width: 16px; height: 16px; }
+        .panel-add-btn .nav-feather { width: 16px; height: 16px; }
+        [data-theme="light"] .panel-add-btn { color: #6B7280; }
+        [data-theme="light"] .panel-add-btn:hover { background-color: #F1F3F5; color: #2563EB; }
 
         /* Matrix footer */
         .pm-matrix-footer {

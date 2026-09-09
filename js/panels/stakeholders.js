@@ -57,18 +57,16 @@
             }
 
             var pmSvgInfo = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
-            var pmSvgPlus = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
             var pmSvgUsers = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
 
             function pmColHtml(id, title, subtitle, cssClass, items) {
                 var count = items.length;
                 var badgeNum = '<div class="pm-col-badge">' + count + '</div>';
                 var body = items.map(pmCardHtml).join('');
-                var addBtn = '<button class="pm-add-btn" onclick="abrirModalStakeholder()">' + pmSvgPlus + ' Añadir interesado</button>';
                 return '<div class="pm-col ' + cssClass + '" data-quadrant="' + id + '">'
                     + '<div class="pm-col-header"><div class="pm-col-header-top">' + pmSvgUsers + '<span class="pm-col-title">' + title + '</span></div><div class="pm-col-subtitle">' + subtitle + '</div>' + badgeNum + '</div>'
                     + '<div class="pm-col-body" data-quadrant="' + id + '">' + body + '</div>'
-                    + addBtn + '</div>';
+                    + '</div>';
             }
 
             var pmMatrixHtml = '<div class="pm-matrix">'
