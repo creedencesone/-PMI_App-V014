@@ -1352,13 +1352,16 @@ body[data-theme="light"] .logo img.logo-light {
         }
 
         /* Banner colors (dark theme) */
-        .pm-banner-gc { background: rgba(240,68,56,0.15); color: #C92A2A; }
-        .pm-banner-gc .pm-banner-icon { color: #F04438; }
-        .pm-banner-ms { background: rgba(245,197,24,0.15); color: #B45309; }
-        .pm-banner-ms .pm-banner-icon { color: #D4A017; }
-        .pm-banner-mi { background: rgba(18,183,106,0.15); color: #2B8A3E; }
-        .pm-banner-mi .pm-banner-icon { color: #12B76A; }
-        .pm-banner-mo { background: rgba(47,110,78,0.85); color: #fff; }
+        .pm-banner-gc { background: #B42318; color: #fff; }
+        .pm-banner-gc .pm-banner-icon { color: #fff; }
+        .pm-banner-gc .pm-banner-num { color: #F04438; }
+        .pm-banner-ms { background: #A16207; color: #fff; }
+        .pm-banner-ms .pm-banner-icon { color: #fff; }
+        .pm-banner-ms .pm-banner-num { color: #E5A50A; }
+        .pm-banner-mi { background: #027A48; color: #fff; }
+        .pm-banner-mi .pm-banner-icon { color: #fff; }
+        .pm-banner-mi .pm-banner-num { color: #12B76A; }
+        .pm-banner-mo { background: #2F6E4E; color: #fff; }
         .pm-banner-mo .pm-banner-icon { color: #fff; }
         .pm-banner-mo .pm-banner-num { color: #2F6E4E; }
 
