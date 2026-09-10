@@ -2472,7 +2472,14 @@
             guardarProyectosStorage(proyectos); 
             actualizarInfoBackup();
             // Sincronizar con API en segundo plano
-            DataService.syncAllProjects(proyectos);
+            const syncPromise = DataService.syncAllProjects(proyectos);
+            if (syncPromise && typeof syncPromise.then === 'function') {
+                syncPromise.then(function(results) {
+                    if (results && results.some(function(r) { return r && r.status === 'created'; })) {
+                        actualizarDashboard();
+                    }
+                }).catch(function() {});
+            }
         }
 
         function actualizarInfoBackup() {
@@ -2739,11 +2746,17 @@
             try {
                 const apiResult = await DataService.listProjects();
                 if (apiResult && apiResult.projects) {
-                    const apiProjects = apiResult.projects.map(apiP => ({
-                        ...(apiP.data || {}),
-                        id: apiP.id,
-                        _fromApi: true,
-                    }));
+                    const apiProjects = apiResult.projects.map(apiP => {
+                        const legacyId = (apiP.data && apiP.data.id != null && String(apiP.data.id) !== String(apiP.id))
+                            ? String(apiP.data.id)
+                            : null;
+                        return {
+                            ...(apiP.data || {}),
+                            id: apiP.id,
+                            _legacyId: legacyId,
+                            _fromApi: true,
+                        };
+                    });
                     // Fusionar con proyectos locales (no reemplazar)
                     const localProjects = cargarProyectosStorage() || [];
                     const merged = [...localProjects];
@@ -2751,8 +2764,21 @@
                         if (typeof DataService !== 'undefined' && typeof DataService.isProjectDeleted === 'function' && DataService.isProjectDeleted(apiP.id)) {
                             return;
                         }
-                        const idx = merged.findIndex(p => p.id === apiP.id);
+                        const apiIdResuelto = String(apiP.id);
+                        let idx = merged.findIndex(p => {
+                            if (String(p.id) === apiIdResuelto) return true;
+                            if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                                if (String(DataService.resolveId(String(p.id))) === apiIdResuelto) return true;
+                                if (apiP._legacyId && String(apiP._legacyId) === String(p.id)) return true;
+                            } else if (apiP._legacyId && String(apiP._legacyId) === String(p.id)) {
+                                return true;
+                            }
+                            return false;
+                        });
                         if (idx >= 0) {
+                            if (apiP._legacyId && typeof DataService !== 'undefined' && typeof DataService._recordRemap === 'function') {
+                                DataService._recordRemap(apiP._legacyId, String(apiP.id));
+                            }
                             merged[idx] = { ...merged[idx], ...apiP };
                         } else {
                             merged.push(apiP);
@@ -2792,7 +2818,16 @@
             } else {
                 const proyectosAsignados = Array.isArray(usuarioActual.proyectosAsignados) ? usuarioActual.proyectosAsignados : [];
                 const proyectosAsignadosStr = proyectosAsignados.map(id => String(id));
-                proyectos = todosLosProyectos.filter(p => proyectosAsignadosStr.includes(String(p.id)));
+                proyectos = todosLosProyectos.filter(p => {
+                    const pid = String(p.id);
+                    if (proyectosAsignadosStr.includes(pid)) return true;
+                    if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                        return proyectosAsignadosStr.some(function(a) {
+                            return String(DataService.resolveId(a)) === pid;
+                        });
+                    }
+                    return false;
+                });
                 console.log(' Usuario - Proyectos visibles:', proyectos.map(p => `${p.id} - ${p.nombre}`));
                 console.log(' Usuario - Cantidad:', proyectos.length);
             }
@@ -2926,10 +2961,21 @@
         }
 
         function abrirProyecto(id) {
+            if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                id = DataService.resolveId(id);
+            }
             // Verificar acceso
             if (usuarioActual.role !== 'admin') {
                 const proyectosAsignados = Array.isArray(usuarioActual.proyectosAsignados) ? usuarioActual.proyectosAsignados : [];
-                if (!proyectosAsignados.map(p => String(p)).includes(String(id))) {
+                const accesoPermitido = proyectosAsignados.some(function(p) {
+                    const asignadoStr = String(p);
+                    if (asignadoStr === String(id)) return true;
+                    if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                        return String(DataService.resolveId(asignadoStr)) === String(id);
+                    }
+                    return false;
+                });
+                if (!accesoPermitido) {
                     mostrarToast(' No tienes acceso a este proyecto', 'warning');
                     return;
                 }
@@ -2990,6 +3036,9 @@
         }
 
         function editarProyecto(id) {
+            if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                id = DataService.resolveId(id);
+            }
             let p = proyectos.find(p => String(p.id) === String(id));
             if (!p) { mostrarToast(' Proyecto no encontrado', 'error'); return; }
             document.getElementById('editarProyectoId').value = id;
@@ -3046,6 +3095,9 @@
         }
         
         async function eliminarProyectoPorId(id) {
+            if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                id = DataService.resolveId(id);
+            }
             let p = proyectos.find(proj => String(proj.id) === String(id));
             if (!p) { mostrarToast(' Proyecto no encontrado', 'error'); return; }
             if (confirm(` Eliminar "${p.nombre}"? Esta accion no se puede deshacer.`)) {
@@ -3064,7 +3116,11 @@
                 if (typeof DataService !== 'undefined' && typeof DataService.markProjectDeleted === 'function') {
                     DataService.markProjectDeleted(String(id));
                 }
-                if (String(localStorage.getItem('proyectoSeleccionado')) === String(id)) {
+                let selId = localStorage.getItem('proyectoSeleccionado');
+                if (selId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                    selId = DataService.resolveId(selId);
+                }
+                if (String(selId) === String(id)) {
                     localStorage.removeItem('proyectoSeleccionado');
                 }
                 proyectos = proyectos.filter(proj => String(proj.id) !== String(id));
@@ -3075,6 +3131,9 @@
         }
 
         function duplicarProyecto(id) {
+            if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                id = DataService.resolveId(id);
+            }
             let original = proyectos.find(p => String(p.id) === String(id));
             if (!original) {
                 mostrarToast(" Proyecto no encontrado", 'error');
@@ -4060,6 +4119,9 @@
             if (!proyectoId) {
                 mostrarToast(" No hay proyecto seleccionado. Abre un proyecto primero.", 'error');
                 return;
+            }
+            if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                proyectoId = DataService.resolveId(proyectoId);
             }
             let proyecto = proyectos.find(p => p.id == proyectoId);
             if (!proyecto) { mostrarToast(" Proyecto no encontrado", 'error'); return; }

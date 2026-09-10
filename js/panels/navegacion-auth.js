@@ -46,6 +46,9 @@
             
             // Aplicar permisos de edición por módulo
             var proyectoId = localStorage.getItem('proyectoSeleccionado');
+            if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+                proyectoId = DataService.resolveId(proyectoId);
+            }
             var usuario = AuthSystem.getCurrentUser();
             if (usuario && usuario.role !== 'admin' && proyectoId) {
                 var nivel = AuthSystem.getNivelAccesoModulo(proyectoId, panelId.toLowerCase());
@@ -72,6 +75,13 @@
     }
 
     let idRaw = localStorage.getItem('proyectoSeleccionado');
+    if (idRaw && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+        const idResuelto = DataService.resolveId(idRaw);
+        if (String(idResuelto) !== String(idRaw)) {
+            idRaw = String(idResuelto);
+            localStorage.setItem('proyectoSeleccionado', idRaw);
+        }
+    }
     let id = parseInt(idRaw, 10);
     // Los IDs de Supabase son UUID (string): NO usar parseInt para decidir la ruta
     const idEsValido = !!idRaw && idRaw !== 'null' && idRaw !== 'undefined';
@@ -271,6 +281,9 @@
     }
     
     var proyectoId = localStorage.getItem('proyectoSeleccionado');
+    if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+        proyectoId = DataService.resolveId(proyectoId);
+    }
     
     var elementos = document.querySelectorAll('.nav-header[data-panel], .nav-header.has-submenu, .submenu-item[data-panel]');
     for (var i = 0; i < elementos.length; i++) {

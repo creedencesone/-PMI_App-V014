@@ -185,12 +185,16 @@ const DataService = {
 
     isProjectDeleted(id) {
         if (id == null) return false;
-        return this._readDeletedProjects().includes(String(id));
+        const sid = String(id);
+        const list = this._readDeletedProjects();
+        if (list.includes(sid)) return true;
+        const resolved = this.resolveId(sid);
+        return resolved !== sid && list.includes(String(resolved));
     },
 
     markProjectDeleted(id) {
         if (id == null) return;
-        const sid = String(id);
+        const sid = String(this.resolveId(id));
         const list = this._readDeletedProjects();
         if (!list.includes(sid)) {
             list.push(sid);
@@ -200,15 +204,54 @@ const DataService = {
 
     unmarkProjectDeleted(id) {
         if (id == null) return;
-        const sid = String(id);
+        const sid = String(this.resolveId(id));
         this._writeDeletedProjects(this._readDeletedProjects().filter(x => x !== sid));
     },
 
     pruneDeletedProjects(knownApiIds) {
         const ids = new Set((knownApiIds || []).map(String));
         const list = this._readDeletedProjects();
-        const remaining = list.filter(id => ids.has(id));
+        const remaining = list.filter(id => ids.has(String(this.resolveId(id))));
         if (remaining.length !== list.length) this._writeDeletedProjects(remaining);
+    },
+
+    _idRemapKey: 'pmi_ids_remapeados',
+
+    _readRemapMap() {
+        try {
+            const raw = localStorage.getItem(this._idRemapKey);
+            if (!raw) return {};
+            const map = JSON.parse(raw);
+            return (map && typeof map === 'object') ? map : {};
+        } catch (e) {
+            return {};
+        }
+    },
+
+    _recordRemap(oldId, newId) {
+        if (oldId == null || newId == null) return;
+        const oldS = String(oldId);
+        const newS = String(newId);
+        if (oldS === newS) return;
+        const map = this._readRemapMap();
+        map[oldS] = newS;
+        try {
+            localStorage.setItem(this._idRemapKey, JSON.stringify(map));
+        } catch (e) {
+            console.warn('[DataService] Error guardando remapeo de ids:', e.message);
+        }
+    },
+
+    resolveId(id) {
+        if (id == null) return id;
+        let cur = String(id);
+        const map = this._readRemapMap();
+        let hops = 0;
+        while (map[cur] && hops < 10) {
+            cur = map[cur];
+            hops++;
+        }
+        return cur;
     },
 
     // --------------------------------------------------
@@ -927,6 +970,7 @@ const DataService = {
                     });
                     if (created && created.project && created.project.id) {
                         window.proyecto.id = created.project.id;
+                        this._recordRemap(oldId, created.project.id);
                         localStorage.setItem('proyectoSeleccionado', created.project.id);
                         // Actualizar el ID también en el array de localStorage
                         const allProyectos = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
@@ -972,6 +1016,7 @@ const DataService = {
                         if (created && created.project && created.project.id) {
                             const oldId = p.id;
                             p.id = created.project.id;
+                            this._recordRemap(oldId, created.project.id);
                             // Update in localStorage array
                             const allProyectos = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
                             const idx = allProyectos.findIndex(pr => String(pr.id) === String(oldId));
@@ -1044,6 +1089,7 @@ const DataService = {
                 if (created && created.project && created.project.id) {
                     const oldId = p.id;
                     p.id = created.project.id;
+                    this._recordRemap(oldId, created.project.id);
                     // Actualizar en localStorage
                     const allProyectos = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
                     const idx = allProyectos.findIndex(pr => String(pr.id) === String(oldId));
@@ -1171,6 +1217,7 @@ const DataService = {
                             data: p,
                         });
                         if (created && created.project && created.project.id) {
+                            this._recordRemap(id, created.project.id);
                             // Actualizar ID en localStorage
                             const allProyectos = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
                             const idx = allProyectos.findIndex(pr => String(pr.id) === id || pr.id === parseInt(id));
@@ -1204,7 +1251,10 @@ const DataService = {
                     _serverUpdatedAt: result.project.updated_at
                 };
                 const allProyectos = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
-                const idx = allProyectos.findIndex(p => String(p.id) === String(projectId));
+                const idx = allProyectos.findIndex(p => {
+                    if (String(p.id) === String(projectId)) return true;
+                    return String(this.resolveId(String(p.id))) === String(projectId);
+                });
                 if (idx >= 0) {
                     allProyectos[idx] = serverProj;
                 } else {
