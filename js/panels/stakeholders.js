@@ -1,4 +1,26 @@
+        function deduplicarStakeholders() {
+            if (!proyecto || !Array.isArray(proyecto.stakeholders) || proyecto.stakeholders.length < 2) return;
+            const vistos = {};
+            const limpios = [];
+            let huboCambios = false;
+            proyecto.stakeholders.forEach(s => {
+                const clave = ((s.nombre || '').trim().toLowerCase() + '|' + (s.email || '').trim().toLowerCase());
+                if (clave in vistos) {
+                    huboCambios = true;
+                    if (proyecto.raci) proyecto.raci.forEach(r => { if (r.stakeholderId === s.id) r.stakeholderId = vistos[clave]; });
+                    return;
+                }
+                vistos[clave] = s.id;
+                limpios.push(s);
+            });
+            if (huboCambios) {
+                proyecto.stakeholders = limpios;
+                guardarProyecto && guardarProyecto();
+            }
+        }
+
         function renderizarStakeholders() {
+            deduplicarStakeholders();
             var container = document.getElementById('stakeholdersContent');
             var estiloActual = localStorage.getItem('pm_stakeholder_style') || 'v1';
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
@@ -356,6 +378,15 @@ function guardarStakeholder() {
       interes: parseInt(document.getElementById('stkInteres')?.value) || 3,
       expectativas: document.getElementById('stkExpectativas')?.value || ''
     };
+
+    const claveNueva = (nombre + '|' + nuevo.email).trim().toLowerCase();
+    const yaExiste = (proyecto.stakeholders || []).some(s =>
+        String(((s.nombre || '') + '|' + (s.email || '')).trim().toLowerCase()) === claveNueva
+    );
+    if (yaExiste) {
+        mostrarToast(' Ya existe un interesado con ese nombre y email', 'error');
+        return;
+    }
 
     proyecto.stakeholders.push(nuevo);
     guardarProyecto && guardarProyecto();
