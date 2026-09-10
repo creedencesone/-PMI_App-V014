@@ -80,7 +80,8 @@
     if (idEsValido && typeof DataService !== 'undefined' && DataService.getToken()) {
         try {
             const apiResult = await DataService.getProject(idRaw);
-            if (apiResult && apiResult.project && apiResult.project.data) {
+            if (apiResult && apiResult.project && apiResult.project.data
+                && !(typeof DataService.isProjectDeleted === 'function' && DataService.isProjectDeleted(String(apiResult.project.id)))) {
                 const apiProyecto = { ...apiResult.project.data, id: apiResult.project.id, _fromApi: true };
                 let todos = cargarProyectosStorage();
                 let idx = todos.findIndex(p => String(p.id) === idRaw || p.id === id);

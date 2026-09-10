@@ -2748,6 +2748,9 @@
                     const localProjects = cargarProyectosStorage() || [];
                     const merged = [...localProjects];
                     apiProjects.forEach(apiP => {
+                        if (typeof DataService !== 'undefined' && typeof DataService.isProjectDeleted === 'function' && DataService.isProjectDeleted(apiP.id)) {
+                            return;
+                        }
                         const idx = merged.findIndex(p => p.id === apiP.id);
                         if (idx >= 0) {
                             merged[idx] = { ...merged[idx], ...apiP };
@@ -2757,6 +2760,9 @@
                     });
                     todosLosProyectos = merged;
                     guardarProyectosStorage(todosLosProyectos);
+                    if (typeof DataService !== 'undefined' && typeof DataService.pruneDeletedProjects === 'function') {
+                        DataService.pruneDeletedProjects(apiProjects.map(apiP => String(apiP.id)));
+                    }
                     console.log(' Proyectos cargados desde API y fusionados con locales:', todosLosProyectos.length);
                 }
             } catch (e) {
@@ -3054,6 +3060,9 @@
                             return;
                         }
                     }
+                }
+                if (typeof DataService !== 'undefined' && typeof DataService.markProjectDeleted === 'function') {
+                    DataService.markProjectDeleted(String(id));
                 }
                 if (String(localStorage.getItem('proyectoSeleccionado')) === String(id)) {
                     localStorage.removeItem('proyectoSeleccionado');

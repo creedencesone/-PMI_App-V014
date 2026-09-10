@@ -165,6 +165,52 @@ const DataService = {
         else localStorage.removeItem('pmi_api_token');
     },
 
+    _deletedProjectsKey: 'pmi_proyectos_eliminados',
+
+    _readDeletedProjects() {
+        try {
+            const raw = localStorage.getItem(this._deletedProjectsKey);
+            if (!raw) return [];
+            const list = JSON.parse(raw);
+            return Array.isArray(list) ? list : [];
+        } catch (e) {
+            console.warn('[DataService] Error leyendo proyectos eliminados:', e.message);
+            return [];
+        }
+    },
+
+    _writeDeletedProjects(list) {
+        localStorage.setItem(this._deletedProjectsKey, JSON.stringify(list));
+    },
+
+    isProjectDeleted(id) {
+        if (id == null) return false;
+        return this._readDeletedProjects().includes(String(id));
+    },
+
+    markProjectDeleted(id) {
+        if (id == null) return;
+        const sid = String(id);
+        const list = this._readDeletedProjects();
+        if (!list.includes(sid)) {
+            list.push(sid);
+            this._writeDeletedProjects(list);
+        }
+    },
+
+    unmarkProjectDeleted(id) {
+        if (id == null) return;
+        const sid = String(id);
+        this._writeDeletedProjects(this._readDeletedProjects().filter(x => x !== sid));
+    },
+
+    pruneDeletedProjects(knownApiIds) {
+        const ids = new Set((knownApiIds || []).map(String));
+        const list = this._readDeletedProjects();
+        const remaining = list.filter(id => ids.has(id));
+        if (remaining.length !== list.length) this._writeDeletedProjects(remaining);
+    },
+
     // --------------------------------------------------
     // Helpers internos (Supabase)
     // --------------------------------------------------
@@ -1148,6 +1194,7 @@ const DataService = {
     async _pullProject(projectId) {
         const token = this.getToken();
         if (!token || !projectId) return null;
+        if (this.isProjectDeleted(projectId)) return null;
         try {
             const result = await this.getProject(projectId);
             if (result && result.project && result.project.data) {
