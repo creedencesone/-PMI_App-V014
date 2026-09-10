@@ -3039,10 +3039,25 @@
             cerrarModalEditarProyecto();
         }
         
-        function eliminarProyectoPorId(id) {
+        async function eliminarProyectoPorId(id) {
             let p = proyectos.find(proj => String(proj.id) === String(id));
             if (!p) { mostrarToast(' Proyecto no encontrado', 'error'); return; }
             if (confirm(` Eliminar "${p.nombre}"? Esta accion no se puede deshacer.`)) {
+                if (typeof DataService !== 'undefined' && DataService.getToken()) {
+                    try {
+                        await DataService.deleteProject(String(id));
+                        if (typeof DataService._dequeue === 'function') DataService._dequeue(String(id));
+                    } catch (e) {
+                        if (!DataService._isMissingProjectError(e)) {
+                            console.warn(' No se pudo eliminar en el servidor:', e.message);
+                            mostrarToast(' No se pudo eliminar en el servidor. Revisa la conexión.', 'error');
+                            return;
+                        }
+                    }
+                }
+                if (String(localStorage.getItem('proyectoSeleccionado')) === String(id)) {
+                    localStorage.removeItem('proyectoSeleccionado');
+                }
                 proyectos = proyectos.filter(proj => String(proj.id) !== String(id));
                 guardarProyectos();
                 actualizarDashboard();

@@ -154,6 +154,12 @@
 }
         sincronizarActaConProyecto();
     } else {
+        if (idEsValido) {
+            console.warn(' Proyecto seleccionado no encontrado. Volviendo al dashboard.');
+            localStorage.removeItem('proyectoSeleccionado');
+            window.location.href = 'dashboard.html';
+            return;
+        }
         
         //  NUEVO PROYECTO - AHORA CON AVALES Y GARANTIA
         proyecto = { 
