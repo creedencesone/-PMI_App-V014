@@ -12,7 +12,7 @@ function renderizarActa() {
         hitosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_hitos_pago') + '</div><div class="acta-value">';
         proyecto.hitosFinancieros.forEach(h => {
             let importe = (proyecto.precioVenta * h.porcentaje) / 100;
-            hitosHtml += `<div style="margin-bottom: 4px;">• ${escapeHtml(h.nombre)}: ${h.porcentaje}% (${formatearMoneda(importe)}) - Mes ${h.mes}</div>`;
+            hitosHtml += `<div class="acta-hito">• ${escapeHtml(h.nombre)}: ${h.porcentaje}% (${formatearMoneda(importe)}) - Mes ${h.mes}</div>`;
         });
         hitosHtml += `</div></div>`;
     } else {
@@ -24,12 +24,12 @@ function renderizarActa() {
         avalesHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_avales') + '</div><div class="acta-value">';
         proyecto.avales.forEach(a => {
             let estadoIcon = a.estado === 'Vigente' ? '' : (a.estado === 'Próximo a vencer' ? '' : '');
-            avalesHtml += `<div style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                <strong>${estadoIcon} ${escapeHtml(a.tipo)}</strong><br>
-                 ${escapeHtml(a.entidad || 'Entidad no especificada')}<br>
-                 Importe: ${formatearMoneda(convertirMoneda(a.importe, a.moneda))}<br>
-                 Emisión: ${a.fechaEmision || '-'} |  Vence: ${a.fechaVencimiento || '-'}<br>
-                 Ref: ${escapeHtml(a.referencia || '-')}
+            avalesHtml += `<div class="acta-aval">
+                <div class="acta-aval-tipo">${estadoIcon} ${escapeHtml(a.tipo)}</div>
+                <div class="acta-aval-linea">${escapeHtml(a.entidad || 'Entidad no especificada')}</div>
+                <div class="acta-aval-linea">Importe: ${formatearMoneda(convertirMoneda(a.importe, a.moneda))}</div>
+                <div class="acta-aval-linea">Emisión: ${a.fechaEmision || '-'} | Vence: ${a.fechaVencimiento || '-'}</div>
+                <div class="acta-aval-linea">Ref: ${escapeHtml(a.referencia || '-')}</div>
             </div>`;
         });
         avalesHtml += `</div></div>`;
@@ -57,79 +57,179 @@ function renderizarActa() {
         metodologiaDetalle = ` Transición: ${metodologia.fechaTransicion || 'No definida'} |  Fases Ágiles: ${fasesTexto}`;
     }
     
+    const actaIniciales = (nombre) => {
+        const parts = (nombre || '').trim().split(/\s+/);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return (parts[0] || '?').substring(0, 2).toUpperCase();
+    };
+    
     document.getElementById('actaContent').innerHTML = `
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_identificacion')}</h3><div class="acta-grid">
-            <div class="acta-field"><div class="acta-label">${tApp('acta_nombre')}</div><div class="acta-value">${escapeHtml(a.nombreProyecto || proyecto.nombre)}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_codigo')}</div><div class="acta-value">${escapeHtml(a.codigo || '-')}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_pais')}</div><div class="acta-value">${escapeHtml(proyecto.pais || a.pais || 'No especificado')}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_inicio')}</div><div class="acta-value">${a.fechaInicio ? formatearFechaEspa(a.fechaInicio) : '-'}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_fin')}</div><div class="acta-value">${a.fechaFin || proyecto.fechaFinPlan || '-'}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_moneda')}</div><div class="acta-value">${a.moneda || proyecto.monedaBase}</div></div>
-        </div></div>
+        <div class="acta-cover">
+            <div class="acta-cover-badge">ACTA DE CONSTITUCIÓN</div>
+            <h2 class="acta-cover-title">${escapeHtml(a.nombreProyecto || proyecto.nombre)}</h2>
+            <div class="acta-cover-pills">
+                <span class="acta-pill">${tApp('acta_codigo')}: ${escapeHtml(a.codigo || '-')}</span>
+                <span class="acta-pill">${tApp('acta_pais')}: ${escapeHtml(proyecto.pais || a.pais || 'No especificado')}</span>
+                <span class="acta-pill">${tApp('acta_inicio')}: ${a.fechaInicio ? formatearFechaEspa(a.fechaInicio) : '-'}</span>
+                <span class="acta-pill">${tApp('acta_fin')}: ${a.fechaFin || proyecto.fechaFinPlan || '-'}</span>
+                <span class="acta-pill">${tApp('acta_moneda')}: ${a.moneda || proyecto.monedaBase}</span>
+            </div>
+        </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_objetivos')}</h3>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-blue">
+                <span class="acta-heading-num">01</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_identificacion')}</div>
+                    <div class="acta-heading-subtitle">Datos generales del proyecto</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+            </div>
+            <div class="acta-grid">
+                <div class="acta-field"><div class="acta-label">${tApp('acta_nombre')}</div><div class="acta-value">${escapeHtml(a.nombreProyecto || proyecto.nombre)}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_codigo')}</div><div class="acta-value">${escapeHtml(a.codigo || '-')}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_pais')}</div><div class="acta-value">${escapeHtml(proyecto.pais || a.pais || 'No especificado')}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_inicio')}</div><div class="acta-value">${a.fechaInicio ? formatearFechaEspa(a.fechaInicio) : '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_fin')}</div><div class="acta-value">${a.fechaFin || proyecto.fechaFinPlan || '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_moneda')}</div><div class="acta-value">${a.moneda || proyecto.monedaBase}</div></div>
+            </div>
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-green">
+                <span class="acta-heading-num">02</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_objetivos')}</div>
+                    <div class="acta-heading-subtitle">Objetivo general y criterios de éxito</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+            </div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_objetivo_general')}</div><div class="acta-value">${escapeHtml(a.objetivoGeneral || 'No definido')}</div></div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_criterios_exito')}</div><div class="acta-value">${escapeHtml(a.criteriosExito || 'No definidos')}</div></div>
         </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_alcance')}</h3>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-orange">
+                <span class="acta-heading-num">03</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_alcance')}</div>
+                    <div class="acta-heading-subtitle">Descripción y entregables clave</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div>
+            </div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_descripcion')}</div><div class="acta-value">${escapeHtml(a.alcance || proyecto.descripcion || 'No definido')}</div></div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_entregables_clave')}</div><div class="acta-value">${escapeHtml(a.entregablesClave || 'No definidos')}</div></div>
         </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_partes')}</h3>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 12px;">
-                <div class="info-card u-text-center" >
-                    <div class="u-fs-32 u-mb-8"></div>
-                    <div class="u-fw-600 u-fs-14 u-mb-4">${tApp('acta_pm')}</div>
-                    <div class="u-fs-13 u-color-primary">${escapeHtml(pm.nombre || tApp('acta_pm_no_asignado'))}</div>
-                    <div class="u-fs-11 u-mt-6"> ${pm.email || '-'}<br> ${pm.telefono || '-'}</div>
-                    <button class="btn btn-secondary btn-small u-w-full" onclick="abrirModalPM()" >${tApp('btn_editar')} PM</button>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-purple">
+                <span class="acta-heading-num">04</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_partes')}</div>
+                    <div class="acta-heading-subtitle">Roles principales del proyecto</div>
                 </div>
-                
-                <div class="info-card u-text-center" >
-                    <div class="u-fs-32 u-mb-8"></div>
-                    <div class="u-fw-600 u-fs-14 u-mb-4">${tApp('acta_sponsor')}</div>
-                    <div class="u-fs-13 u-color-primary">${escapeHtml(sp.nombre || tApp('acta_sponsor_no_asignado'))}</div>
-                    <div class="u-fs-11 u-mt-6"> ${sp.email || '-'}<br> ${sp.telefono || '-'}</div>
-                    <button class="btn btn-secondary btn-small u-w-full" onclick="abrirModalSponsor()" >${tApp('btn_editar')} Sponsor</button>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            </div>
+            <div class="acta-partes">
+                <div class="acta-parte">
+                    <div class="pm-avatar pm-avatar-interno acta-parte-avatar">${escapeHtml(actaIniciales(pm.nombre))}</div>
+                    <div class="acta-parte-info">
+                        <div class="acta-parte-rol">${tApp('acta_pm')}</div>
+                        <div class="acta-parte-nombre">${escapeHtml(pm.nombre || tApp('acta_pm_no_asignado'))}</div>
+                        <div class="acta-parte-contacto">${escapeHtml(pm.email || '-')}<br>${escapeHtml(pm.telefono || '-')}</div>
+                    </div>
+                    <button class="btn btn-secondary btn-small acta-parte-btn" onclick="abrirModalPM()">${tApp('btn_editar')} PM</button>
                 </div>
-                
-                <div class="info-card u-text-center" >
-                    <div class="u-fs-32 u-mb-8"></div>
-                    <div class="u-fw-600 u-fs-14 u-mb-4">${tApp('acta_cliente')}</div>
-                    <div class="u-fs-13 u-color-primary">${escapeHtml(cl.nombre || tApp('acta_cliente_no_asignado'))}</div>
-                    <div class="u-fs-11 u-mt-6"> ${cl.email || '-'}<br> ${cl.telefono || '-'}</div>
-                    <button class="btn btn-secondary btn-small u-w-full" onclick="abrirModalCliente()" >${tApp('btn_editar')} Cliente</button>
+                <div class="acta-parte">
+                    <div class="pm-avatar pm-avatar-institucional acta-parte-avatar">${escapeHtml(actaIniciales(sp.nombre))}</div>
+                    <div class="acta-parte-info">
+                        <div class="acta-parte-rol">${tApp('acta_sponsor')}</div>
+                        <div class="acta-parte-nombre">${escapeHtml(sp.nombre || tApp('acta_sponsor_no_asignado'))}</div>
+                        <div class="acta-parte-contacto">${escapeHtml(sp.email || '-')}<br>${escapeHtml(sp.telefono || '-')}</div>
+                    </div>
+                    <button class="btn btn-secondary btn-small acta-parte-btn" onclick="abrirModalSponsor()">${tApp('btn_editar')} Sponsor</button>
+                </div>
+                <div class="acta-parte">
+                    <div class="pm-avatar pm-avatar-cliente acta-parte-avatar">${escapeHtml(actaIniciales(cl.nombre))}</div>
+                    <div class="acta-parte-info">
+                        <div class="acta-parte-rol">${tApp('acta_cliente')}</div>
+                        <div class="acta-parte-nombre">${escapeHtml(cl.nombre || tApp('acta_cliente_no_asignado'))}</div>
+                        <div class="acta-parte-contacto">${escapeHtml(cl.email || '-')}<br>${escapeHtml(cl.telefono || '-')}</div>
+                    </div>
+                    <button class="btn btn-secondary btn-small acta-parte-btn" onclick="abrirModalCliente()">${tApp('btn_editar')} Cliente</button>
                 </div>
             </div>
         </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_presupuesto')}</h3><div class="acta-grid">
-            <div class="acta-field"><div class="acta-label">${tApp('acta_presupuesto_valor')}</div><div class="acta-value">${a.presupuesto ? formatearMoneda(a.presupuesto) : '-'}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_contrato')}</div><div class="acta-value"><strong class="u-color-success">${proyecto.precioVenta ? formatearMoneda(proyecto.precioVenta) : 'No definido'}</strong></div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_moneda_venta')}</div><div class="acta-value">${proyecto.monedaVenta || proyecto.monedaBase}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_roi')}</div><div class="acta-value">${a.roi ? a.roi + '%' : '-'}</div></div>
-        </div></div>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-teal">
+                <span class="acta-heading-num">05</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_presupuesto')}</div>
+                    <div class="acta-heading-subtitle">Presupuesto, contrato y rentabilidad</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+            </div>
+            <div class="acta-grid">
+                <div class="acta-field"><div class="acta-label">${tApp('acta_presupuesto_valor')}</div><div class="acta-value">${a.presupuesto ? formatearMoneda(a.presupuesto) : '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_contrato')}</div><div class="acta-value"><strong class="u-color-success">${proyecto.precioVenta ? formatearMoneda(proyecto.precioVenta) : 'No definido'}</strong></div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_moneda_venta')}</div><div class="acta-value">${proyecto.monedaVenta || proyecto.monedaBase}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_roi')}</div><div class="acta-value">${a.roi ? a.roi + '%' : '-'}</div></div>
+            </div>
+        </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_condiciones')}</h3>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-yellow">
+                <span class="acta-heading-num">06</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_condiciones')}</div>
+                    <div class="acta-heading-subtitle">Condiciones de pago y hitos financieros</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+            </div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_condiciones_texto')}</div><div class="acta-value">${escapeHtml(proyecto.condicionesPago || 'No definidas')}</div></div>
             ${hitosHtml}
         </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_avales')}</h3>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-red">
+                <span class="acta-heading-num">07</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_avales')}</div>
+                    <div class="acta-heading-subtitle">Avales y garantías del proyecto</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            </div>
             ${avalesHtml}
         </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_aprobaciones')}</h3><div class="acta-grid">
-            <div class="acta-field"><div class="acta-label">${tApp('acta_aprobado_por')}</div><div class="acta-value">${escapeHtml(a.aprobadoPor || 'Pendiente')}</div></div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${a.fechaAprobacion || '-'}</div></div>
-        </div></div>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-indigo">
+                <span class="acta-heading-num">08</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_aprobaciones')}</div>
+                    <div class="acta-heading-subtitle">Aprobación del acta de constitución</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            </div>
+            <div class="acta-grid">
+                <div class="acta-field"><div class="acta-label">${tApp('acta_aprobado_por')}</div><div class="acta-value">${escapeHtml(a.aprobadoPor || 'Pendiente')}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${a.fechaAprobacion || '-'}</div></div>
+            </div>
+        </div>
         
-        <div class="acta-section"><h3 class="u-color-primary">${tApp('acta_metodologia')}</h3>
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-green">
+                <span class="acta-heading-num">09</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_metodologia')}</div>
+                    <div class="acta-heading-subtitle">Enfoque de gestión del proyecto</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></div>
+            </div>
             <div class="acta-field">
                 <div class="acta-label">${tApp('acta_metodologia_tipo')}</div>
-                <div class="acta-value">${metodologiaTexto}</div>
+                <div class="acta-value"><span class="acta-pill acta-pill-${metodologia.tipo}">${metodologiaTexto.trim()}</span></div>
             </div>
             <div class="acta-field">
                 <div class="acta-label">${tApp('acta_metodologia_desc')}</div>
