@@ -27,6 +27,7 @@
                 organigrama_vacio: 'No hay nodos en el organigrama',
                 organigrama_sin_vinculo: 'sin vínculo',
                 organigrama_anyadir_subordinado: 'Añadir subordinado',
+                organigrama_anyadir_companero: 'Añadir compañero',
                 organigrama_estilo_tarjetas: 'Tarjetas',
                 organigrama_estilo_compacto: 'Compacto',
                 organigrama_zoom_in: 'Acercar',
@@ -41,6 +42,8 @@
         }
         window.AuthSystem = { puedeEditarModulo: function () { return true; } };
         window.guardarProyecto = function () {};
+        window.mostrarToast = function () {};
+        window.cerrarModalGeneric = function () { const m = document.getElementById('genericModal'); if (m) m.remove(); };
         window.proyecto = {
             stakeholders: [
                 { id: 7, nombre: 'Gloria Peña', puesto: 'Contable Senior', email: 'gloria.viva@empresa.com' }

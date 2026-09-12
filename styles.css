@@ -1796,7 +1796,8 @@ body[data-theme="light"] .logo img.logo-light {
         .organigrama-nodo-puesto { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; word-break: break-word; }
         .organigrama-nodo-email { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; word-break: break-all; }
         .organigrama-sin-vinculo { display: inline-block; font-size: 10px; font-weight: 600; color: #F59E0B; background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
-        .organigrama-nodo .edit-btn, .organigrama-nodo .delete-btn, .organigrama-nodo .btn { margin-top: 8px; margin-right: 4px; }
+        .organigrama-nodo-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px; }
+        .organigrama-nodo .edit-btn, .organigrama-nodo .delete-btn, .organigrama-nodo .btn { margin: 0; }
         .organigrama-nodo .btn { transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
         .organigrama-nodo[data-nivel="0"] { --org-nivel-accent: #6366F1; }
         .organigrama-nodo[data-nivel="1"] { --org-nivel-accent: #8B5CF6; }
@@ -1872,6 +1873,8 @@ body[data-theme="light"] .logo img.logo-light {
             align-items: center;
             gap: 2px;
             margin-left: auto;
+            margin-top: 0;
+            flex-wrap: nowrap;
         }
         .organigrama-estilo-compacto .organigrama-nodo-acciones .btn {
             width: 20px;
@@ -1885,6 +1888,7 @@ body[data-theme="light"] .logo img.logo-light {
             justify-content: center;
         }
         .organigrama-estilo-compacto .organigrama-nodo-acciones .btn::before { content: '+'; font-size: 13px; line-height: 1; }
+        .organigrama-estilo-compacto .organigrama-nodo-acciones .organigrama-peer-btn::before { content: '⧉'; }
         .organigrama-estilo-compacto .organigrama-nodo-acciones .edit-btn,
         .organigrama-estilo-compacto .organigrama-nodo-acciones .delete-btn {
             display: none;

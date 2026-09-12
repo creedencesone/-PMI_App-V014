@@ -106,6 +106,7 @@ function organigramaNodoHtml(n, nivel) {
     }
     html += '<div class="organigrama-nodo-acciones">';
     html += '<button class="btn btn-secondary btn-small" onclick="abrirModalOrganigrama(' + n.id + ')">' + tApp('organigrama_anyadir_subordinado') + '</button>';
+    html += '<button class="btn btn-secondary btn-small organigrama-peer-btn" title="' + tApp('organigrama_anyadir_companero') + '" onclick="abrirModalOrganigrama(' + (n.hijoDe === null || n.hijoDe === undefined ? 'null' : n.hijoDe) + ')">' + tApp('organigrama_anyadir_companero') + '</button>';
     html += '<button class="edit-btn" onclick="editarNodoOrganigrama(' + n.id + ')">Editar</button>';
     html += '<button class="delete-btn" onclick="eliminarNodoOrganigrama(' + n.id + ')">Eliminar</button>';
     html += '</div></div>';
