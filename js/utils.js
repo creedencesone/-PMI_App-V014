@@ -119,6 +119,10 @@ function refreshAllPanels() {
         renderizarStakeholders();
     }
     
+    if (typeof renderizarOrganigrama === 'function') {
+        renderizarOrganigrama();
+    }
+    
     // RACI
     if (typeof renderizarRACI === 'function') {
         renderizarRACI();
@@ -625,7 +629,8 @@ function cerrarModalGeneric() {
                     { selector: '.submenu-item[data-panel="materiales"]', icono: 'package' },
                     { selector: '.submenu-item[data-panel="servicios"]', icono: 'tool' },
                     { selector: '.submenu-item[data-panel="logistica"]', icono: 'anchor' },
-                    { selector: '.submenu-item[data-panel="viajes"]', icono: 'plane' }
+                    { selector: '.submenu-item[data-panel="viajes"]', icono: 'plane' },
+                    { selector: '.submenu-item[data-panel="organigrama"]', icono: 'users' }
                 ];
                 elementosConIcono.forEach(item => {
                     const el = document.querySelector(item.selector);
@@ -665,6 +670,7 @@ function cerrarModalGeneric() {
                 { selector: '.submenu-item[data-panel="servicios"]', key: 'sidebar_servicios' },
                 { selector: '.submenu-item[data-panel="logistica"]', key: 'sidebar_logistica' },
                 { selector: '.submenu-item[data-panel="viajes"]', key: 'sidebar_viajes' },
+                { selector: '.submenu-item[data-panel="organigrama"]', key: 'sidebar_organigrama' },
                 { selector: '.submenu-item[data-panel="sprintBacklog"]', key: 'sidebar_sprintBacklog' },
                 { selector: '.submenu-item[data-panel="sprintBurndown"]', key: 'sidebar_sprintBurndown' },
                 { selector: '.submenu-item[data-panel="velocityTracking"]', key: 'sidebar_velocityTracking' },

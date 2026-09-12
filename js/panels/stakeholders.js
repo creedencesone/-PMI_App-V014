@@ -8,6 +8,7 @@
                 if (clave in vistos) {
                     huboCambios = true;
                     if (proyecto.raci) proyecto.raci.forEach(r => { if (r.stakeholderId === s.id) r.stakeholderId = vistos[clave]; });
+                    if (proyecto.organigrama) { proyecto.organigrama = organigramaRemapearStakeholder(proyecto.organigrama, s.id, vistos[clave]); }
                     return;
                 }
                 vistos[clave] = s.id;
@@ -453,6 +454,7 @@ function guardarStakeholder() {
                 const s = proyecto.stakeholders.find(s => s.id === id);
                 proyecto.stakeholders = proyecto.stakeholders.filter(s => s.id !== id);
                 if (proyecto.raci) proyecto.raci = proyecto.raci.filter(r => r.stakeholderId !== id);
+                if (proyecto.organigrama && proyecto.organigrama.length) { proyecto.organigrama = organigramaLimpiarStakeholder(proyecto.organigrama, id); }
                 guardarProyecto();
                 renderizarStakeholders();
                 cerrarModalGeneric();

@@ -25,6 +25,7 @@ function cargarProyecto() {
             condicionesPago: "",
             hitosFinancieros: [],
             stakeholders: [],
+            organigrama: [],
             raci: [],
             equipo: [],
             materiales: [],

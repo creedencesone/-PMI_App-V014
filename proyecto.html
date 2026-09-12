@@ -99,6 +99,7 @@
                     <div class="submenu-item" data-panel="servicios">Servicios</div>
                     <div class="submenu-item" data-panel="logistica">Logística</div>
                     <div class="submenu-item" data-panel="viajes">Viajes</div>
+                    <div class="submenu-item" data-panel="organigrama">Organigrama</div>
                 </div>
             </div>
             <div class="nav-section"><div class="nav-header has-submenu" data-submenu="finanzas"><span class="nav-icon"><i data-feather="dollar-sign" class="nav-feather"></i></span><span class="nav-title">Finanzas</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
@@ -1060,6 +1061,11 @@
                     <span><i data-feather="file-text" class="nav-feather"></i> Registro de Viajes</span>
                 </div>
                 <div id="listaViajes" class="lista-viajes-scroll"></div>
+            </div>
+
+            <div id="panelOrganigrama" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="users" class="nav-feather"></i> Organigrama</span><button class="btn btn-primary btn-small" onclick="abrirModalOrganigrama(null)"><i data-feather="plus" class="nav-feather"></i> Añadir</button></div>
+                <div id="organigramaContent"></div>
             </div>
 
             <!-- MODAL PARA NUEVO/EDITAR VIAJE -->
@@ -2445,6 +2451,7 @@
     <script src="js/panels/grafico-monedas.js"></script>
     <script src="js/panels/venta-cashflow.js"></script>
     <script src="js/panels/stakeholders.js"></script>
+    <script src="js/panels/organigrama.js"></script>
     <script src="js/panels/resumen-procesos.js"></script>
     <script src="js/panels/riesgos.js"></script>
     <script src="js/panels/garantia-viajes-avales.js"></script>

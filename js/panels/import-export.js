@@ -80,6 +80,7 @@ function inicializarEstructuraProyecto(proy) {
     if (!proy.costesFinancierosExtra) proy.costesFinancierosExtra = [];
     if (!proy.hitosFinancieros) proy.hitosFinancieros = [];
     if (!proy.stakeholders) proy.stakeholders = [];
+    if (!proy.organigrama) proy.organigrama = [];
     if (!proy.raci) proy.raci = [];
     if (!proy.equipo) proy.equipo = [];
     if (!proy.materiales) proy.materiales = [];

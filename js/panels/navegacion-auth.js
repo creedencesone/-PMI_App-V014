@@ -18,6 +18,7 @@
             if(pid === 'raci') renderizarRACI();
             if(pid === 'monedas') { actualizarTiposCambioUI(); mostrarFechaUltimaActualizacion(); poblarSelectMonedas(); setTimeout(actualizarGraficoEvolucionMoneda, 300); }
             if(pid === 'equipo') renderizarEquipo();
+            if(pid === 'organigrama') renderizarOrganigrama();
             if(pid === 'materiales') renderizarMateriales();
             if(pid === 'servicios') renderizarServicios();
             if(pid === 'comunicaciones') { renderizarComunicaciones(); renderizarReuniones(); document.querySelectorAll('.subpanel-comunicaciones').forEach(el => el.style.display = 'none'); document.getElementById('subpanelComunicaciones').style.display = 'block'; }
@@ -132,6 +133,7 @@
         if(!proyecto.costesFinancierosExtra) proyecto.costesFinancierosExtra = [];
         if(!proyecto.hitosFinancieros) proyecto.hitosFinancieros = [];
         if(!proyecto.stakeholders) proyecto.stakeholders = [];
+        if(!proyecto.organigrama) proyecto.organigrama = [];
         if(!proyecto.raci) proyecto.raci = [];
         if(!proyecto.equipo) proyecto.equipo = [];
         if(!proyecto.materiales) proyecto.materiales = [];
@@ -183,6 +185,7 @@
             condicionesPago: "", 
             hitosFinancieros: [], 
             stakeholders: [], 
+            organigrama: [],
             raci: [], 
             equipo: [], 
             materiales: [], 
@@ -244,6 +247,7 @@
     renderizarComunicaciones();
     renderizarReuniones();
     renderizarViajes();        //  Añadir esta línea
+    if (typeof renderizarOrganigrama === 'function') renderizarOrganigrama();
     mostrarFechaUltimaActualizacion();
     inicializarBeneficios();
     inicializarCambios();
