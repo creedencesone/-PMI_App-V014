@@ -1712,6 +1712,49 @@ body[data-theme="light"] .logo img.logo-light {
             .acta-partes { grid-template-columns: 1fr; }
         }
 
+        /* Organigrama */
+        .organigrama-nivel { margin-bottom: 24px; }
+        .organigrama-nivel-titulo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border-left: 3px solid #007AFF;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 10px;
+        }
+        .organigrama-fila { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 14px; padding-bottom: 8px; }
+        .organigrama-nodo {
+            min-width: 200px;
+            max-width: 240px;
+            flex: 0 0 auto;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .organigrama-nodo:hover { background: rgba(255,255,255,0.08); }
+        .organigrama-nodo-avatar { width: 44px; height: 44px; font-size: 15px; margin-bottom: 10px; }
+        .organigrama-nodo-nombre { font-size: 14px; font-weight: 600; color: #fff; word-break: break-word; }
+        .organigrama-nodo-puesto { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; word-break: break-word; }
+        .organigrama-nodo-email { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; word-break: break-all; }
+        .organigrama-sin-vinculo { display: inline-block; font-size: 10px; font-weight: 600; color: #F59E0B; background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+        .organigrama-nodo .edit-btn, .organigrama-nodo .delete-btn, .organigrama-nodo .btn { margin-top: 8px; margin-right: 4px; }
+        [data-theme="light"] .organigrama-nodo, body[data-theme="light"] .organigrama-nodo { background: #fff; border-color: #E5E7EB; }
+        [data-theme="light"] .organigrama-nodo:hover, body[data-theme="light"] .organigrama-nodo:hover { background: #F9FAFB; }
+        [data-theme="light"] .organigrama-nodo-nombre, body[data-theme="light"] .organigrama-nodo-nombre { color: #111827; }
+        [data-theme="light"] .organigrama-nodo-puesto, body[data-theme="light"] .organigrama-nodo-puesto { color: rgba(31,41,55,0.6); }
+        [data-theme="light"] .organigrama-nodo-email, body[data-theme="light"] .organigrama-nodo-email { color: rgba(31,41,55,0.45); }
+        [data-theme="light"] .organigrama-nivel-titulo, body[data-theme="light"] .organigrama-nivel-titulo { color: rgba(31,41,55,0.7); }
+
         /* Formularios */
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 12px; color: rgba(255, 255, 255, 0.8); }
