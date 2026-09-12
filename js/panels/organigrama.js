@@ -120,19 +120,126 @@ function renderizarOrganigrama() {
         contenedor.innerHTML = '<div class="info-card"><div class="u-text-center" style="padding:24px">' + tApp('organigrama_vacio') + '</div></div>';
         return;
     }
-    const niveles = organigramaCalcularNiveles(nodos);
-    const maxNivel = nodos.reduce((m, n) => Math.max(m, niveles[n.id] || 0), 0);
-    let html = '';
-    for (let nivel = 0; nivel <= maxNivel; nivel++) {
-        const nodosNivel = nodos.filter(n => (niveles[n.id] || 0) === nivel);
-        if (!nodosNivel.length) continue;
-        html += '<div class="organigrama-nivel">';
-        html += '<div class="organigrama-nivel-titulo">' + tApp('organigrama_nivel') + ' ' + (nivel + 1) + '</div>';
-        html += '<div class="organigrama-fila">';
-        nodosNivel.forEach(n => { html += organigramaNodoHtml(n); });
-        html += '</div></div>';
-    }
+    const porId = {};
+    nodos.forEach(n => { porId[n.id] = n; });
+    const hijosDe = (padreId) => nodos.filter(n => n.hijoDe === padreId);
+    const raices = nodos.filter(n => n.hijoDe === null || n.hijoDe === undefined || !porId[n.hijoDe]);
+    const vistos = new Set();
+    const subarbolHtml = (padreId) => {
+        const hijos = hijosDe(padreId);
+        let html = '<div class="organigrama-subarbol">';
+        if (padreId !== null && padreId !== undefined) {
+            html += organigramaNodoHtml(porId[padreId]);
+        }
+        if (hijos.length) {
+            html += '<div class="organigrama-hijos">';
+            hijos.forEach(h => {
+                if (vistos.has(h.id)) return;
+                vistos.add(h.id);
+                html += subarbolHtml(h.id);
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    };
+    let html = '<div class="organigrama-arbol"><div class="organigrama-arbol-inner">';
+    raices.forEach(r => {
+        if (vistos.has(r.id)) return;
+        vistos.add(r.id);
+        html += subarbolHtml(r.id);
+    });
+    html += '</div></div>';
     contenedor.innerHTML = html;
+    organigramaDibujarConectores(contenedor);
+    organigramaVincularResize(contenedor);
+    if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => organigramaDibujarConectores(contenedor));
+    }
+    if (typeof document !== 'undefined' && document.fonts && typeof document.fonts.ready === 'object') {
+        document.fonts.ready.then(() => organigramaDibujarConectores(contenedor));
+    }
+}
+
+function organigramaDibujarConectores(contenedor) {
+    const arbol = contenedor.querySelector('.organigrama-arbol');
+    const inner = arbol ? arbol.querySelector('.organigrama-arbol-inner') : null;
+    if (!inner) return;
+    const ancho = inner.scrollWidth;
+    const alto = inner.scrollHeight;
+    let svg = inner.querySelector('.organigrama-conectores');
+    if (!svg) {
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'organigrama-conectores');
+        inner.insertBefore(svg, inner.firstChild);
+    }
+    svg.setAttribute('width', ancho);
+    svg.setAttribute('height', alto);
+    svg.innerHTML = '';
+    const innerRect = inner.getBoundingClientRect();
+    const porNodo = {};
+    inner.querySelectorAll('.organigrama-nodo').forEach(nodo => {
+        porNodo[nodo.getAttribute('data-org-id')] = nodo;
+    });
+    const nodosData = (proyecto && proyecto.organigrama) || [];
+    const porId = {};
+    nodosData.forEach(n => { porId[n.id] = n; });
+    const hijosDe = (padreId) => nodosData.filter(n => n.hijoDe === padreId);
+    const crear = (d) => {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('class', 'organigrama-conector');
+        svg.appendChild(path);
+    };
+    const vistos = new Set();
+    const dibujar = (padreId) => {
+        const hijos = hijosDe(padreId).filter(h => porNodo[h.id]);
+        if (!hijos.length) return;
+        const padreEl = porNodo[padreId];
+        const padreRect = padreEl ? padreEl.getBoundingClientRect() : null;
+        const hijosRects = hijos.map(h => porNodo[h.id].getBoundingClientRect());
+        const xPadre = padreRect ? (padreRect.left + padreRect.width / 2 - innerRect.left) : (hijosRects[0].left + hijosRects[0].width / 2 - innerRect.left);
+        const yPadre = padreRect ? (padreRect.bottom - innerRect.top) : 0;
+        const yHijos = hijosRects[0].top - innerRect.top;
+        const xIzq = hijosRects[0].left + hijosRects[0].width / 2 - innerRect.left;
+        const xDer = hijosRects[hijosRects.length - 1].left + hijosRects[hijosRects.length - 1].width / 2 - innerRect.left;
+        if (hijos.length === 1) {
+            crear('M ' + xPadre + ' ' + yPadre + ' L ' + xIzq + ' ' + yHijos);
+        } else {
+            const yBus = (yPadre + yHijos) / 2;
+            crear('M ' + xPadre + ' ' + yPadre + ' L ' + xPadre + ' ' + yBus + ' L ' + xIzq + ' ' + yBus + ' L ' + xDer + ' ' + yBus);
+            hijosRects.forEach(r => {
+                const x = r.left + r.width / 2 - innerRect.left;
+                crear('M ' + x + ' ' + yBus + ' L ' + x + ' ' + yHijos);
+            });
+        }
+        hijos.forEach(h => {
+            if (vistos.has(h.id)) return;
+            vistos.add(h.id);
+            dibujar(h.id);
+        });
+    };
+    nodosData.forEach(n => {
+        if (n.hijoDe === null || n.hijoDe === undefined || !porId[n.hijoDe]) {
+            if (vistos.has(n.id)) return;
+            vistos.add(n.id);
+            dibujar(n.id);
+        }
+    });
+}
+
+function organigramaVincularResize(contenedor) {
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    if (contenedor.__orgResizeVinculado) return;
+    contenedor.__orgResizeVinculado = true;
+    let timer = null;
+    window.addEventListener('resize', () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+            const c = document.getElementById('organigramaContent');
+            if (c && c.querySelector('.organigrama-arbol')) organigramaDibujarConectores(c);
+        }, 150);
+    });
 }
 
 function organigramaResolverOrigen(origen, nombre, puesto, email) {

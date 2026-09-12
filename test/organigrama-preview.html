@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organigrama - Preview</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body { padding: 24px; }
+        .panel { display: block; }
+        .preview-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .preview-toolbar h2 { font-size: 16px; font-weight: 600; margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <div class="preview-toolbar">
+            <h2>Organigrama - Vista de árbol</h2>
+            <button id="temaBtn" class="btn btn-secondary btn-small">Tema: Oscuro</button>
+        </div>
+        <div id="organigramaContent"></div>
+    </div>
+    <script src="../js/panels/organigrama.js"></script>
+    <script>
+        function tApp(key) {
+            const dict = {
+                organigrama_vacio: 'No hay nodos en el organigrama',
+                organigrama_sin_vinculo: 'sin vínculo',
+                organigrama_anyadir_subordinado: 'Añadir subordinado'
+            };
+            return dict[key] || key;
+        }
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+        window.AuthSystem = { puedeEditarModulo: function () { return true; } };
+        window.guardarProyecto = function () {};
+        window.proyecto = {
+            stakeholders: [
+                { id: 7, nombre: 'Gloria Peña', puesto: 'Contable Senior', email: 'gloria.viva@empresa.com' }
+            ],
+            organigrama: [
+                { id: 1, stakeholderId: null, nombre: 'Ana García', puesto: 'Directora General', email: 'ana@empresa.com', hijoDe: null },
+                { id: 2, stakeholderId: null, nombre: 'Bruno López', puesto: 'Director de Operaciones', email: 'bruno@empresa.com', hijoDe: 1 },
+                { id: 3, stakeholderId: null, nombre: 'Carla Ruiz', puesto: 'Directora Financiera', email: 'carla@empresa.com', hijoDe: 1 },
+                { id: 4, stakeholderId: null, nombre: 'Diego Mora', puesto: 'Director de RRHH', email: 'diego@empresa.com', hijoDe: 1 },
+                { id: 5, stakeholderId: null, nombre: 'Elena Vidal', puesto: 'Jefa de Proyectos', email: 'elena@empresa.com', hijoDe: 2 },
+                { id: 6, stakeholderId: null, nombre: 'Fabián Ríos', puesto: 'Analista de Datos', email: 'fabian@empresa.com', hijoDe: 2 },
+                { id: 7, stakeholderId: 7, nombre: 'Gloria Peña', puesto: 'Contable', email: 'gloria@empresa.com', hijoDe: 3 },
+                { id: 10, stakeholderId: null, nombre: 'Javier Gil', puesto: 'Director Comercial', email: 'javier@empresa.com', hijoDe: null },
+                { id: 11, stakeholderId: null, nombre: 'Kira Soler', puesto: 'Comercial', email: 'kira@empresa.com', hijoDe: 10 },
+                { id: 12, stakeholderId: 999, nombre: 'Luis Orbe', puesto: 'Consultor', email: 'luis@empresa.com', hijoDe: 10 }
+            ]
+        };
+        document.getElementById('temaBtn').addEventListener('click', () => {
+            const html = document.documentElement;
+            const esOscuro = html.getAttribute('data-theme') !== 'light';
+            if (esOscuro) {
+                html.setAttribute('data-theme', 'light');
+                document.getElementById('temaBtn').textContent = 'Tema: Claro';
+            } else {
+                html.removeAttribute('data-theme');
+                document.getElementById('temaBtn').textContent = 'Tema: Oscuro';
+            }
+        });
+        renderizarOrganigrama();
+    </script>
+</body>
+</html>

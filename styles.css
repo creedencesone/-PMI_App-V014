@@ -1713,24 +1713,15 @@ body[data-theme="light"] .logo img.logo-light {
         }
 
         /* Organigrama */
-        .organigrama-nivel { margin-bottom: 24px; }
-        .organigrama-nivel-titulo {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            border-left: 3px solid #007AFF;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 10px;
-        }
-        .organigrama-fila { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 14px; padding-bottom: 8px; }
+        .organigrama-arbol { overflow-x: auto; padding: 16px 24px 24px; }
+        .organigrama-arbol-inner { display: flex; align-items: flex-start; width: max-content; margin: 0 auto; position: relative; }
+        .organigrama-conectores { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; overflow: visible; }
+        .organigrama-conector { fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 2; }
+        .organigrama-subarbol { display: flex; flex-direction: column; align-items: center; }
+        .organigrama-hijos { display: flex; align-items: flex-start; padding-top: 24px; }
         .organigrama-nodo {
+            position: relative;
+            z-index: 1;
             min-width: 200px;
             max-width: 240px;
             flex: 0 0 auto;
@@ -1753,7 +1744,7 @@ body[data-theme="light"] .logo img.logo-light {
         [data-theme="light"] .organigrama-nodo-nombre, body[data-theme="light"] .organigrama-nodo-nombre { color: #111827; }
         [data-theme="light"] .organigrama-nodo-puesto, body[data-theme="light"] .organigrama-nodo-puesto { color: rgba(31,41,55,0.6); }
         [data-theme="light"] .organigrama-nodo-email, body[data-theme="light"] .organigrama-nodo-email { color: rgba(31,41,55,0.45); }
-        [data-theme="light"] .organigrama-nivel-titulo, body[data-theme="light"] .organigrama-nivel-titulo { color: rgba(31,41,55,0.7); }
+        [data-theme="light"] .organigrama-conector, body[data-theme="light"] .organigrama-conector { stroke: rgba(31,41,55,0.35); }
 
         /* Formularios */
         .form-group { margin-bottom: 16px; }
