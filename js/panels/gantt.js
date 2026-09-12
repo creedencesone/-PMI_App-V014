@@ -421,15 +421,28 @@ function generarMeses(fechaInicio, diasTotales) {
 
 function getOrdenArbol(elementos) {
     const orden = [];
+    const incluidos = new Set();
+    function anadir(e) {
+        if (incluidos.has(e)) return;
+        incluidos.add(e);
+        orden.push(e);
+    }
     function walk(parentId) {
-        const hijos = elementos.filter(e => e.dependeDe === parentId || (!e.dependeDe && parentId === null))
+        const hijos = elementos.filter(e => parentId === null
+            ? (e.dependeDe === null || e.dependeDe === undefined)
+            : e.dependeDe === parentId)
             .sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
         hijos.forEach(h => {
-            orden.push(h);
+            anadir(h);
             if (h.tipo === 'edt' && !ganttState.collapsed.has(h.id)) walk(h.id);
         });
     }
     walk(null);
+    elementos.forEach(e => {
+        if (incluidos.has(e)) return;
+        anadir(e);
+        if (e.tipo === 'edt' && !ganttState.collapsed.has(e.id)) walk(e.id);
+    });
     return orden;
 }
 
