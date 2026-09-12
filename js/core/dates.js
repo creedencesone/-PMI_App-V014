@@ -51,9 +51,9 @@ function sumarDiasHabiles(fechaStr, dias) {
         }
     } else {
         const diasInt = Math.ceil(Math.abs(dias));
-        for (let i = 0; i < diasInt; i++) {
+        while (contados < diasInt) {
             dt.setDate(dt.getDate() - 1);
-            if (!esFinDeSemana(dt)) contados--;
+            if (!esFinDeSemana(dt)) contados++;
         }
     }
     return formatLocalDate(dt);
