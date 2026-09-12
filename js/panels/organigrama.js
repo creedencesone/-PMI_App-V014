@@ -96,7 +96,7 @@ function organigramaNodoHtml(n, nivel) {
     const nombre = vinculado ? st.nombre : n.nombre;
     const puesto = vinculado ? (st.puesto || n.puesto) : n.puesto;
     const email = vinculado ? (st.email || n.email) : n.email;
-    let html = '<div class="organigrama-nodo" data-org-id="' + n.id + '" data-nivel="' + (nivel || 0) + '">';
+    let html = '<div class="organigrama-nodo" data-org-id="' + n.id + '" data-nivel="' + (nivel || 0) + '" title="' + tApp('organigrama_arrastrar_hint') + '">';
     html += '<div class="pm-avatar pm-avatar-interno organigrama-nodo-avatar">' + escapeHtml(organigramaIniciales(nombre)) + '</div>';
     html += '<div class="organigrama-nodo-nombre">' + escapeHtml(nombre || '') + '</div>';
     html += '<div class="organigrama-nodo-puesto">' + escapeHtml(puesto || '') + '</div>';
@@ -240,6 +240,7 @@ function renderizarOrganigrama() {
     organigramaAplicarZoom(contenedor);
     organigramaVincularToolbar(contenedor);
     organigramaVincularResize(contenedor);
+    organigramaVincularArrastre(contenedor);
     if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => organigramaDibujarConectores(contenedor));
     }
@@ -553,4 +554,134 @@ function eliminarNodoOrganigrama(id) {
     guardarProyecto();
     renderizarOrganigrama();
     mostrarToast(tApp('organigrama_reparentado'), 'success');
+}
+
+let organigramaArrastre = null;
+let organigramaIndicador = null;
+
+function organigramaVincularArrastre(contenedor) {
+    if (contenedor.__orgArrastreVinculado) return;
+    contenedor.__orgArrastreVinculado = true;
+    contenedor.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const nodo = e.target.closest('.organigrama-nodo');
+        if (!nodo || e.target.closest('button')) return;
+        let proyectoId = localStorage.getItem('proyectoSeleccionado');
+        if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
+            proyectoId = DataService.resolveId(proyectoId);
+        }
+        if (typeof AuthSystem !== 'undefined' && !AuthSystem.puedeEditarModulo(proyectoId, 'organigrama')) return;
+        organigramaArrastre = {
+            id: parseInt(nodo.getAttribute('data-org-id'), 10),
+            nodo: nodo,
+            startX: e.clientX,
+            startY: e.clientY,
+            activo: false
+        };
+        nodo.setPointerCapture(e.pointerId);
+    });
+    contenedor.addEventListener('pointermove', (e) => {
+        const arr = organigramaArrastre;
+        if (!arr) return;
+        if (!arr.activo) {
+            if (Math.hypot(e.clientX - arr.startX, e.clientY - arr.startY) < 5) return;
+            arr.activo = true;
+            arr.nodo.classList.add('organigrama-arrastrando');
+            const arbol = contenedor.querySelector('.organigrama-arbol');
+            if (arbol) arbol.classList.add('organigrama-arrastrando-activo');
+            organigramaIndicadorCrear();
+        }
+        organigramaIndicadorActualizar(e.clientX, e.clientY);
+    });
+    contenedor.addEventListener('pointerup', (e) => {
+        const arr = organigramaArrastre;
+        if (!arr) return;
+        organigramaArrastre = null;
+        if (!arr.activo) return;
+        arr.nodo.classList.remove('organigrama-arrastrando');
+        const arbol = contenedor.querySelector('.organigrama-arbol');
+        if (arbol) arbol.classList.remove('organigrama-arrastrando-activo');
+        organigramaIndicadorEliminar();
+        const destino = organigramaNodoEnPunto(e.clientX, e.clientY);
+        if (!destino || destino.id === arr.id) return;
+        organigramaReordenar(arr.id, destino.id, organigramaLadoEnPunto(destino.nodo, e.clientX));
+    });
+    contenedor.addEventListener('pointercancel', () => {
+        organigramaCancelarArrastre(contenedor);
+    });
+}
+
+function organigramaCancelarArrastre(contenedor) {
+    const arr = organigramaArrastre;
+    organigramaArrastre = null;
+    if (!arr) return;
+    if (arr.nodo) arr.nodo.classList.remove('organigrama-arrastrando');
+    const arbol = contenedor.querySelector('.organigrama-arbol');
+    if (arbol) arbol.classList.remove('organigrama-arrastrando-activo');
+    organigramaIndicadorEliminar();
+}
+
+function organigramaIndicadorCrear() {
+    if (organigramaIndicador) return;
+    const el = document.createElement('div');
+    el.className = 'organigrama-indicador-insercion';
+    document.body.appendChild(el);
+    organigramaIndicador = el;
+}
+
+function organigramaIndicadorEliminar() {
+    if (organigramaIndicador) {
+        organigramaIndicador.remove();
+        organigramaIndicador = null;
+    }
+}
+
+function organigramaNodoEnPunto(x, y) {
+    const el = document.elementFromPoint(x, y);
+    const nodo = el ? el.closest('.organigrama-nodo') : null;
+    if (!nodo) return null;
+    return { id: parseInt(nodo.getAttribute('data-org-id'), 10), nodo: nodo };
+}
+
+function organigramaLadoEnPunto(nodo, x) {
+    const r = nodo.getBoundingClientRect();
+    return x < r.left + r.width / 2 ? 'izq' : 'der';
+}
+
+function organigramaMismoPadre(idA, idB) {
+    const data = (proyecto && proyecto.organigrama) || [];
+    const a = data.find(n => n.id === idA);
+    const b = data.find(n => n.id === idB);
+    if (!a || !b) return false;
+    return (a.hijoDe ?? null) === (b.hijoDe ?? null);
+}
+
+function organigramaIndicadorActualizar(x, y) {
+    if (!organigramaIndicador) return;
+    const destino = organigramaNodoEnPunto(x, y);
+    const arr = organigramaArrastre;
+    if (!destino || !arr || destino.id === arr.id || !organigramaMismoPadre(arr.id, destino.id)) {
+        organigramaIndicador.style.display = 'none';
+        return;
+    }
+    const r = destino.nodo.getBoundingClientRect();
+    const lado = organigramaLadoEnPunto(destino.nodo, x);
+    organigramaIndicador.style.display = 'block';
+    organigramaIndicador.style.left = (lado === 'izq' ? r.left : r.right) - 1.5 + 'px';
+    organigramaIndicador.style.top = r.top + 'px';
+    organigramaIndicador.style.height = r.height + 'px';
+}
+
+function organigramaReordenar(idArrastrado, idDestino, lado) {
+    const data = (proyecto && proyecto.organigrama) || [];
+    const idxOrigen = data.findIndex(n => n.id === idArrastrado);
+    if (idxOrigen === -1) return;
+    const nodo = data[idxOrigen];
+    if (!organigramaMismoPadre(idArrastrado, idDestino)) return;
+    data.splice(idxOrigen, 1);
+    const idxDestino = data.findIndex(n => n.id === idDestino);
+    if (idxDestino === -1) return;
+    data.splice(lado === 'izq' ? idxDestino : idxDestino + 1, 0, nodo);
+    guardarProyecto();
+    renderizarOrganigrama();
 }

@@ -28,6 +28,7 @@
                 organigrama_sin_vinculo: 'sin vínculo',
                 organigrama_anyadir_subordinado: 'Añadir subordinado',
                 organigrama_anyadir_companero: 'Añadir compañero',
+                organigrama_arrastrar_hint: 'Arrastra para reordenar',
                 organigrama_estilo_tarjetas: 'Tarjetas',
                 organigrama_estilo_compacto: 'Compacto',
                 organigrama_zoom_in: 'Acercar',
@@ -41,7 +42,9 @@
             return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
         }
         window.AuthSystem = { puedeEditarModulo: function () { return true; } };
-        window.guardarProyecto = function () {};
+        window.guardarProyecto = function () {
+            localStorage.setItem('org_preview_proyecto', JSON.stringify(window.proyecto));
+        };
         window.mostrarToast = function () {};
         window.cerrarModalGeneric = function () { const m = document.getElementById('genericModal'); if (m) m.remove(); };
         window.proyecto = {
@@ -72,6 +75,8 @@
                 document.getElementById('temaBtn').textContent = 'Tema: Oscuro';
             }
         });
+        const guardado = localStorage.getItem('org_preview_proyecto');
+        if (guardado) window.proyecto = JSON.parse(guardado);
         renderizarOrganigrama();
     </script>
 </body>
