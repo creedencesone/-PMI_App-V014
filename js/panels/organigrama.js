@@ -90,13 +90,13 @@ function organigramaNombreVisible(n) {
     return st ? st.nombre : n.nombre;
 }
 
-function organigramaNodoHtml(n) {
+function organigramaNodoHtml(n, nivel) {
     const st = (proyecto.stakeholders || []).find(s => s.id === n.stakeholderId);
     const vinculado = !!st;
     const nombre = vinculado ? st.nombre : n.nombre;
     const puesto = vinculado ? (st.puesto || n.puesto) : n.puesto;
     const email = vinculado ? (st.email || n.email) : n.email;
-    let html = '<div class="organigrama-nodo" data-org-id="' + n.id + '">';
+    let html = '<div class="organigrama-nodo" data-org-id="' + n.id + '" data-nivel="' + (nivel || 0) + '">';
     html += '<div class="pm-avatar pm-avatar-interno organigrama-nodo-avatar">' + escapeHtml(organigramaIniciales(nombre)) + '</div>';
     html += '<div class="organigrama-nodo-nombre">' + escapeHtml(nombre || '') + '</div>';
     html += '<div class="organigrama-nodo-puesto">' + escapeHtml(puesto || '') + '</div>';
@@ -112,6 +112,89 @@ function organigramaNodoHtml(n) {
     return html;
 }
 
+function organigramaZoomPct() {
+    let z = 100;
+    if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('organigrama_zoom');
+        if (raw !== null) z = parseInt(raw, 10);
+    }
+    if (isNaN(z)) z = 100;
+    z = Math.max(30, Math.min(200, z));
+    return Math.round(z / 10) * 10;
+}
+
+function organigramaEstiloActual() {
+    let estilo = 'tarjetas';
+    if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('organigrama_estilo');
+        if (raw === 'compacto' || raw === 'tarjetas') estilo = raw;
+    }
+    return estilo;
+}
+
+function organigramaToolbarHtml() {
+    const estilo = organigramaEstiloActual();
+    const zoom = organigramaZoomPct();
+    return '<div class="organigrama-toolbar">'
+        + '<span class="pm-style-toggle">'
+        + '<button type="button" class="pm-style-opt' + (estilo === 'tarjetas' ? ' active' : '') + '" data-estilo="tarjetas">' + tApp('organigrama_estilo_tarjetas') + '</button>'
+        + '<button type="button" class="pm-style-opt' + (estilo === 'compacto' ? ' active' : '') + '" data-estilo="compacto">' + tApp('organigrama_estilo_compacto') + '</button>'
+        + '</span>'
+        + '<span class="organigrama-zoom">'
+        + '<button type="button" class="organigrama-zoom-btn" data-zoom="-1" title="' + tApp('organigrama_zoom_out') + '">−</button>'
+        + '<span class="organigrama-zoom-pct">' + zoom + '%</span>'
+        + '<button type="button" class="organigrama-zoom-btn" data-zoom="1" title="' + tApp('organigrama_zoom_in') + '">+</button>'
+        + '<button type="button" class="organigrama-zoom-btn" data-zoom="0" title="' + tApp('organigrama_zoom_reset') + '">⟲</button>'
+        + '</span>'
+        + '</div>';
+}
+
+function organigramaAplicarZoom(contenedor) {
+    const arbol = contenedor.querySelector('.organigrama-arbol');
+    const inner = arbol ? arbol.querySelector('.organigrama-arbol-inner') : null;
+    if (!inner) return;
+    const zoom = organigramaZoomPct() / 100;
+    inner.style.zoom = zoom;
+    const pct = contenedor.querySelector('.organigrama-zoom-pct');
+    if (pct) pct.textContent = Math.round(zoom * 100) + '%';
+    organigramaDibujarConectores(contenedor);
+}
+
+function organigramaAplicarEstilo(contenedor) {
+    const arbol = contenedor.querySelector('.organigrama-arbol');
+    if (!arbol) return;
+    const estilo = organigramaEstiloActual();
+    arbol.classList.toggle('organigrama-estilo-compacto', estilo === 'compacto');
+    contenedor.querySelectorAll('.pm-style-opt').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-estilo') === estilo);
+    });
+    if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => organigramaDibujarConectores(contenedor));
+    } else {
+        organigramaDibujarConectores(contenedor);
+    }
+}
+
+function organigramaVincularToolbar(contenedor) {
+    contenedor.querySelectorAll('.organigrama-zoom-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const delta = parseInt(btn.getAttribute('data-zoom'), 10);
+            let z = organigramaZoomPct();
+            if (delta === 0) z = 100;
+            else z = Math.max(30, Math.min(200, z + delta * 10));
+            if (typeof localStorage !== 'undefined') localStorage.setItem('organigrama_zoom', String(z));
+            organigramaAplicarZoom(contenedor);
+        });
+    });
+    contenedor.querySelectorAll('.pm-style-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const estilo = btn.getAttribute('data-estilo');
+            if (typeof localStorage !== 'undefined') localStorage.setItem('organigrama_estilo', estilo);
+            organigramaAplicarEstilo(contenedor);
+        });
+    });
+}
+
 function renderizarOrganigrama() {
     const contenedor = document.getElementById('organigramaContent');
     if (!contenedor) return;
@@ -125,33 +208,36 @@ function renderizarOrganigrama() {
     const hijosDe = (padreId) => nodos.filter(n => n.hijoDe === padreId);
     const raices = nodos.filter(n => n.hijoDe === null || n.hijoDe === undefined || !porId[n.hijoDe]);
     const vistos = new Set();
-    const subarbolHtml = (padreId) => {
+    const subarbolHtml = (padreId, nivel) => {
         const hijos = hijosDe(padreId);
         let html = '<div class="organigrama-subarbol">';
         if (padreId !== null && padreId !== undefined) {
-            html += organigramaNodoHtml(porId[padreId]);
+            html += organigramaNodoHtml(porId[padreId], nivel);
         }
         if (hijos.length) {
             html += '<div class="organigrama-hijos">';
             hijos.forEach(h => {
                 if (vistos.has(h.id)) return;
                 vistos.add(h.id);
-                html += subarbolHtml(h.id);
+                html += subarbolHtml(h.id, nivel + 1);
             });
             html += '</div>';
         }
         html += '</div>';
         return html;
     };
-    let html = '<div class="organigrama-arbol"><div class="organigrama-arbol-inner">';
+    const estilo = organigramaEstiloActual();
+    let html = organigramaToolbarHtml();
+    html += '<div class="organigrama-arbol' + (estilo === 'compacto' ? ' organigrama-estilo-compacto' : '') + '"><div class="organigrama-arbol-inner">';
     raices.forEach(r => {
         if (vistos.has(r.id)) return;
         vistos.add(r.id);
-        html += subarbolHtml(r.id);
+        html += subarbolHtml(r.id, 0);
     });
     html += '</div></div>';
     contenedor.innerHTML = html;
-    organigramaDibujarConectores(contenedor);
+    organigramaAplicarZoom(contenedor);
+    organigramaVincularToolbar(contenedor);
     organigramaVincularResize(contenedor);
     if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(() => organigramaDibujarConectores(contenedor));
@@ -165,8 +251,10 @@ function organigramaDibujarConectores(contenedor) {
     const arbol = contenedor.querySelector('.organigrama-arbol');
     const inner = arbol ? arbol.querySelector('.organigrama-arbol-inner') : null;
     if (!inner) return;
-    const ancho = inner.scrollWidth;
-    const alto = inner.scrollHeight;
+    const zoom = organigramaZoomPct() / 100;
+    const innerRect = inner.getBoundingClientRect();
+    const ancho = innerRect.width / zoom;
+    const alto = innerRect.height / zoom;
     let svg = inner.querySelector('.organigrama-conectores');
     if (!svg) {
         svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -176,7 +264,6 @@ function organigramaDibujarConectores(contenedor) {
     svg.setAttribute('width', ancho);
     svg.setAttribute('height', alto);
     svg.innerHTML = '';
-    const innerRect = inner.getBoundingClientRect();
     const porNodo = {};
     inner.querySelectorAll('.organigrama-nodo').forEach(nodo => {
         porNodo[nodo.getAttribute('data-org-id')] = nodo;
@@ -198,18 +285,18 @@ function organigramaDibujarConectores(contenedor) {
         const padreEl = porNodo[padreId];
         const padreRect = padreEl ? padreEl.getBoundingClientRect() : null;
         const hijosRects = hijos.map(h => porNodo[h.id].getBoundingClientRect());
-        const xPadre = padreRect ? (padreRect.left + padreRect.width / 2 - innerRect.left) : (hijosRects[0].left + hijosRects[0].width / 2 - innerRect.left);
-        const yPadre = padreRect ? (padreRect.bottom - innerRect.top) : 0;
-        const yHijos = hijosRects[0].top - innerRect.top;
-        const xIzq = hijosRects[0].left + hijosRects[0].width / 2 - innerRect.left;
-        const xDer = hijosRects[hijosRects.length - 1].left + hijosRects[hijosRects.length - 1].width / 2 - innerRect.left;
+        const xPadre = padreRect ? (padreRect.left + padreRect.width / 2 - innerRect.left) / zoom : (hijosRects[0].left + hijosRects[0].width / 2 - innerRect.left) / zoom;
+        const yPadre = padreRect ? (padreRect.bottom - innerRect.top) / zoom : 0;
+        const yHijos = (hijosRects[0].top - innerRect.top) / zoom;
+        const xIzq = (hijosRects[0].left + hijosRects[0].width / 2 - innerRect.left) / zoom;
+        const xDer = (hijosRects[hijosRects.length - 1].left + hijosRects[hijosRects.length - 1].width / 2 - innerRect.left) / zoom;
         if (hijos.length === 1) {
             crear('M ' + xPadre + ' ' + yPadre + ' L ' + xIzq + ' ' + yHijos);
         } else {
             const yBus = (yPadre + yHijos) / 2;
             crear('M ' + xPadre + ' ' + yPadre + ' L ' + xPadre + ' ' + yBus + ' L ' + xIzq + ' ' + yBus + ' L ' + xDer + ' ' + yBus);
             hijosRects.forEach(r => {
-                const x = r.left + r.width / 2 - innerRect.left;
+                const x = (r.left + r.width / 2 - innerRect.left) / zoom;
                 crear('M ' + x + ' ' + yBus + ' L ' + x + ' ' + yHijos);
             });
         }

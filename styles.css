@@ -1713,6 +1713,49 @@ body[data-theme="light"] .logo img.logo-light {
         }
 
         /* Organigrama */
+        .organigrama-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .organigrama-zoom {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-card, rgba(255,255,255,0.06));
+            border-radius: 8px;
+            padding: 3px;
+        }
+        .organigrama-zoom-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+        }
+        .organigrama-zoom-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.08);
+        }
+        .organigrama-zoom-pct {
+            min-width: 44px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
         .organigrama-arbol { overflow-x: auto; padding: 16px 24px 24px; }
         .organigrama-arbol-inner { display: flex; align-items: flex-start; width: max-content; margin: 0 auto; position: relative; }
         .organigrama-conectores { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; overflow: visible; }
@@ -1731,20 +1774,128 @@ body[data-theme="light"] .logo img.logo-light {
             border: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
+            transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
         }
-        .organigrama-nodo:hover { background: rgba(255,255,255,0.08); }
-        .organigrama-nodo-avatar { width: 44px; height: 44px; font-size: 15px; margin-bottom: 10px; }
+        .organigrama-nodo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 12px 12px 0 0;
+            background: var(--org-nivel-accent, rgba(255,255,255,0.2));
+        }
+        .organigrama-nodo:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        }
+        .organigrama-nodo-avatar { width: 44px; height: 44px; font-size: 15px; margin-bottom: 10px; background: var(--org-nivel-accent, #007AFF); }
         .organigrama-nodo-nombre { font-size: 14px; font-weight: 600; color: #fff; word-break: break-word; }
         .organigrama-nodo-puesto { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; word-break: break-word; }
         .organigrama-nodo-email { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; word-break: break-all; }
         .organigrama-sin-vinculo { display: inline-block; font-size: 10px; font-weight: 600; color: #F59E0B; background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
         .organigrama-nodo .edit-btn, .organigrama-nodo .delete-btn, .organigrama-nodo .btn { margin-top: 8px; margin-right: 4px; }
+        .organigrama-nodo .btn { transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+        .organigrama-nodo[data-nivel="0"] { --org-nivel-accent: #6366F1; }
+        .organigrama-nodo[data-nivel="1"] { --org-nivel-accent: #8B5CF6; }
+        .organigrama-nodo[data-nivel="2"] { --org-nivel-accent: #10B981; }
+        .organigrama-nodo[data-nivel="3"] { --org-nivel-accent: #F59E0B; }
+        .organigrama-nodo[data-nivel="4"] { --org-nivel-accent: #F43F5E; }
+        .organigrama-nodo[data-nivel="5"] { --org-nivel-accent: #6366F1; }
+        .organigrama-nodo[data-nivel="6"] { --org-nivel-accent: #8B5CF6; }
+        .organigrama-nodo[data-nivel="7"] { --org-nivel-accent: #10B981; }
+        .organigrama-nodo[data-nivel="8"] { --org-nivel-accent: #F59E0B; }
+        .organigrama-nodo[data-nivel="9"] { --org-nivel-accent: #F43F5E; }
         [data-theme="light"] .organigrama-nodo, body[data-theme="light"] .organigrama-nodo { background: #fff; border-color: #E5E7EB; }
         [data-theme="light"] .organigrama-nodo:hover, body[data-theme="light"] .organigrama-nodo:hover { background: #F9FAFB; }
         [data-theme="light"] .organigrama-nodo-nombre, body[data-theme="light"] .organigrama-nodo-nombre { color: #111827; }
         [data-theme="light"] .organigrama-nodo-puesto, body[data-theme="light"] .organigrama-nodo-puesto { color: rgba(31,41,55,0.6); }
         [data-theme="light"] .organigrama-nodo-email, body[data-theme="light"] .organigrama-nodo-email { color: rgba(31,41,55,0.45); }
         [data-theme="light"] .organigrama-conector, body[data-theme="light"] .organigrama-conector { stroke: rgba(31,41,55,0.35); }
+        [data-theme="light"] .organigrama-nodo[data-nivel="0"], body[data-theme="light"] .organigrama-nodo[data-nivel="0"] { --org-nivel-accent: #4F46E5; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="1"], body[data-theme="light"] .organigrama-nodo[data-nivel="1"] { --org-nivel-accent: #7C3AED; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="2"], body[data-theme="light"] .organigrama-nodo[data-nivel="2"] { --org-nivel-accent: #059669; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="3"], body[data-theme="light"] .organigrama-nodo[data-nivel="3"] { --org-nivel-accent: #D97706; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="4"], body[data-theme="light"] .organigrama-nodo[data-nivel="4"] { --org-nivel-accent: #E11D48; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="5"], body[data-theme="light"] .organigrama-nodo[data-nivel="5"] { --org-nivel-accent: #4F46E5; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="6"], body[data-theme="light"] .organigrama-nodo[data-nivel="6"] { --org-nivel-accent: #7C3AED; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="7"], body[data-theme="light"] .organigrama-nodo[data-nivel="7"] { --org-nivel-accent: #059669; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="8"], body[data-theme="light"] .organigrama-nodo[data-nivel="8"] { --org-nivel-accent: #D97706; }
+        [data-theme="light"] .organigrama-nodo[data-nivel="9"], body[data-theme="light"] .organigrama-nodo[data-nivel="9"] { --org-nivel-accent: #E11D48; }
+
+        /* Organigrama compacto */
+        .organigrama-estilo-compacto .organigrama-hijos { padding-top: 16px; }
+        .organigrama-estilo-compacto .organigrama-nodo {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            max-width: none;
+            padding: 5px 10px;
+            border-radius: 999px;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo::before {
+            top: 0;
+            left: 0;
+            right: auto;
+            bottom: 0;
+            width: 3px;
+            height: auto;
+            border-radius: 999px 0 0 999px;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo-avatar {
+            width: 24px;
+            height: 24px;
+            font-size: 10px;
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo-nombre {
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo-puesto {
+            font-size: 10px;
+            margin-top: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo-email { display: none; }
+        .organigrama-estilo-compacto .organigrama-sin-vinculo { display: none; }
+        .organigrama-estilo-compacto .organigrama-nodo-acciones {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: auto;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo-acciones .btn {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            margin: 0;
+            border-radius: 50%;
+            font-size: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo-acciones .btn::before { content: '+'; font-size: 13px; line-height: 1; }
+        .organigrama-estilo-compacto .organigrama-nodo-acciones .edit-btn,
+        .organigrama-estilo-compacto .organigrama-nodo-acciones .delete-btn {
+            display: none;
+            margin: 0;
+        }
+        .organigrama-estilo-compacto .organigrama-nodo:hover .organigrama-nodo-acciones .edit-btn,
+        .organigrama-estilo-compacto .organigrama-nodo:focus-within .organigrama-nodo-acciones .edit-btn,
+        .organigrama-estilo-compacto .organigrama-nodo:hover .organigrama-nodo-acciones .delete-btn,
+        .organigrama-estilo-compacto .organigrama-nodo:focus-within .organigrama-nodo-acciones .delete-btn {
+            display: inline-flex;
+        }
 
         /* Formularios */
         .form-group { margin-bottom: 16px; }

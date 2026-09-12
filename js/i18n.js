@@ -161,6 +161,11 @@
         organigrama_sin_vinculo: "Sin vínculo",
         organigrama_confirmar_eliminar: "¿Eliminar este nodo? Sus subordinados pasarán al nivel superior.",
         organigrama_reparentado: "Subordinados reasignados",
+        organigrama_estilo_tarjetas: "Tarjetas",
+        organigrama_estilo_compacto: "Compacto",
+        organigrama_zoom_in: "Acercar",
+        organigrama_zoom_out: "Alejar",
+        organigrama_zoom_reset: "Restablecer zoom",
         
         // ========== SALUD DEL PROYECTO ==========
         salud_titulo: "Salud del Proyecto - Cuadro de Mando",
@@ -576,6 +581,11 @@
         organigrama_sin_vinculo: "No link",
         organigrama_confirmar_eliminar: "Delete this node? Its subordinates will move up a level.",
         organigrama_reparentado: "Subordinates reassigned",
+        organigrama_estilo_tarjetas: "Cards",
+        organigrama_estilo_compacto: "Compact",
+        organigrama_zoom_in: "Zoom in",
+        organigrama_zoom_out: "Zoom out",
+        organigrama_zoom_reset: "Reset zoom",
         
         salud_titulo: "Project Health - Dashboard",
         salud_general: "OVERALL PROJECT HEALTH",
@@ -1300,6 +1310,11 @@
         organigrama_sin_vinculo: "Sans lien",
         organigrama_confirmar_eliminar: "Supprimer ce nœud ? Ses subordonnés passeront au niveau supérieur.",
         organigrama_reparentado: "Subordonnés réaffectés",
+        organigrama_estilo_tarjetas: "Cartes",
+        organigrama_estilo_compacto: "Compact",
+        organigrama_zoom_in: "Zoom avant",
+        organigrama_zoom_out: "Zoom arrière",
+        organigrama_zoom_reset: "Réinitialiser le zoom",
         
         // ========== SALUD DU PROJET ==========
         salud_titulo: "Santé du Projet - Tableau de Bord",
@@ -2032,6 +2047,11 @@
         organigrama_sin_vinculo: "Keine Verknüpfung",
         organigrama_confirmar_eliminar: "Diesen Knoten löschen? Seine Untergeordneten steigen eine Ebene auf.",
         organigrama_reparentado: "Untergeordnete neu zugewiesen",
+        organigrama_estilo_tarjetas: "Karten",
+        organigrama_estilo_compacto: "Kompakt",
+        organigrama_zoom_in: "Vergrößern",
+        organigrama_zoom_out: "Verkleinern",
+        organigrama_zoom_reset: "Zoom zurücksetzen",
         
         idioma_titulo: "Sprache ändern",
         idioma_es: "Spanisch",
