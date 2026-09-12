@@ -4,11 +4,12 @@
 
 if (typeof window === "undefined") {
     global.window = global;
+    global.document = { addEventListener: function() {} };
     const fs = process.getBuiltinModule("fs");
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "panels/organigrama.js"].forEach(f => {
+    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "panels/organigrama.js", "panels/gantt.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -29,7 +30,7 @@ QUnit.test('esFinDeSemana', assert => {
 QUnit.test('parseLocalDate / formatLocalDate roundtrip', assert => {
     const str = '2026-07-17';
     const d = parseLocalDate(str);
-    assert.notNull(d, 'parseLocalDate devuelve Date');
+    assert.notEqual(d, null, 'parseLocalDate devuelve Date');
     assert.equal(formatLocalDate(d), str, 'formatLocalDate restaura el string original');
 });
 
@@ -73,7 +74,7 @@ QUnit.test('calcularCosteTotal', assert => {
     const mats = [{ cantidad: 5, costeUnitario: 100, moneda: 'EUR' }];
     const serv = [{ cantidad: 2, costeUnitario: 300, moneda: 'EUR' }];
     const viajes = [{ costeVuelos: 500, costeHotel: 300, costeComidas: 100, costeTraslados: 100, moneda: 'EUR' }];
-    assert.equal(calcularCosteTotal(gantt, mats, serv, viajes, convert), 4500, '1000+2000+500+600+1000');
+    assert.equal(calcularCosteTotal(gantt, mats, serv, viajes, convert), 5100, '1000+2000+500+600+1000');
 });
 
 QUnit.test('calcularCPI', assert => {
@@ -158,8 +159,10 @@ QUnit.test('ejecutarCPM forward pass', assert => {
         { id: 2, nombre: 'B', inicio: '2026-07-20', duracion: 5, predecesores: [{ id: 1, tipo: 'FS' }], tipo: 'tarea' },
     ];
     const result = ejecutarCPM(elements);
+    const a = result.find(e => e.id === 1);
     const b = result.find(e => e.id === 2);
-    assert.ok(b._inicio > parseLocalDate('2026-07-22'), 'B empieza después de que A termine');
+    assert.equal(a._earlyFinish, 3, 'A termina en día 3 (offset)');
+    assert.equal(b._earlyStart, a._earlyFinish, 'B (FS) empieza cuando A termina');
 });
 
 QUnit.module('Organigrama');
