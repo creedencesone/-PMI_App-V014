@@ -2,6 +2,17 @@
 // PMI Mind - Tests Unitarios (QUnit)
 // ============================================================
 
+if (typeof window === "undefined") {
+    global.window = global;
+    const fs = process.getBuiltinModule("fs");
+    const path = process.getBuiltinModule("path");
+    const vm = process.getBuiltinModule("vm");
+    const base = path.join(process.cwd(), "js");
+    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "panels/organigrama.js"].forEach(f => {
+        vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
+    });
+}
+
 QUnit.module('Fechas');
 
 QUnit.test('esFinDeSemana', assert => {
@@ -149,4 +160,102 @@ QUnit.test('ejecutarCPM forward pass', assert => {
     const result = ejecutarCPM(elements);
     const b = result.find(e => e.id === 2);
     assert.ok(b._inicio > parseLocalDate('2026-07-22'), 'B empieza después de que A termine');
+});
+
+QUnit.module('Organigrama');
+
+QUnit.test('organigramaCalcularNiveles - fixture de 2 niveles', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+        { id: 2, stakeholderId: null, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: 1 },
+        { id: 3, stakeholderId: null, nombre: 'Carla', puesto: 'Sub', email: 'carla@x.com', hijoDe: 1 },
+    ];
+    const niveles = organigramaCalcularNiveles(nodos);
+    assert.equal(niveles[1], 0, 'raíz nivel 0');
+    assert.equal(niveles[2], 1, 'hijo nivel 1');
+    assert.equal(niveles[3], 1, 'hijo nivel 1');
+});
+
+QUnit.test('organigramaEsDescendiente', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+        { id: 2, stakeholderId: null, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: 1 },
+        { id: 3, stakeholderId: null, nombre: 'Carla', puesto: 'Sub', email: 'carla@x.com', hijoDe: 2 },
+    ];
+    assert.true(organigramaEsDescendiente(nodos, 1, 3), 'Carla es descendiente de Ana');
+    assert.true(organigramaEsDescendiente(nodos, 2, 3), 'Carla es descendiente de Bruno');
+    assert.false(organigramaEsDescendiente(nodos, 3, 1), 'Ana no es descendiente de Carla');
+    assert.false(organigramaEsDescendiente(nodos, 1, 1), 'un nodo no es descendiente de sí mismo');
+});
+
+QUnit.test('organigramaValidarReparent - reparent válido', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+        { id: 2, stakeholderId: null, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: null },
+    ];
+    assert.deepEqual(organigramaValidarReparent(nodos, 2, 1), { ok: true }, 'mover Bruno bajo Ana');
+    assert.deepEqual(organigramaValidarReparent(nodos, 2, null), { ok: true }, 'mover a raíz');
+});
+
+QUnit.test('organigramaValidarReparent - self', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+    ];
+    assert.deepEqual(organigramaValidarReparent(nodos, 1, 1), { ok: false, error: 'self' }, 'auto-padre rechazado');
+});
+
+QUnit.test('organigramaValidarReparent - ciclo A→B y B→A', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: 2 },
+        { id: 2, stakeholderId: null, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: null },
+    ];
+    assert.deepEqual(organigramaValidarReparent(nodos, 2, 1), { ok: false, error: 'descendant' }, 'Bruno bajo Ana crearía ciclo');
+});
+
+QUnit.test('organigramaValidarReparent - notfound', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+    ];
+    assert.deepEqual(organigramaValidarReparent(nodos, 99, 1), { ok: false, error: 'notfound' }, 'nodo inexistente rechazado');
+});
+
+QUnit.test('organigramaReparentarAlEliminar - elimina y reparenta hijos', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: null, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+        { id: 2, stakeholderId: null, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: 1 },
+        { id: 3, stakeholderId: null, nombre: 'Carla', puesto: 'Sub', email: 'carla@x.com', hijoDe: 1 },
+        { id: 4, stakeholderId: null, nombre: 'David', puesto: 'Sub2', email: 'david@x.com', hijoDe: 2 },
+    ];
+    const resultado = organigramaReparentarAlEliminar(nodos, 2);
+    assert.equal(resultado.length, 3, 'nodo eliminado');
+    assert.false(resultado.some(n => n.id === 2), 'Bruno ya no existe');
+    assert.equal(resultado.find(n => n.id === 4).hijoDe, 1, 'David reparentado bajo Ana');
+    assert.equal(nodos.length, 4, 'input intacto');
+    assert.equal(nodos.find(n => n.id === 4).hijoDe, 2, 'input sin mutar');
+});
+
+QUnit.test('organigramaLimpiarStakeholder - elimina vinculados y preserva el árbol', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: 10, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+        { id: 2, stakeholderId: 20, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: 1 },
+        { id: 3, stakeholderId: 10, nombre: 'Carla', puesto: 'Sub', email: 'carla@x.com', hijoDe: 2 },
+        { id: 4, stakeholderId: 30, nombre: 'David', puesto: 'Sub2', email: 'david@x.com', hijoDe: 3 },
+    ];
+    const resultado = organigramaLimpiarStakeholder(nodos, 10);
+    assert.equal(resultado.length, 2, 'dos nodos eliminados');
+    assert.false(resultado.some(n => n.stakeholderId === 10), 'sin nodos con stakeholder 10');
+    assert.equal(resultado.find(n => n.id === 2).hijoDe, null, 'Bruno reparentado a raíz');
+    assert.equal(resultado.find(n => n.id === 4).hijoDe, 2, 'David reparentado bajo Bruno');
+    assert.equal(nodos.length, 4, 'input intacto');
+});
+
+QUnit.test('organigramaRemapearStakeholder - intercambia ids', assert => {
+    const nodos = [
+        { id: 1, stakeholderId: 10, nombre: 'Ana', puesto: 'Jefa', email: 'ana@x.com', hijoDe: null },
+        { id: 2, stakeholderId: 20, nombre: 'Bruno', puesto: 'Sub', email: 'bruno@x.com', hijoDe: 1 },
+    ];
+    const resultado = organigramaRemapearStakeholder(nodos, 10, 99);
+    assert.equal(resultado.find(n => n.id === 1).stakeholderId, 99, 'stakeholder 10 remapeado a 99');
+    assert.equal(resultado.find(n => n.id === 2).stakeholderId, 20, 'otros nodos intactos');
+    assert.equal(nodos.find(n => n.id === 1).stakeholderId, 10, 'input intacto');
 });
