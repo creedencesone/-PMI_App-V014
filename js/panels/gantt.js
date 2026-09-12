@@ -68,6 +68,17 @@ function cargarElementosGantt() {
         ];
         guardarProyecto();
     }
+    const idsVistos = new Set();
+    const elementosUnicos = [];
+    proyecto.elementosGantt.forEach(e => {
+        if (idsVistos.has(e.id)) return;
+        idsVistos.add(e.id);
+        elementosUnicos.push(e);
+    });
+    if (elementosUnicos.length !== proyecto.elementosGantt.length) {
+        proyecto.elementosGantt = elementosUnicos;
+        guardarProyecto();
+    }
     proyecto.elementosGantt.forEach(e => { if (!e.predecesores) e.predecesores = []; });
     renderizarCronograma();
 }
@@ -423,8 +434,8 @@ function getOrdenArbol(elementos) {
     const orden = [];
     const incluidos = new Set();
     function anadir(e) {
-        if (incluidos.has(e)) return;
-        incluidos.add(e);
+        if (incluidos.has(e.id)) return;
+        incluidos.add(e.id);
         orden.push(e);
     }
     function walk(parentId) {
@@ -439,7 +450,7 @@ function getOrdenArbol(elementos) {
     }
     walk(null);
     elementos.forEach(e => {
-        if (incluidos.has(e)) return;
+        if (incluidos.has(e.id)) return;
         anadir(e);
         if (e.tipo === 'edt' && !ganttState.collapsed.has(e.id)) walk(e.id);
     });
