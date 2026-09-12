@@ -2695,7 +2695,14 @@ function escHtml(str) {
 }
 
 if ('serviceWorker' in navigator) {
+    const _swHadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.register('/service-worker.js').then(r => console.log('SW registered:', r.scope)).catch(e => console.warn('SW failed:', e));
+    let _swReloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!_swHadController || _swReloading) return;
+        _swReloading = true;
+        window.location.reload();
+    });
 }
 var _user = typeof AuthSystem !== 'undefined' ? AuthSystem.getCurrentUser() : null;
 if (_user && _user.nombre) {

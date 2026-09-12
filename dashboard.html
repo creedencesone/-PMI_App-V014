@@ -4929,7 +4929,14 @@
         console.log(' Proyectos visibles:', proyectos?.length || 0);
 
         if ('serviceWorker' in navigator) {
+            const _swHadController = !!navigator.serviceWorker.controller;
             navigator.serviceWorker.register('/service-worker.js').then(r => console.log('SW registered:', r.scope)).catch(e => console.warn('SW failed:', e));
+            let _swReloading = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!_swHadController || _swReloading) return;
+                _swReloading = true;
+                window.location.reload();
+            });
         }
         if (typeof feather !== 'undefined') { feather.replace(); }
 
