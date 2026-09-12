@@ -1,4 +1,4 @@
-const CACHE = 'pmi-mind-v8';
+const CACHE = 'pmi-mind-v9';
 const PRECACHE_URLS = [
     '/',
     '/index.html',
@@ -32,16 +32,15 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
     if (e.request.method !== 'GET') return;
+    const url = new URL(e.request.url);
+    if (url.origin !== self.location.origin) return;
     e.respondWith(
-        caches.match(e.request).then(cached => {
-            const fetchPromise = fetch(e.request).then(res => {
-                if (res && res.ok) {
-                    const clone = res.clone();
-                    caches.open(CACHE).then(cache => cache.put(e.request, clone));
-                }
-                return res;
-            }).catch(() => cached);
-            return cached || fetchPromise;
-        })
+        fetch(e.request).then(res => {
+            if (res && res.ok) {
+                const clone = res.clone();
+                caches.open(CACHE).then(cache => cache.put(e.request, clone));
+            }
+            return res;
+        }).catch(() => caches.match(e.request).then(c => c || Response.error()))
     );
 });
