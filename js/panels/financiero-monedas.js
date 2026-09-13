@@ -159,15 +159,32 @@ async function actualizarTiposCambioAuto() {
                     }
                 }
                 
+                const faltantes = Object.keys(MONEDAS).filter(m => !tiposCambio[m]);
+                if (faltantes.length && provId !== 'exchangerate') {
+                    try {
+                        const r2 = await fetch('https://open.er-api.com/v6/latest/EUR');
+                        if (r2.ok) {
+                            const d2 = await r2.json();
+                            if (d2 && d2.rates) {
+                                faltantes.forEach(m => {
+                                    const v = d2.rates[m];
+                                    if (typeof v === 'number' && v > 0) tiposCambio[m] = v;
+                                });
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
                 // Añadir monedas extra que no estén en la API
                 const monedasExtra = {
-                    DZD: 134, CDF: 2800, MZN: 64, ZAR: 18.5,
-                    BRL: 5.45, MXN: 18.25, COP: 4190, ARS: 950, CLP: 920,
-                    NGN: 1500, KES: 140, EGP: 48, MAD: 10.8,
-                    VES: 36, UYU: 39, PEN: 3.8, BOB: 6.9, PYG: 7300,
-                    GHS: 11.5, TND: 3.3, ETB: 115, TZS: 2700, UGX: 4000,
-                    RWF: 1380, AOA: 900, XOF: 655.96, XAF: 655.96,
-                    ZMW: 24.5, BWP: 13.5, MUR: 48
+                    USD: 1.1603, GBP: 0.858, JPY: 178.482, CHF: 0.9465,
+                    BRL: 5.9218, MXN: 19.683, COP: 3608.9243, ARS: 1751.9618, CLP: 1089.0409,
+                    DZD: 154.7319, CDF: 2683.3008, MZN: 74.3037, ZAR: 18.7189,
+                    NGN: 1582.1055, KES: 150.4795, EGP: 59.5726, MAD: 10.9132,
+                    VES: 977.8778, UYU: 46.8129, PEN: 3.9008, BOB: 14.6552, PYG: 6862.2429,
+                    GHS: 13.2637, TND: 3.3782, ETB: 188.6609, TZS: 3069.14, UGX: 4362.6583,
+                    RWF: 1714.9784, AOA: 1104.1025, XOF: 655.957, XAF: 655.957,
+                    ZMW: 22.2952, BWP: 16.3762, MUR: 54.3755
                 };
                 
                 for (const [moneda, tasa] of Object.entries(monedasExtra)) {
@@ -290,17 +307,17 @@ function usarTiposCambioRespaldo() {
     console.log(" Usando tipos de cambio de respaldo (valores fijos)");
     
     tiposCambio = {
-        EUR: 1, USD: 1.09, GBP: 0.86, JPY: 164, CHF: 0.95,
-        BRL: 5.45, MXN: 18.25, COP: 4190, ARS: 950, CLP: 920,
-        DZD: 134, CDF: 2800, MZN: 64, ZAR: 18.5,
-        NGN: 1500, KES: 140, EGP: 48, MAD: 10.8,
-        VES: 36, UYU: 39, PEN: 3.8, BOB: 6.9, PYG: 7300,
-        CNY: 7.8, INR: 90, KRW: 1400, SGD: 1.45, HKD: 8.5,
-        TRY: 32, PLN: 4.3, CZK: 25, HUF: 390, RON: 5.0,
-        SEK: 11.2, NOK: 11.5, DKK: 7.5, ISK: 150,
-        GHS: 11.5, TND: 3.3, ETB: 115, TZS: 2700, UGX: 4000,
-        RWF: 1380, AOA: 900, XOF: 655.96, XAF: 655.96,
-        ZMW: 24.5, BWP: 13.5, MUR: 48
+        EUR: 1, USD: 1.1603, GBP: 0.858, JPY: 178.482, CHF: 0.9465,
+        BRL: 5.9218, MXN: 19.683, COP: 3608.9243, ARS: 1751.9618, CLP: 1089.0409,
+        DZD: 154.7319, CDF: 2683.3008, MZN: 74.3037, ZAR: 18.7189,
+        NGN: 1582.1055, KES: 150.4795, EGP: 59.5726, MAD: 10.9132,
+        VES: 977.8778, UYU: 46.8129, PEN: 3.9008, BOB: 14.6552, PYG: 6862.2429,
+        CNY: 7.8016, INR: 110.8364, KRW: 1559.7241, SGD: 1.4704, HKD: 9.101,
+        TRY: 56.3739, PLN: 4.3215, CZK: 24.2392, HUF: 363.6758, RON: 5.2547,
+        SEK: 11.2507, NOK: 10.7781, DKK: 7.4748, ISK: 139.6628,
+        GHS: 13.2637, TND: 3.3782, ETB: 188.6609, TZS: 3069.14, UGX: 4362.6583,
+        RWF: 1714.9784, AOA: 1104.1025, XOF: 655.957, XAF: 655.957,
+        ZMW: 22.2952, BWP: 16.3762, MUR: 54.3755
     };
     
     localStorage.setItem('tiposCambioCache', JSON.stringify(tiposCambio));
