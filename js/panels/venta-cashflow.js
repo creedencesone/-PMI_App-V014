@@ -445,8 +445,10 @@ function calcularCashflow() {
             }
         });
     }
+    const _handled = new Set();
     (proyecto.elementosGantt || []).forEach(tarea => {
         if (tarea.inicio && tarea.duracion > 0 && tarea.tipo !== 'hito') {
+            _handled.add(tarea);
             let costeTarea = tarea.costeReal > 0 ? tarea.costeReal : (tarea.costeEstimado || 0);
             if (costeTarea > 0) {
                 const startDate = new Date(tarea.inicio);
@@ -465,6 +467,7 @@ function calcularCashflow() {
                 }
             }
         } else if (tarea.inicio && tarea.tipo === 'hito') {
+            _handled.add(tarea);
             // Hitos: coste en el mes de su fecha
             let costeTarea = tarea.costeReal > 0 ? tarea.costeReal : (tarea.costeEstimado || 0);
             if (costeTarea > 0) {
@@ -479,8 +482,8 @@ function calcularCashflow() {
     });
     // Incluir costes de elementos sin fecha ni recurso que no pasaron los filtros
     let costeNoDistribuido = (proyecto.elementosGantt || []).reduce((sum, e) => {
-        if (!e.inicio || e.duracion <= 0 || !e.tipo) return sum + (e.costeEstimado || 0);
-        return sum;
+        if (_handled.has(e)) return sum;
+        return sum + (e.costeEstimado || 0);
     }, 0);
     if (costeNoDistribuido > 0) gastos[0] = (gastos[0] || 0) + convertirMoneda(costeNoDistribuido, proyecto.monedaBase);
     
@@ -957,7 +960,8 @@ function calcularCashflow() {
         }); 
     }
     
-    document.getElementById('dashboardStats').innerHTML = `
+    const _dashStats = document.getElementById('dashboardStats');
+    if (_dashStats) _dashStats.innerHTML = `
         <tr><th>Stakeholders</th><td>${proyecto.stakeholders?.length || 0}</td></tr>
         <tr><th>Procesos</th><td>${proyecto.procesos?.filter(p => p.completado).length || 0}/49</td></tr>
         <tr><th>Equipo</th><td>${proyecto.equipo?.length || 0}</td></tr>
