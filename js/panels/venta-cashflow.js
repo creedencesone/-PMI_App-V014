@@ -31,15 +31,14 @@
         
         container.innerHTML = proyecto.hitosFinancieros.map(h => {
             let importe = 0;
-            let monedaSimbolo = {EUR:"€",USD:"$",GBP:"£",JPY:"¥",CHF:"₣",BRL:"R$",MXN:"Mex$",COP:"COL$",ARS:"ARS$",CLP:"CLP$",DZD:"دج",CDF:"FC",MZN:"MT",ZAR:"R",NGN:"₦",KES:"KSh",EGP:"E£",MAD:"د.م."}[h.moneda] || h.moneda;
+            const monedaVenta = proyecto.monedaVenta || proyecto.monedaBase || 'EUR';
+            const monedaHito = h.moneda || monedaVenta;
+            let monedaSimbolo = {EUR:"€",USD:"$",GBP:"£",JPY:"¥",CHF:"₣",BRL:"R$",MXN:"Mex$",COP:"COL$",ARS:"ARS$",CLP:"CLP$",DZD:"دج",CDF:"FC",MZN:"MT",ZAR:"R",NGN:"₦",KES:"KSh",EGP:"E£",MAD:"د.م."}[monedaHito] || monedaHito;
             
             if (h.importeFijo && h.importeFijo > 0) {
                 importe = h.importeFijo;
             } else {
-                importe = (proyecto.precioVenta * h.porcentaje) / 100;
-                if (proyecto.monedaVenta !== h.moneda) {
-                    importe = convertirMoneda(importe, proyecto.monedaVenta);
-                }
+                importe = convertirEntreMonedas((proyecto.precioVenta * h.porcentaje) / 100, monedaVenta, monedaHito);
             }
             
             let metodoPago = h.metodoPago || 'transferencia';

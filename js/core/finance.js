@@ -96,8 +96,23 @@ function distribuirCostePorMeses(coste, mesInicio, duracionMeses) {
     return resultado;
 }
 
+function convertirEntreMonedas(valor, monedaOrigen, monedaDestino) {
+    if (valor === undefined || valor === null || isNaN(valor)) return 0;
+    const base = (typeof proyecto !== 'undefined' && proyecto?.monedaBase) || 'EUR';
+    const origen = monedaOrigen || base;
+    const destino = monedaDestino || base;
+    if (origen === destino) return valor;
+    const enBase = convertirMoneda(valor, origen);
+    if (destino === base) return enBase;
+    const tasas = (typeof tiposCambio !== 'undefined' && tiposCambio) || TASAS_POR_DEFECTO;
+    const tasa = tasas[destino] || TASAS_POR_DEFECTO[destino];
+    if (!tasa) return enBase;
+    return enBase * tasa;
+}
+
 // Asignar al window para compatibilidad legacy
 window.convertirMoneda = convertirMoneda;
+window.convertirEntreMonedas = convertirEntreMonedas;
 window.formatearMoneda = formatearMoneda;
 window.getMonedaSimbolo = getMonedaSimbolo;
 window.calcularROI2 = calcularROI;
