@@ -13,11 +13,16 @@
         
         function calcularTodosLosCostesFinancieros() { calcularAnalisisMateriales(); calcularAnalisisEquipo(); renderizarCostesFinancierosExtra(); }
         
+        function calcularTasasFijas(proyecto) {
+            return (proyecto.tasasAduanerasFijas || []).filter(t => t.tipo === 'fijo').reduce((sum, t) => sum + convertirMoneda(t.valor, t.moneda), 0);
+        }
+        
         function calcularAnalisisMateriales() {
             const tbody = document.getElementById('analisisMaterialesBody'); if (!tbody) return;
             if (!proyecto.materiales || proyecto.materiales.length === 0) { tbody.innerHTML = '<tr><td colspan="10">No hay materiales</td></tr>'; return; }
             const flete = parseFloat(document.getElementById('factorFlete')?.value || 10) / 100;
             const seguro = parseFloat(document.getElementById('factorSeguro')?.value || 2) / 100;
+            const tasasFijas = calcularTasasFijas(proyecto);
             let totalMateriales = 0, totalAranceles = 0, totalTasas = 0, totalImportacion = 0;
             tbody.innerHTML = proyecto.materiales.map(m => {
                 const valorUnitario = convertirMoneda(m.costeUnitario, m.moneda);
@@ -25,10 +30,9 @@
                 const valorCIF = valorTotalMaterial + (valorTotalMaterial * flete) + (valorTotalMaterial * seguro);
                 const arancel = (proyecto.configAranceles || []).find(a => a.pais.toLowerCase() === (m.paisOrigen || '').toLowerCase())?.porcentaje || 0;
                 const valorArancel = valorCIF * (arancel / 100);
-                const tasasFijas = (proyecto.tasasAduanerasFijas || []).filter(t => t.tipo === 'fijo').reduce((sum, t) => sum + convertirMoneda(t.valor, t.moneda), 0);
                 const valorTasas = tasasFijas;
                 const totalItem = valorTotalMaterial + valorArancel + valorTasas;
-                totalMateriales += valorTotalMaterial; totalAranceles += valorArancel; totalTasas += valorTasas; totalImportacion += totalItem;
+                totalMateriales += valorTotalMaterial; totalAranceles += valorArancel; totalImportacion += valorTotalMaterial + valorArancel;
                 return `</table>
                     <td>${escapeHtml(m.nombre)}</td>
                     <td>${m.cantidad}</td>
@@ -42,6 +46,7 @@
                     <td>Mes ${m.mes || 1}</td>
                 </tr>`;
             }).join('');
+            totalTasas += tasasFijas; totalImportacion += tasasFijas;
             document.getElementById('resumenCosteMateriales').innerHTML = formatearMoneda(totalMateriales);
             document.getElementById('resumenTotalAranceles').innerHTML = formatearMoneda(totalAranceles);
             document.getElementById('resumenTotalTasas').innerHTML = formatearMoneda(totalTasas);

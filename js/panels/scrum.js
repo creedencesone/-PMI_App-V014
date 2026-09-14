@@ -20,7 +20,7 @@ function inicializarMetricasAgiles() {
 }
 
 function actualizarBurnDown() {
-    const ctx = document.getElementById('burndownChart')?.getContext('2d');
+    const ctx = document.getElementById('burndownChartCanvas')?.getContext('2d');
     if (!ctx) return;
     
     const puntosPorSprint = parseInt(document.getElementById('puntosPorSprint')?.value) || 20;
@@ -49,6 +49,7 @@ function actualizarBurnDown() {
     
     //  Usar la variable global
     destruirChart("burndownChart");
+    destruirChart("burndownChartGlobal");
     
     window.burndownChart = new Chart(ctx, {
         type: 'line',
@@ -102,7 +103,8 @@ function registrarVelocidadSprint() {
         mostrarToast(` Sprint ${sprintNum}: ${puntos} puntos completados. Velocidad promedio: ${proyecto.metricasAgiles.velocidadPromedio.toFixed(1)} pts/sprint`, 'success');
         
         // Sugerir próximo sprint
-        document.getElementById('sprintActual').value = sprintNum + 1;
+        const elSprintActual = document.getElementById('sprintActual');
+        if (elSprintActual) elSprintActual.value = sprintNum + 1;
     }
 }
 
@@ -1490,6 +1492,7 @@ function renderizarBurndown() {
         if (!ctx) return;
         
         // Destruir gráfico anterior
+        destruirChart("burndownChart");
         if (window.burndownChartGlobal) {
             destruirChart("burndownChartGlobal");
         }

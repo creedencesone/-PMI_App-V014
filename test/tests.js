@@ -9,7 +9,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "panels/organigrama.js", "panels/gantt.js"].forEach(f => {
+    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "panels/organigrama.js", "panels/gantt.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -261,4 +261,29 @@ QUnit.test('organigramaRemapearStakeholder - intercambia ids', assert => {
     assert.equal(resultado.find(n => n.id === 1).stakeholderId, 99, 'stakeholder 10 remapeado a 99');
     assert.equal(resultado.find(n => n.id === 2).stakeholderId, 20, 'otros nodos intactos');
     assert.equal(nodos.find(n => n.id === 1).stakeholderId, 10, 'input intacto');
+});
+
+QUnit.module('G-B costes');
+
+QUnit.test('filtrarElementosGantt filtra por nombre y tipo case-insensitive', assert => {
+    const elementos = [{nombre:'Hito A'},{nombre:'Pruebas'},{tipo:'hito', nombre:'EDT'}];
+    assert.equal(filtrarElementosGantt(elementos, 'hi').length, 2, 'Hito A (nombre) + EDT (tipo hito)');
+    assert.equal(filtrarElementosGantt(elementos, 'prue').length, 1, 'Pruebas');
+    assert.equal(filtrarElementosGantt(elementos, '').length, 3, 'query vacía devuelve todo');
+});
+
+QUnit.test('calcularCosteRecursosProyecto salta materiales sprint-asociados en ágil', assert => {
+    const proyecto = {elementosGantt:[{costeEstimado:100}], materiales:[{cantidad:2,costeUnitario:50,moneda:'EUR',sprint:1}], servicios:[], viajes:[]};
+    assert.equal(calcularCosteRecursosProyecto(proyecto, true), 100, 'ágil: salta material sprint:1');
+    assert.equal(calcularCosteRecursosProyecto(proyecto, false), 200, 'no ágil: incluye material');
+});
+
+QUnit.test('calcularTasasFijas suma solo tasas fijas una vez', assert => {
+    const proyecto = {tasasAduanerasFijas:[{tipo:'fijo',valor:150,moneda:'EUR'},{tipo:'porcentaje',valor:5}]};
+    assert.equal(calcularTasasFijas(proyecto), 150, '1 fija de 150, ignora porcentaje');
+});
+
+QUnit.test('calcularCosteAgileTotalInforme suma historias con sprintId', assert => {
+    const proyecto = {scrum:{historias:[{sprintId:'s1',costeEstimado:100},{sprintId:'s2',costeEstimado:50},{sprintId:null,costeEstimado:999}],sprints:[{id:'s1'},{id:'s2'}]},monedaBase:'EUR'};
+    assert.equal(calcularCosteAgileTotalInforme(proyecto), 150, 'salta la sin sprintId');
 });

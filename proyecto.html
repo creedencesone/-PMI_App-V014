@@ -177,9 +177,7 @@
 
 
         <div class="main-content">
-                        <!-- Botón de cambio de tema -->
-            <div class="theme-toggle" onclick="toggleTheme()" id="themeToggleBtn"><i data-feather="help-circle" class="nav-feather"></i></div>
-            <div class="proceso-tabs" id="procesoTabs">
+                        <div class="proceso-tabs" id="procesoTabs">
                 <button class="proceso-tab active" data-fase="Inicio" onclick="setActiveProceso('Inicio')" style="--fase-color:#E54D42">Inicio</button>
                 <button class="proceso-tab" data-fase="Planificación" onclick="setActiveProceso('Planificación')" style="--fase-color:#F59E0B">Planificación</button>
                 <button class="proceso-tab" data-fase="Ejecución" onclick="setActiveProceso('Ejecución')" style="--fase-color:#EAB308">Ejecución</button>
@@ -868,7 +866,7 @@
                         <button class="btn-icon" onclick="abrirMonteCarlo()" title="Simulación Monte Carlo"><i data-feather="divide-square" class="nav-feather"></i> Monte Carlo</button>
                     </div>
                     <div class="crono-toolbar-right">
-                        <input type="text" class="crono-search" id="buscarGantt" placeholder="Buscar..." onkeyup="renderizarCronograma()">
+                        <input type="text" class="crono-search" id="buscarGantt" placeholder="Buscar..." onkeyup="buscarCronogramaDebounced()">
                     </div>
                 </div>
 

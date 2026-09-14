@@ -7,6 +7,27 @@
         let saludChartCashflow = null;
         let saludChartEntregables = null;
         
+// ============================================
+// Coste de recursos del proyecto (elementos Gantt + materiales + servicios + viajes)
+// En modo ágil (esAgile=true) se excluyen los materiales/servicios con sprint/sprintAsociado:
+// ya están contabilizados en costeAgileTotal vía sprint.costes.real (calcularCostesPorSprint).
+// ============================================
+function calcularCosteRecursosProyecto(proyecto, esAgile) {
+    let total = (proyecto.elementosGantt || []).reduce((sum, e) => sum + (e.costeEstimado || 0), 0);
+    (proyecto.materiales || []).forEach(m => {
+        if (esAgile && (m.sprint || m.sprintAsociado)) return;
+        total += convertirMoneda(m.cantidad * m.costeUnitario, m.moneda);
+    });
+    (proyecto.servicios || []).forEach(s => {
+        if (esAgile && (s.sprint || s.sprintAsociado)) return;
+        total += convertirMoneda(s.cantidad * s.costeUnitario, s.moneda);
+    });
+    (proyecto.viajes || []).forEach(v => {
+        total += convertirMoneda((v.costeVuelos + v.costeHotel + v.costeComidas + v.costeTraslados), v.moneda);
+    });
+    return total;
+}
+
 function actualizarPanelSalud() {
     if (!proyecto) return;
     
@@ -31,15 +52,13 @@ function actualizarPanelSalud() {
     if (!_fechas.min && proyecto.fechaInicio) _fechas.min = new Date(proyecto.fechaInicio);
     if (!_fechas.max && proyecto.fechaFinPlan) _fechas.max = new Date(proyecto.fechaFinPlan);
 
-    // Coste proyectado = suma de costes estimados por elemento + materiales + servicios + viajes
-    let costeTotal = (proyecto.elementosGantt || []).reduce((sum, e) => sum + (e.costeEstimado || 0), 0);
-    (proyecto.materiales || []).forEach(m => costeTotal += convertirMoneda(m.cantidad * m.costeUnitario, m.moneda));
-    (proyecto.servicios || []).forEach(s => costeTotal += convertirMoneda(s.cantidad * s.costeUnitario, s.moneda));
-    (proyecto.viajes || []).forEach(v => costeTotal += convertirMoneda((v.costeVuelos + v.costeHotel + v.costeComidas + v.costeTraslados), v.moneda));
-    
     //  NUEVO: Costes de sprints ágiles (si está en modo ágil o mixto)
     const metodologia = proyecto?.metodologia?.tipo || 'cascada';
     const esAgile = (metodologia === 'agile' || metodologia === 'mixto');
+
+    // Coste proyectado = suma de costes estimados por elemento + materiales + servicios + viajes
+    // (en modo ágil se excluyen los materiales/servicios sprint-asociados: ya están en costeAgileTotal)
+    let costeTotal = calcularCosteRecursosProyecto(proyecto, esAgile);
     
     let costeAgileTotal = 0;
     let agileCPI = 1;
@@ -775,13 +794,24 @@ function diagnosticarProgreso() {
                 select.innerHTML = '<option value="todos">Todos los stakeholders (promedio)</option>' +
                     proyecto.stakeholders.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)}</option>`).join('');
             }
-            document.getElementById('modalSatisfaccion').style.display = 'flex';
+            const modal = document.getElementById('modalSatisfaccion');
+            if (!modal) {
+                mostrarToast('La validación de satisfacción no está disponible aún', 'warning');
+                return;
+            }
+            modal.style.display = 'flex';
         }
         
         function guardarSatisfaccion() {
-            let puntaje = parseFloat(document.getElementById('satisfaccionPuntaje').value);
-            let stakeholderId = document.getElementById('satisfaccionStakeholder').value;
-            let comentarios = document.getElementById('satisfaccionComentarios').value;
+            const inputPuntaje = document.getElementById('satisfaccionPuntaje');
+            const inputStakeholder = document.getElementById('satisfaccionStakeholder');
+            if (!inputPuntaje || !inputStakeholder) {
+                mostrarToast('La validación de satisfacción no está disponible aún', 'warning');
+                return;
+            }
+            let puntaje = parseFloat(inputPuntaje.value);
+            let stakeholderId = inputStakeholder.value;
+            let comentarios = document.getElementById('satisfaccionComentarios') ? document.getElementById('satisfaccionComentarios').value : '';
             
             if (!proyecto.satisfacciones) proyecto.satisfacciones = [];
             proyecto.satisfacciones.push({
@@ -837,7 +867,8 @@ function diagnosticarProgreso() {
 }
 
 function cerrarModalSatisfaccion() {
-    document.getElementById('modalSatisfaccion').style.display = 'none';
+    const modal = document.getElementById('modalSatisfaccion');
+    if (modal) modal.style.display = 'none';
 }
 
 

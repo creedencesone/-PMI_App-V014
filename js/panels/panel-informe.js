@@ -3,6 +3,10 @@ let infChartVariacion = null;
 let infChartForecast = null;
 let infChartHitos = null;
 
+function calcularCosteAgileTotalInforme(proyecto) {
+    return (proyecto?.scrum?.historias || []).filter(h => h.sprintId).reduce((sum, h) => sum + convertirMoneda(h.costeEstimado || 0, proyecto?.monedaBase), 0);
+}
+
 function actualizarInformeCompleto() {
     console.log(' actualizarInformeCompleto() called');
     try {
@@ -52,12 +56,7 @@ function actualizarInformeCompleto() {
         tieneDatosReales = true;
     }
 
-    let costeAgileTotal = 0;
-    if (esAgile && proyecto.scrum && proyecto.scrum.sprints) {
-        proyecto.scrum.sprints.forEach(s => {
-            if (s.historias) s.historias.forEach(h => { costeAgileTotal += convertirMoneda(h.coste || 0, 'EUR') });
-        });
-    }
+    const costeAgileTotal = esAgile ? calcularCosteAgileTotalInforme(proyecto) : 0;
 
     let desviacionDias = 0;
     let tareasConDesviacion = 0;
@@ -95,7 +94,7 @@ function actualizarInformeCompleto() {
             let velocityData = proyecto.scrum?.sprints?.filter(s => s.estado === 'completado' && s.velocity);
             let velocidades = velocityData ? velocityData.map(s => s.velocity) : [];
             let velocidadPromedioAgile = velocidades.length > 0 ? velocidades.reduce((a, b) => a + b, 0) / velocidades.length : 0;
-            let puntosBacklog = proyecto.scrum?.sprints?.reduce((sum, s) => sum + (s.historias ? s.historias.length : 0), 0) || 1;
+            let puntosBacklog = (proyecto.scrum?.historias || []).filter(h => h.sprintId).length || 1;
             let agileCPI = AC > 0 ? (costeAgileTotal / AC) : 1;
             let agileSPI = puntosBacklog > 0 ? velocidadPromedioAgile / puntosBacklog : 1;
             CPI = Math.min(2, Math.max(0, agileCPI));

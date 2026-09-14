@@ -48,7 +48,8 @@ let ganttState = {
     selectedId: null,
     editandoDependencia: false,
     vista: 'gantt',
-    escala: 'día'
+    escala: 'día',
+    _buscarTimer: null
 };
 
 let cpmResult = { criticalPath: [], totalFloat: 0 };
@@ -302,6 +303,24 @@ function ejecutarCPM(elementos) {
     return tasks;
 }
 
+// ─── BÚSQUEDA POR NOMBRE ────────────────────────────────────────
+
+function filtrarElementosGantt(elementos, query) {
+    const q = (query || '').trim().toLowerCase();
+    if (!q) return elementos;
+    return elementos.filter(e => {
+        const nombre = (e.nombre || '').toLowerCase();
+        const id = String(e.id ?? '');
+        const tipo = (e.tipo || '').toLowerCase();
+        return nombre.includes(q) || id.includes(q) || tipo.includes(q);
+    });
+}
+
+function buscarCronogramaDebounced() {
+    clearTimeout(ganttState._buscarTimer);
+    ganttState._buscarTimer = setTimeout(renderizarCronograma, 250);
+}
+
 // ─── RENDERIZAR CRONOGRAMA COMPLETO ─────────────────────────────
 
 function renderizarCronograma() {
@@ -324,8 +343,11 @@ function renderizarCronograma() {
     const elementos = [...(proyecto.elementosGantt || [])];
     ejecutarCPM(elementos);
 
+    const q = (document.getElementById('buscarGantt')?.value || '').trim().toLowerCase();
+    const elementosVisibles = q ? filtrarElementosGantt(elementos, q) : elementos;
+
     if (ganttState.vista === 'tarjetas') {
-        renderizarVistaTarjetas(elementos);
+        renderizarVistaTarjetas(elementosVisibles);
         renderizarInfoBar();
         return;
     }
@@ -335,8 +357,8 @@ function renderizarCronograma() {
         container.innerHTML = _cronogramaOriginalHTML;
     }
 
-    const fechaInicioProy = calcularInicioProyecto(elementos);
-    const fechaFinProy = calcularFinProyecto(elementos);
+    const fechaInicioProy = calcularInicioProyecto(elementosVisibles);
+    const fechaFinProy = calcularFinProyecto(elementosVisibles);
     const spanFechas = document.getElementById('cronoFechasProyecto');
     if (spanFechas) {
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -350,10 +372,10 @@ function renderizarCronograma() {
     const headerHeight = ganttState.escala === 'día' ? 60 : 40;
 
     // Orden único para árbol + timeline
-    const ordenArbol = getOrdenArbol(elementos);
+    const ordenArbol = getOrdenArbol(elementosVisibles);
 
-    renderizarArbolWBS(ordenArbol, elementos, headerHeight);
-    renderizarTimelineSVG(ordenArbol, elementos, fechaInicioProy, diasTotales, anchoDia, meses, anchoTotal);
+    renderizarArbolWBS(ordenArbol, elementosVisibles, headerHeight);
+    renderizarTimelineSVG(ordenArbol, elementosVisibles, fechaInicioProy, diasTotales, anchoDia, meses, anchoTotal);
     renderizarInfoBar();
     actualizarZoomLabel();
 
