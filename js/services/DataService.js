@@ -156,6 +156,19 @@ const DataService = {
     _flushTimer: null,
     _pendingUICallback: null,
 
+    _safeSetItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                console.warn('[DataService] localStorage sin espacio para', key, '- no se cachea');
+                return false;
+            }
+            throw e;
+        }
+    },
+
     getToken() {
         return localStorage.getItem('pmi_api_token');
     },
@@ -987,7 +1000,7 @@ const DataService = {
                         const idx = allProyectos.findIndex(p => String(p.id) === String(oldId));
                         if (idx >= 0) {
                             allProyectos[idx].id = created.project.id;
-                            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
+                            this._safeSetItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
                         }
                     }
                     this._lastSyncTime = Date.now();
@@ -1035,7 +1048,7 @@ const DataService = {
                             const idx = allProyectos.findIndex(pr => String(pr.id) === String(oldId));
                             if (idx >= 0) {
                                 allProyectos[idx].id = created.project.id;
-                                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
+                                this._safeSetItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
                             }
                             // Actualizar proyectoSeleccionado si apuntaba al viejo ID
                             const sel = localStorage.getItem('proyectoSeleccionado');
@@ -1111,7 +1124,7 @@ const DataService = {
                     const idx = allProyectos.findIndex(pr => String(pr.id) === String(oldId));
                     if (idx >= 0) {
                         allProyectos[idx].id = created.project.id;
-                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
+                        this._safeSetItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
                     }
                     // Actualizar proyectoSeleccionado si apuntaba al viejo ID
                     const sel = localStorage.getItem('proyectoSeleccionado');
@@ -1239,7 +1252,7 @@ const DataService = {
                             const idx = allProyectos.findIndex(pr => String(pr.id) === id || pr.id === parseInt(id));
                             if (idx >= 0) {
                                 allProyectos[idx].id = created.project.id;
-                                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
+                                this._safeSetItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
                             }
                             this._dequeue(id);
                             this._lastSyncTime = Date.now();
@@ -1276,9 +1289,13 @@ const DataService = {
                 } else {
                     allProyectos.push(serverProj);
                 }
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(allProyectos));
                 if (window.proyecto && String(window.proyecto.id) === String(projectId)) {
                     window.proyecto = serverProj;
+                }
+                const json = JSON.stringify(allProyectos);
+                if (!this._safeSetItem(this.STORAGE_KEY, json)) {
+                    const trimmed = seleccionarProyectosACachear(allProyectos, projectId, 5);
+                    this._safeSetItem(this.STORAGE_KEY, JSON.stringify(trimmed));
                 }
                 return serverProj;
             }

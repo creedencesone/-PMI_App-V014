@@ -53,8 +53,61 @@ function dedupeById(items) {
     return out;
 }
 
+/**
+ * Select projects to keep in the localStorage cache when quota is exceeded.
+ * Returns a NEW array with at most 1 + max entries.
+ * ALWAYS keeps the project whose String(p.id) === String(keepId) (if present).
+ * Among the rest, keeps the max MOST RECENT, ordered by
+ * _serverUpdatedAt || updated_at || 0 descending (string/number compare
+ * that tolerates both ISO strings and timestamps). Ties broken by
+ * original array order (stable).
+ * Non-array input → returned unchanged. max default = 5 if not a positive finite number.
+ *
+ * @param {Array} projects – array of project objects
+ * @param {*} keepId – project id to always keep
+ * @param {number} [max=5] – max additional projects to keep
+ * @returns {Array} trimmed copy
+ */
+function seleccionarProyectosACachear(projects, keepId, max) {
+    if (!Array.isArray(projects)) return projects;
+    if (typeof max !== 'number' || !isFinite(max) || max <= 0) max = 5;
+
+    // Find the project to always keep
+    const keepIdx = projects.findIndex(p => String(p.id) === String(keepId));
+    const keepProject = keepIdx >= 0 ? projects[keepIdx] : null;
+
+    // The rest: exclude the kept project
+    const candidates = keepProject
+        ? projects.filter((_, i) => i !== keepIdx)
+        : [...projects];
+
+    // Sort by most recent first (stable sort via index tracking)
+    const indexed = candidates.map((p, i) => ({ p, i }));
+    indexed.sort((a, b) => {
+        const aVal = a.p._serverUpdatedAt || a.p.updated_at || 0;
+        const bVal = b.p._serverUpdatedAt || b.p.updated_at || 0;
+        // Compare: string vs string, or number vs number
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+            return bVal.localeCompare(aVal);
+        }
+        if (aVal > bVal) return -1;
+        if (aVal < bVal) return 1;
+        // Tie: original order (lower index = earlier)
+        return a.i - b.i;
+    });
+
+    const trimmed = indexed.slice(0, max).map(x => x.p);
+
+    // Prepend keepProject if present
+    if (keepProject) {
+        return [keepProject, ...trimmed];
+    }
+    return trimmed;
+}
+
 // Expose as globals for browser + vm.runInThisContext harness
 if (typeof window !== 'undefined') {
     window.dedupeDomainRows = dedupeDomainRows;
     window.dedupeById = dedupeById;
+    window.seleccionarProyectosACachear = seleccionarProyectosACachear;
 }

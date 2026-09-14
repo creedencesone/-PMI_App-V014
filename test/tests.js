@@ -359,3 +359,76 @@ QUnit.test('dedupeById passthrough for non-array', assert => {
     assert.deepEqual(dedupeById(undefined), undefined, 'undefined passthrough');
     assert.deepEqual(dedupeById(42), 42, 'number passthrough');
 });
+
+QUnit.module('Cache');
+
+QUnit.test('seleccionarProyectosACachear keeps current + max most-recent', assert => {
+    const now = Date.now();
+    const projects = [
+        { id: 'a', _serverUpdatedAt: now - 1000 },
+        { id: 'b', _serverUpdatedAt: now - 2000 },
+        { id: 'c', _serverUpdatedAt: now - 500 },
+        { id: 'd', _serverUpdatedAt: now - 3000 },
+    ];
+    const result = seleccionarProyectosACachear(projects, 'b', 2);
+    assert.equal(result.length, 3, '1 kept + 2 max = 3');
+    assert.equal(result[0].id, 'b', 'kept project is first');
+    assert.equal(result[1].id, 'c', 'most recent after kept');
+    assert.equal(result[2].id, 'a', 'second most recent');
+});
+
+QUnit.test('seleccionarProyectosACachear ordering by _serverUpdatedAt', assert => {
+    const projects = [
+        { id: 'x', _serverUpdatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'y', _serverUpdatedAt: '2026-06-01T00:00:00Z' },
+        { id: 'z', _serverUpdatedAt: '2026-03-01T00:00:00Z' },
+    ];
+    const result = seleccionarProyectosACachear(projects, 'x', 2);
+    assert.equal(result.length, 3, 'kept + 2 = 3');
+    assert.equal(result[0].id, 'x', 'kept first');
+    assert.equal(result[1].id, 'y', 'most recent ISO string');
+    assert.equal(result[2].id, 'z', 'second most recent ISO string');
+});
+
+QUnit.test('seleccionarProyectosACachear ordering by updated_at fallback', assert => {
+    const projects = [
+        { id: 'a', updated_at: 100 },
+        { id: 'b', updated_at: 300 },
+        { id: 'c', updated_at: 200 },
+    ];
+    const result = seleccionarProyectosACachear(projects, 'b', 1);
+    assert.equal(result.length, 2, 'kept + 1 = 2');
+    assert.equal(result[0].id, 'b', 'kept first');
+    assert.equal(result[1].id, 'c', 'most recent by updated_at');
+});
+
+QUnit.test('seleccionarProyectosACachear keeps current even if oldest', assert => {
+    const projects = [
+        { id: 'old', updated_at: 1 },
+        { id: 'mid', updated_at: 10 },
+        { id: 'new', updated_at: 100 },
+    ];
+    const result = seleccionarProyectosACachear(projects, 'old', 1);
+    assert.equal(result.length, 2, 'kept + 1 = 2');
+    assert.equal(result[0].id, 'old', 'oldest is kept');
+    assert.equal(result[1].id, 'new', 'most recent fills slot');
+});
+
+QUnit.test('seleccionarProyectosACachear non-array passthrough', assert => {
+    assert.deepEqual(seleccionarProyectosACachear(undefined, 'a'), undefined);
+    assert.deepEqual(seleccionarProyectosACachear(null, 'a'), null);
+    assert.deepEqual(seleccionarProyectosACachear(42, 'a'), 42);
+});
+
+QUnit.test('seleccionarProyectosACachear default max = 5', assert => {
+    const projects = Array.from({ length: 8 }, (_, i) => ({ id: String(i), updated_at: i }));
+    const result = seleccionarProyectosACachear(projects, '0');
+    assert.equal(result.length, 6, '1 kept + default 5 = 6');
+    assert.equal(result[0].id, '0', 'kept first');
+});
+
+QUnit.test('seleccionarProyectosACachear result length cap with keepId absent', assert => {
+    const projects = Array.from({ length: 10 }, (_, i) => ({ id: String(i), updated_at: i }));
+    const result = seleccionarProyectosACachear(projects, 'nonexistent', 3);
+    assert.equal(result.length, 3, 'no keep match → just max items');
+});
