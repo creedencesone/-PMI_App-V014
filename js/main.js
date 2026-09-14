@@ -7,6 +7,7 @@ import './core/dates.js';
 import './core/evm.js';
 import './core/finance.js';
 import './core/ui.js';
+import './core/collections.js';
 
 // Panel modules (import secuencial para respetar dependencias)
 import './panels/acta-roles.js';

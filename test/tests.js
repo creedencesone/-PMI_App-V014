@@ -9,7 +9,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "panels/organigrama.js", "panels/gantt.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js"].forEach(f => {
+    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "core/collections.js", "panels/organigrama.js", "panels/gantt.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -286,4 +286,76 @@ QUnit.test('calcularTasasFijas suma solo tasas fijas una vez', assert => {
 QUnit.test('calcularCosteAgileTotalInforme suma historias con sprintId', assert => {
     const proyecto = {scrum:{historias:[{sprintId:'s1',costeEstimado:100},{sprintId:'s2',costeEstimado:50},{sprintId:null,costeEstimado:999}],sprints:[{id:'s1'},{id:'s2'}]},monedaBase:'EUR'};
     assert.equal(calcularCosteAgileTotalInforme(proyecto), 150, 'salta la sin sprintId');
+});
+
+// ============================================================
+QUnit.module('Dedupe');
+
+QUnit.test('dedupeDomainRows deduplicates by data.id, first wins', assert => {
+    const rows = [
+        { id: 'r1', organization_id: 'o1', project_id: 'p1', data: { id: 'h1', nombre: 'A' } },
+        { id: 'r2', organization_id: 'o1', project_id: 'p1', data: { id: 'h1', nombre: 'A-dup' } },
+        { id: 'r3', organization_id: 'o1', project_id: 'p1', data: { id: 'h2', nombre: 'B' } },
+    ];
+    const result = dedupeDomainRows(rows);
+    assert.equal(result.length, 2, '2 unique data.id values → 2 rows');
+    assert.equal(result[0].data.nombre, 'A', 'first occurrence kept');
+    assert.equal(result[1].data.nombre, 'B', 'second unique kept');
+});
+
+QUnit.test('dedupeDomainRows preserves order = first occurrence', assert => {
+    const rows = [
+        { id: 'a', data: { id: 'x' } },
+        { id: 'b', data: { id: 'y' } },
+        { id: 'c', data: { id: 'x' } },
+        { id: 'd', data: { id: 'y' } },
+    ];
+    const result = dedupeDomainRows(rows);
+    assert.equal(result.length, 2, '2 unique ids');
+    assert.equal(result[0].id, 'a', 'first x occurrence');
+    assert.equal(result[1].id, 'b', 'first y occurrence');
+});
+
+QUnit.test('dedupeDomainRows preserves rows without data.id', assert => {
+    const rows = [
+        { id: 'a', data: null },
+        { id: 'b', data: { id: 'h1' } },
+        { id: 'c', data: undefined },
+        { id: 'd', data: { id: 'h1' } },
+    ];
+    const result = dedupeDomainRows(rows);
+    assert.equal(result.length, 3, 'null data + undefined data + 1 unique h1');
+});
+
+QUnit.test('dedupeDomainRows passthrough for non-array', assert => {
+    assert.deepEqual(dedupeDomainRows(null), null, 'null passthrough');
+    assert.deepEqual(dedupeDomainRows('foo'), 'foo', 'string passthrough');
+});
+
+QUnit.test('dedupeById deduplicates by top-level id, first wins', assert => {
+    const items = [
+        { id: '1', value: 'A' },
+        { id: '1', value: 'A-dup' },
+        { id: '2', value: 'B' },
+    ];
+    const result = dedupeById(items);
+    assert.equal(result.length, 2, '2 unique ids');
+    assert.equal(result[0].value, 'A', 'first occurrence kept');
+    assert.equal(result[1].value, 'B', 'second unique kept');
+});
+
+QUnit.test('dedupeById preserves items without id', assert => {
+    const items = [
+        { id: 1 },
+        { noId: true },
+        { id: 1 },
+    ];
+    const result = dedupeById(items);
+    assert.equal(result.length, 2, '1 unique id + 1 noId item');
+    assert.equal(result[1].noId, true, 'noId item preserved');
+});
+
+QUnit.test('dedupeById passthrough for non-array', assert => {
+    assert.deepEqual(dedupeById(undefined), undefined, 'undefined passthrough');
+    assert.deepEqual(dedupeById(42), 42, 'number passthrough');
 });

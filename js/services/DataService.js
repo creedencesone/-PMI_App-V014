@@ -339,7 +339,11 @@ const DataService = {
                 if (d.key === 'garantia') {
                     if (rows && rows.length > 0) data.garantia = rows[0].data || null;
                 } else if (rows && rows.length > 0) {
-                    data[d.key] = rows.map(r => r.data);
+                    data[d.key] = dedupeDomainRows(rows).map(r => r.data);
+                } else if (!rows || rows.length === 0) {
+                    if (Array.isArray(data[d.key]) && typeof dedupeById === 'function') {
+                        data[d.key] = dedupeById(data[d.key]);
+                    }
                 }
             } catch { /* dominio no disponible: se conserva el valor del blob */ }
         }
@@ -358,15 +362,20 @@ const DataService = {
         const supabase = await _getSupabase();
         for (const d of DOMAIN_TABLES) {
             try {
-                await supabase.from(d.table).delete().eq('project_id', projectId);
+                const { error: delErr } = await supabase.from(d.table).delete().eq('project_id', projectId);
+                if (delErr) {
+                    console.warn(`[DataService] Delete falló en ${d.key}, se omite insert:`, delErr.message);
+                    continue;
+                }
                 const value = data ? data[d.key] : undefined;
                 if (d.key === 'garantia') {
                     if (value && typeof value === 'object') {
-                        await supabase.from(d.table).insert({
+                        const { error: insErr } = await supabase.from(d.table).insert({
                             organization_id: orgId,
                             project_id: projectId,
                             data: value,
                         });
+                        if (insErr) console.warn(`[DataService] Insert falló en ${d.key}:`, insErr.message);
                     }
                 } else if (Array.isArray(value) && value.length > 0) {
                     const rows = value.map(item => ({
@@ -374,7 +383,8 @@ const DataService = {
                         project_id: projectId,
                         data: item,
                     }));
-                    await supabase.from(d.table).insert(rows);
+                    const { error: insErr } = await supabase.from(d.table).insert(rows);
+                    if (insErr) console.warn(`[DataService] Insert falló en ${d.key}:`, insErr.message);
                 }
             } catch (e) {
                 console.warn(`[DataService] No se pudieron sincronizar ${d.key}:`, e.message);
@@ -999,6 +1009,9 @@ const DataService = {
     async syncAllProjects(projects) {
         const token = this.getToken();
         if (!token || !projects) return;
+        if (this._syncInProgress) return;
+        this._syncInProgress = true;
+        try {
         const results = [];
         for (const p of projects) {
             try {
@@ -1046,6 +1059,9 @@ const DataService = {
             }
         }
         return results;
+        } finally {
+            this._syncInProgress = false;
+        }
     },
 
     // --------------------------------------------------
