@@ -167,7 +167,6 @@ function editarHitoFinanciero(id) {
                 <h3> Editar Hito: ${escapeHtml(h.nombre)}</h3>
                 <span class="close-modal" onclick="cerrarModalGeneric()">&times;</span>
             </div>
-            <input type="hidden" id="hfId" value="${h.id}">
             
             <div class="form-group">
                 <label>Nombre del hito</label>
@@ -256,7 +255,7 @@ function editarHitoFinanciero(id) {
             
             <div class="u-flex-gap-12 u-mt-20">
                 <button class="btn btn-secondary u-flex-1" onclick="document.getElementById('editHitoModal')?.remove()">Cancelar</button>
-                <button class="btn btn-primary u-flex-1" onclick="guardarHitoFinanciero()">Guardar Cambios</button>
+                <button class="btn btn-primary u-flex-1" onclick="guardarHitoFinanciero(${h.id})">Guardar Cambios</button>
             </div>
         </div>
     `;
@@ -302,14 +301,16 @@ function toggleCamposLCEdit() {
 // ============================================
 
 // Reemplaza la función guardarHitoFinanciero
-function guardarHitoFinanciero() {
+function guardarHitoFinanciero(idHito) {
     let nombre = document.getElementById('hfNombre').value.trim();
     if (!nombre) { 
         mostrarToast(tApp('toast_nombre_obligatorio'), 'error'); 
         return; 
     }
     
-    let id = document.getElementById('hfId')?.value;
+    // "Añadir" no pasa idHito => SIEMPRE crea (push). "Editar" pasa el id => actualiza.
+    // Nunca se lee #hfId del DOM global (evita el stale que sobrescribía hitos).
+    let id = (typeof idHito !== 'undefined' && idHito !== null && idHito !== '') ? parseInt(idHito) : null;
     let mes = parseInt(document.getElementById('hfMes').value);
     let porcentaje = parseFloat(document.getElementById('hfPorcentaje').value);
     let metodoPago = document.getElementById('hfMetodoPago').value;
@@ -325,7 +326,7 @@ function guardarHitoFinanciero() {
     }
     
     let nuevoHito = { 
-        id: id ? parseInt(id) : Date.now(), 
+        id: id || Date.now(), 
         nombre: nombre, 
         mes: mes, 
         porcentaje: porcentaje,
@@ -343,11 +344,12 @@ function guardarHitoFinanciero() {
     
     if (!proyecto.hitosFinancieros) proyecto.hitosFinancieros = [];
     
-    if (id) { 
-        let idx = proyecto.hitosFinancieros.findIndex(h => h.id === parseInt(id)); 
-        if (idx >= 0) proyecto.hitosFinancieros[idx] = nuevoHito; 
-    } else { 
-        proyecto.hitosFinancieros.push(nuevoHito); 
+    if (id !== null) {
+        const idx = proyecto.hitosFinancieros.findIndex(h => h.id === id);
+        if (idx >= 0) proyecto.hitosFinancieros[idx] = nuevoHito;
+        else proyecto.hitosFinancieros.push(nuevoHito); // defensivo: nunca perder el dato silenciosamente
+    } else {
+        proyecto.hitosFinancieros.push(nuevoHito);
     }
     
     guardarProyecto(); 

@@ -562,6 +562,8 @@ function mostrarMenuIdiomaApp() {
 function cerrarModalGeneric() {
     const genericModal = document.getElementById('genericModal');
     if (genericModal) genericModal.remove();
+    const editHitoModal = document.getElementById('editHitoModal');
+    if (editHitoModal) editHitoModal.remove();
     const modals = ['modalGarantia','modalSatisfaccion','modalViaje','modalEmbalaje','modalIA'];
     modals.forEach(id => {
         const el = document.getElementById(id);
