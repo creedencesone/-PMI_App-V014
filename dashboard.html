@@ -1143,42 +1143,6 @@
         .empty-state .icon { font-size: 64px; margin-bottom: 16px; }
 
         /* ============================================
-           BACKUP GRID
-           ============================================ */
-        .backup-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
-
-        .info-card {
-            background: var(--card-bg);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 16px;
-            transition: all 0.3s ease;
-            border: 0.5px solid var(--border-color);
-            cursor: pointer;
-            text-align: center;
-        }
-        .info-card:hover {
-            transform: translateY(-4px);
-            background: var(--card-bg-hover);
-        }
-        .info-card .info-card-icon { font-size: 32px; }
-        .info-card h4 {
-            margin: 8px 0 4px;
-            font-size: 14px;
-            color: var(--text-primary);
-        }
-        .info-card p {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin: 0;
-        }
-
-        /* ============================================
            SCROLLBAR
            ============================================ */
         ::-webkit-scrollbar {
@@ -1276,9 +1240,6 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            .backup-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
             .project-metrics {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -1313,7 +1274,6 @@
 
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr; }
-            .backup-grid { grid-template-columns: 1fr; }
             .project-metrics { grid-template-columns: 1fr; }
             .perm-modules-grid { grid-template-columns: 1fr; }
         }
@@ -1467,6 +1427,7 @@
             </div>
             <div class="header-actions">
                 <button class="btn btn-primary" onclick="abrirModalNuevoProyecto()"><i data-feather="plus-circle" class="nav-feather"></i> Nuevo Proyecto</button>
+                <button class="theme-toggle-sidebar" onclick="exportarProyectoCSV()" title="Exportar a CSV"><span><i data-feather="file-text" class="nav-feather"></i></span></button>
                 <button class="btn btn-secondary btn-small" id="languageToggleBtn" onclick="mostrarMenuIdiomaAppDashboard()"><i data-feather="external-link" class="nav-feather"></i> Cambiar idioma</button>
                 <button class="btn btn-help btn-small" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
             </div>
@@ -1521,40 +1482,6 @@
             <h3><i data-feather="entries" class="nav-feather"></i> Mis Proyectos</h3>
         </div>
         <div id="projectsGrid" class="projects-grid"></div>
-        
-        <!-- BACKUP -->
-        <div class="section-title section-title--spaced" style="margin-top: 40px;">
-            <h3><i data-feather="download-cloud" class="nav-feather"></i> Backup y Exportación de Datos</h3>
-        </div>
-        <div class="backup-grid">
-            <div class="info-card" onclick="exportarProyectoUnico()">
-                <div class="info-card-icon"><i data-feather="file-text" class="nav-feather"></i></div>
-                <h4>Guardar Proyecto</h4>
-                <p>Guarda el proyecto actual en JSON</p>
-            </div>
-            <div class="info-card" onclick="exportarTodosProyectos()">
-                <div class="info-card-icon"><i data-feather="shopping-bag" class="nav-feather"></i></div>
-                <h4>Guardar Cartera</h4>
-                <p>Guarda todos los proyectos en JSON</p>
-            </div>
-            <div class="info-card" onclick="exportarProyectoCSV()">
-                <div class="info-card-icon"><i data-feather="bar-chart" class="nav-feather"></i></div>
-                <h4>Exportar a CSV</h4>
-                <p>Datos del proyecto en CSV</p>
-            </div>
-            <div class="info-card" onclick="importarProyectos()">
-                <div class="info-card-icon"><i data-feather="folder-plus" class="nav-feather"></i></div>
-                <h4>Importar Proyectos</h4>
-                <p>Carga desde archivo JSON</p>
-            </div>
-            <div class="info-card" onclick="restaurarAutoBackup()" style="border-color:rgba(255,183,77,0.3);">
-                <div class="info-card-icon"><i data-feather="refresh-cw" class="nav-feather"></i></div>
-                <h4>Recuperar Datos</h4>
-                <p>Restaura proyectos desde backups automáticos</p>
-                <div id="backupInfo" style="font-size:11px;color:var(--text-muted);margin-top:4px;"></div>
-            </div>
-
-        </div>
     </div>
 
     <!-- ============================================
@@ -2166,15 +2093,6 @@
                 duplicar: "Duplicar",
                 sin_proyectos: "No tienes proyectos",
                 crear_proyecto: "Haz clic en \"Nuevo Proyecto\" para comenzar",
-                backup_titulo: '<i data-feather="download-cloud" class="nav-feather"></i> Backup y Exportación de Datos',
-                guardar_proyecto: "Guardar Proyecto",
-                guardar_proyecto_desc: "Guarda el proyecto actual en JSON",
-                guardar_cartera: "Guardar Cartera",
-                guardar_cartera_desc: "Guarda todos los proyectos en JSON",
-                exportar_csv: "Exportar a CSV",
-                exportar_csv_desc: "Datos del proyecto en CSV",
-                importar_proyectos: "Importar Proyectos",
-                importar_proyectos_desc: "Carga desde archivo JSON",
                 estado_en_curso: "🟢 En curso",
                 estado_atencion: "🟡 Atención",
                 estado_critico: " Crítico",
@@ -2234,15 +2152,6 @@
                 duplicar: "Duplicate",
                 sin_proyectos: "You have no projects",
                 crear_proyecto: "Click \"New Project\" to get started",
-                backup_titulo: " Backup & Data Export",
-                guardar_proyecto: "Save Project",
-                guardar_proyecto_desc: "Save current project as JSON",
-                guardar_cartera: "Save Portfolio",
-                guardar_cartera_desc: "Save all projects as JSON",
-                exportar_csv: "Export to CSV",
-                exportar_csv_desc: "Project data in CSV",
-                importar_proyectos: "Import Projects",
-                importar_proyectos_desc: "Load from JSON file",
                 estado_en_curso: "🟢 In progress",
                 estado_atencion: "🟡 Attention",
                 estado_critico: " Critical",
@@ -2302,15 +2211,6 @@
                 duplicar: "Dupliquer",
                 sin_proyectos: "Vous n'avez pas de projets",
                 crear_proyecto: "Cliquez sur \"Nouveau Projet\" pour commencer",
-                backup_titulo: " Sauvegarde et Exportation",
-                guardar_proyecto: "Sauvegarder le Projet",
-                guardar_proyecto_desc: "Sauvegarder le projet actuel en JSON",
-                guardar_cartera: "Sauvegarder le Portefeuille",
-                guardar_cartera_desc: "Sauvegarder tous les projets en JSON",
-                exportar_csv: "Exporter en CSV",
-                exportar_csv_desc: "Données du projet en CSV",
-                importar_proyectos: "Importer des Projets",
-                importar_proyectos_desc: "Charger depuis un fichier JSON",
                 estado_en_curso: "🟢 En cours",
                 estado_atencion: "🟡 Attention",
                 estado_critico: " Critique",
@@ -2370,15 +2270,6 @@
                 duplicar: "Duplizieren",
                 sin_proyectos: "Sie haben keine Projekte",
                 crear_proyecto: "Klicken Sie auf \"Neues Projekt\" um zu beginnen",
-                backup_titulo: " Backup und Datenexport",
-                guardar_proyecto: "Projekt speichern",
-                guardar_proyecto_desc: "Aktuelles Projekt als JSON speichern",
-                guardar_cartera: "Portfolio speichern",
-                guardar_cartera_desc: "Alle Projekte als JSON speichern",
-                exportar_csv: "Als CSV exportieren",
-                exportar_csv_desc: "Projektdaten in CSV",
-                importar_proyectos: "Projekte importieren",
-                importar_proyectos_desc: "Aus JSON-Datei laden",
                 estado_en_curso: "🟢 In Bearbeitung",
                 estado_atencion: "🟡 Achtung",
                 estado_critico: " Kritisch",
@@ -2470,7 +2361,6 @@
 
         function guardarProyectos() { 
             guardarProyectosStorage(proyectos); 
-            actualizarInfoBackup();
             // Sincronizar con API en segundo plano
             const syncPromise = DataService.syncAllProjects(proyectos);
             if (syncPromise && typeof syncPromise.then === 'function') {
@@ -2481,38 +2371,6 @@
                 }).catch(function() {});
             }
         }
-
-        function actualizarInfoBackup() {
-            const el = document.getElementById('backupInfo');
-            if (!el) return;
-            const fuentes = [
-                { key: 'pmi_recovery', nombre: 'automático' },
-                { key: 'pmi_proyectos_bkp1', nombre: 'bkp1' },
-                { key: 'pmi_proyectos_bkp2', nombre: 'bkp2' }
-            ];
-            let info = [];
-            for (const f of fuentes) {
-                try {
-                    const raw = localStorage.getItem(f.key);
-                    if (!raw) continue;
-                    const parsed = JSON.parse(raw);
-                    let datos = f.key === 'pmi_recovery' ? parsed.data : parsed;
-                    if (datos && Array.isArray(datos) && datos.length > 0) {
-                        info.push(f.nombre + ': ' + datos.length + ' proyectos');
-                    }
-                } catch {}
-            }
-            const pp = localStorage.getItem('pmi_proyectos');
-            try {
-                const p = JSON.parse(pp);
-                if (Array.isArray(p) && p.length > 0) info.push('principal: ' + p.length + ' proyectos');
-            } catch {}
-            el.textContent = info.length > 0
-                ? 'Disponible: ' + info.join(' | ')
-                : 'No hay backups disponibles';
-        }
-
-
 
         function restaurarAutoBackup() {
             const fuentes = [
@@ -2534,7 +2392,6 @@
                             guardarProyectosStorage(proyectos);
                             renderizarProyectos();
                             actualizarDashboard();
-                            actualizarInfoBackup();
                             mostrarToast('Proyectos restaurados desde ' + fuente.nombre, 'success');
                             return;
                         }
@@ -2854,7 +2711,6 @@
             }
             
             actualizarDashboard();
-            actualizarInfoBackup();
             verificarMigracion();
         }
 
@@ -4269,28 +4125,9 @@
             const sectionTitles = document.querySelectorAll('.section-title h3');
             if (sectionTitles[0]) sectionTitles[0].innerHTML = t('alertas_titulo');
             if (sectionTitles[1]) sectionTitles[1].innerHTML = t('mis_proyectos');
-            if (sectionTitles[2]) sectionTitles[2].innerHTML = t('backup_titulo');
             
             const refreshBtn = document.querySelector('.alertas-globales .btn-secondary');
             if (refreshBtn) refreshBtn.innerHTML = t('alertas_refrescar');
-            
-            const backupCards = document.querySelectorAll('.info-card');
-            if (backupCards[0]) {
-                backupCards[0].querySelector('h4').textContent = t('guardar_proyecto');
-                backupCards[0].querySelector('p').textContent = t('guardar_proyecto_desc');
-            }
-            if (backupCards[1]) {
-                backupCards[1].querySelector('h4').textContent = t('guardar_cartera');
-                backupCards[1].querySelector('p').textContent = t('guardar_cartera_desc');
-            }
-            if (backupCards[2]) {
-                backupCards[2].querySelector('h4').textContent = t('exportar_csv');
-                backupCards[2].querySelector('p').textContent = t('exportar_csv_desc');
-            }
-            if (backupCards[3]) {
-                backupCards[3].querySelector('h4').textContent = t('importar_proyectos');
-                backupCards[3].querySelector('p').textContent = t('importar_proyectos_desc');
-            }
             
             const modalNuevo = document.querySelector('#modalNuevoProyecto .modal-header h3');
             const modalEditar = document.querySelector('#modalEditarProyecto .modal-header h3');
