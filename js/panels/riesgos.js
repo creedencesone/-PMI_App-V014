@@ -129,23 +129,23 @@
             var categorias = [
                 {
                     id: 'critico', cssClass: 'pm-col-red', icon: svgAlert, title: 'Crítico',
-                    subtitle: 'Alta Probabilidad · Alto Impacto',
-                    filter: function(r) { return r.probabilidad >= 3 && r.impacto >= 3; }
+                    subtitle: 'Score ≥ 20',
+                    filter: function(r) { return r.nivel === 'Crítico'; }
                 },
                 {
-                    id: 'moderado', cssClass: 'pm-col-yellow', icon: svgTrendingUp, title: 'Moderado',
-                    subtitle: 'Alta Probabilidad · Bajo Impacto',
-                    filter: function(r) { return r.probabilidad >= 3 && r.impacto < 3; }
+                    id: 'alto', cssClass: 'pm-col-orange', icon: svgAlertCircle, title: 'Alto',
+                    subtitle: 'Score 12 – 19',
+                    filter: function(r) { return r.nivel === 'Alto'; }
                 },
                 {
-                    id: 'grave', cssClass: 'pm-col-orange', icon: svgAlertCircle, title: 'Grave',
-                    subtitle: 'Baja Probabilidad · Alto Impacto',
-                    filter: function(r) { return r.probabilidad < 3 && r.impacto >= 3; }
+                    id: 'medio', cssClass: 'pm-col-yellow', icon: svgTrendingUp, title: 'Medio',
+                    subtitle: 'Score 6 – 11',
+                    filter: function(r) { return r.nivel === 'Medio'; }
                 },
                 {
                     id: 'bajo', cssClass: 'pm-col-green', icon: svgCheck, title: 'Bajo',
-                    subtitle: 'Baja Probabilidad · Bajo Impacto',
-                    filter: function(r) { return r.probabilidad < 3 && r.impacto < 3; }
+                    subtitle: 'Score < 6',
+                    filter: function(r) { return r.nivel === 'Bajo'; }
                 }
             ];
 
