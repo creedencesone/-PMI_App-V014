@@ -3683,12 +3683,7 @@ body[data-theme="light"] .cashflow-negative {
 }
 
 /* Risk matrix canvas (line 760) */
-.matriz-riesgos-canvas {
-    max-width: 100%;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-    margin-bottom: 16px;
-}
+
 
 /* Wide materials table (line 825) */
 .data-table--wide {

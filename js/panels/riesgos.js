@@ -6,6 +6,7 @@
         }
         
         function renderizarRiesgos() {
+            refrescarMatrizRiesgosSiVisible();
             const tbody = document.getElementById('riesgosBody');
             if (!proyecto.riesgos || proyecto.riesgos.length === 0) { tbody.innerHTML = '<tr><td colspan="11">No hay riesgos</td></tr>'; return; }
             tbody.innerHTML = proyecto.riesgos.map(r => {
@@ -114,25 +115,90 @@
             mostrarToast(` Análisis: ${criticos} riesgos críticos identificados`, 'info');
         }
         
+        function renderizarMatrizRiesgos() {
+            var grid = document.getElementById('matrizRiesgosGrid');
+            if (!grid) return;
+
+            var riesgos = proyecto.riesgos || [];
+
+            var svgAlert = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+            var svgTrendingUp = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
+            var svgAlertCircle = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+            var svgCheck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+            var categorias = [
+                {
+                    id: 'critico', cssClass: 'pm-col-red', icon: svgAlert, title: 'Crítico',
+                    subtitle: 'Alta Probabilidad · Alto Impacto',
+                    filter: function(r) { return r.probabilidad >= 3 && r.impacto >= 3; }
+                },
+                {
+                    id: 'moderado', cssClass: 'pm-col-yellow', icon: svgTrendingUp, title: 'Moderado',
+                    subtitle: 'Alta Probabilidad · Bajo Impacto',
+                    filter: function(r) { return r.probabilidad >= 3 && r.impacto < 3; }
+                },
+                {
+                    id: 'grave', cssClass: 'pm-col-orange', icon: svgAlertCircle, title: 'Grave',
+                    subtitle: 'Baja Probabilidad · Alto Impacto',
+                    filter: function(r) { return r.probabilidad < 3 && r.impacto >= 3; }
+                },
+                {
+                    id: 'bajo', cssClass: 'pm-col-green', icon: svgCheck, title: 'Bajo',
+                    subtitle: 'Baja Probabilidad · Bajo Impacto',
+                    filter: function(r) { return r.probabilidad < 3 && r.impacto < 3; }
+                }
+            ];
+
+            var html = '<div class="pm-matrix">';
+            categorias.forEach(function(cat) {
+                var items = riesgos.filter(cat.filter);
+                var count = items.length;
+                var cards = count === 0
+                    ? '<div class="pm-card" style="cursor:default;opacity:0.5;justify-content:center;"><div class="pm-card-body"><div class="pm-card-name" style="text-align:center;">Sin riesgos</div></div></div>'
+                    : items.map(function(r) {
+                        var nivelColor = { 'Crítico': '#B42318', 'Alto': '#F79009', 'Medio': '#A16207', 'Bajo': '#2F6E4E' }[r.nivel] || '#667085';
+                        return '<div class="pm-card" style="cursor:default;border-left:3px solid ' + nivelColor + ';">'
+                            + '<div class="pm-card-body">'
+                            + '<div class="pm-card-name">' + escapeHtml(r.nombre) + '</div>'
+                            + '<div class="pm-card-role">' + escapeHtml(r.categoria || '-') + '</div>'
+                            + '<div class="pm-card-email">Prob ' + r.probabilidad + '/5 · Imp ' + r.impacto + '/5</div>'
+                            + '<div class="pm-tag" style="display:inline-block;margin-top:4px;font-size:10px;padding:2px 6px;border-radius:4px;background:' + nivelColor + '22;color:' + nivelColor + ';">' + escapeHtml(r.nivel || '-') + '</div>'
+                            + '</div></div>';
+                    }).join('');
+
+                html += '<div class="pm-col ' + cat.cssClass + '" data-quadrant="' + cat.id + '">'
+                    + '<div class="pm-col-header"><div class="pm-col-header-top">' + cat.icon + '<span class="pm-col-title">' + cat.title + '</span></div><div class="pm-col-subtitle">' + cat.subtitle + '</div>'
+                    + '<div class="pm-col-badge">' + count + '</div>'
+                    + '</div>'
+                    + '<div class="pm-col-body" data-quadrant="' + cat.id + '">' + cards + '</div>'
+                    + '</div>';
+            });
+            html += '</div>';
+
+            grid.innerHTML = html;
+        }
+
+        function refrescarMatrizRiesgosSiVisible() {
+            var container = document.getElementById('matrizRiesgosContainer');
+            var grid = document.getElementById('matrizRiesgosGrid');
+            if (!container || !grid) return;
+            if (container.classList.contains('u-hidden') || container.style.display === 'none') return;
+            renderizarMatrizRiesgos();
+        }
+
         function mostrarMatrizRiesgos() {
-            const container = document.getElementById('matrizRiesgosContainer');
+            var container = document.getElementById('matrizRiesgosContainer');
             if (!container) return;
-            container.style.display = 'block';
-            const canvas = document.getElementById('matrizRiesgosCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            canvas.width = 500; canvas.height = 400;
-            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
-            for (let i = 1; i <= 5; i++) { ctx.beginPath(); ctx.moveTo(i * 80, 0); ctx.lineTo(i * 80, 400); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, 400 - i * 60); ctx.lineTo(500, 400 - i * 60); ctx.stroke(); }
-            ctx.fillStyle = 'white'; ctx.font = '10px sans-serif';
-            for (let i = 1; i <= 5; i++) { ctx.fillText(i, i * 80 - 5, 20); ctx.fillText(i, 5, 400 - i * 60 + 5); }
-            ctx.fillStyle = '#007AFF';
-            proyecto.riesgos.forEach(r => { let x = r.probabilidad * 80 - 10; let y = 400 - r.impacto * 60 - 10; ctx.fillRect(x, y, 8, 8); ctx.fillStyle = '#FF5F57'; });
+            container.classList.remove('u-hidden');
+            container.style.display = '';
+            renderizarMatrizRiesgos();
             mostrarToast(" Matriz de riesgos mostrada", 'success');
         }
         
-        function ocultarMatrizRiesgos() { document.getElementById('matrizRiesgosContainer').style.display = 'none'; }
+        function ocultarMatrizRiesgos() {
+            var container = document.getElementById('matrizRiesgosContainer');
+            if (container) { container.classList.add('u-hidden'); container.style.display = 'none'; }
+        }
         
         function calcularValorEsperado() {
             let valorProyecto = parseFloat(document.getElementById('valorProyectoRiesgos').value) || proyecto.precioVenta || 0;
