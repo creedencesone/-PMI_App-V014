@@ -2278,7 +2278,6 @@ function confirmarImportarCSV(timestamp) {
         // Limpiar campos auxiliares
         delete e._importIdx;
         delete e._importId;
-        e._imported = true;
         proyecto.elementosGantt.push(e);
     });
 
@@ -2290,16 +2289,15 @@ function confirmarImportarCSV(timestamp) {
     mostrarToast(` Importados ${finales.length} elementos`, 'success');
 }
 
-function eliminarElementosImportados() {
-    if (!proyecto.elementosGantt) { mostrarToast('No hay elementos importados', 'info'); return; }
-    const importados = proyecto.elementosGantt.filter(e => e._imported);
-    if (importados.length === 0) { mostrarToast('No hay elementos importados', 'info'); return; }
-    if (!confirm(`¿Eliminar ${importados.length} elemento(s) importado(s)? Esta acción no se puede deshacer.`)) return;
-    proyecto.elementosGantt = proyecto.elementosGantt.filter(e => !e._imported);
+function limpiarCronograma() {
+    const total = (proyecto.elementosGantt || []).length;
+    if (total === 0) { mostrarToast('El cronograma ya está vacío', 'info'); return; }
+    if (!confirm(`¿Estás seguro de que quieres eliminar TODO el cronograma?\n\nSe borrarán ${total} elemento(s) (EDT, actividades, entregables e hitos).\n\nEsta acción NO se puede deshacer ni recuperar.`)) return;
+    proyecto.elementosGantt = [];
     guardarProyecto();
     if (typeof autoScheduler === 'function') autoScheduler();
     renderizarCronograma();
-    mostrarToast(` Eliminados ${importados.length} elemento(s) importado(s)`, 'success');
+    mostrarToast(` Cronograma eliminado (${total} elementos)`, 'success');
 }
 
 // ─── LISTADO ORDENADO (imprimible) ────────────────────────────
