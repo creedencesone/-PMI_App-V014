@@ -37,6 +37,17 @@ function renderizarActa() {
         avalesHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_avales') + '</div><div class="acta-value">' + tApp('acta_sin_avales') + '</div></div>';
     }
     
+    let riesgosHtml = '';
+    if (proyecto.riesgos && proyecto.riesgos.length > 0) {
+        riesgosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_riesgos') + '</div><div class="acta-value">';
+        proyecto.riesgos.forEach(r => {
+            riesgosHtml += `<div class="acta-riesgo">• ${escapeHtml(r.nombre || 'Sin nombre')} — ${escapeHtml(r.categoria || '-')} | Prob: ${r.probabilidad || '-'}/5 | Imp: ${r.impacto || '-'}/5 | Nivel: ${escapeHtml(r.nivel || '-')}${r.estado ? ' | ' + escapeHtml(r.estado) : ''}</div>`;
+        });
+        riesgosHtml += '</div></div>';
+    } else {
+        riesgosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_riesgos') + '</div><div class="acta-value">' + tApp('acta_sin_riesgos') + '</div></div>';
+    }
+    
     // Metodología
     const metodologia = proyecto.metodologia || { tipo: 'cascada', fasesAgile: [], fechaTransicion: null };
     let metodologiaTexto = '';
@@ -122,8 +133,97 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-purple">
+            <div class="acta-heading acta-heading-teal">
                 <span class="acta-heading-num">04</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_presupuesto')}</div>
+                    <div class="acta-heading-subtitle">Presupuesto, contrato y rentabilidad</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+            </div>
+            <div class="acta-grid">
+                <div class="acta-field"><div class="acta-label">${tApp('acta_presupuesto_valor')}</div><div class="acta-value">${a.presupuesto ? formatearMoneda(a.presupuesto) : '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_contrato')}</div><div class="acta-value"><strong class="u-color-success">${proyecto.precioVenta ? formatearMoneda(proyecto.precioVenta) : 'No definido'}</strong></div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_moneda_venta')}</div><div class="acta-value">${proyecto.monedaVenta || proyecto.monedaBase}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_roi')}</div><div class="acta-value">${a.roi ? a.roi + '%' : '-'}</div></div>
+            </div>
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-yellow">
+                <span class="acta-heading-num">05</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_condiciones')}</div>
+                    <div class="acta-heading-subtitle">Condiciones de pago y hitos financieros</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+            </div>
+            <div class="acta-field"><div class="acta-label">${tApp('acta_condiciones_texto')}</div><div class="acta-value">${escapeHtml(proyecto.condicionesPago || 'No definidas')}</div></div>
+            ${hitosHtml}
+            <div class="acta-field"><div class="acta-label">${tApp('acta_entregables_clave')}</div><div class="acta-value">${escapeHtml(a.entregablesClave || 'No definidos')}</div></div>
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-red">
+                <span class="acta-heading-num">06</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_avales')}</div>
+                    <div class="acta-heading-subtitle">Avales y garantías del proyecto</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            </div>
+            ${avalesHtml}
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-indigo">
+                <span class="acta-heading-num">07</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_aprobaciones')}</div>
+                    <div class="acta-heading-subtitle">Aprobación del acta de constitución</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            </div>
+            <div class="acta-grid">
+                <div class="acta-field"><div class="acta-label">${tApp('acta_aprobado_por')}</div><div class="acta-value">${escapeHtml(a.aprobadoPor || 'Pendiente')}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${a.fechaAprobacion || '-'}</div></div>
+            </div>
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-green">
+                <span class="acta-heading-num">08</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_metodologia')}</div>
+                    <div class="acta-heading-subtitle">Enfoque de gestión del proyecto</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></div>
+            </div>
+            <div class="acta-field">
+                <div class="acta-label">${tApp('acta_metodologia_tipo')}</div>
+                <div class="acta-value"><span class="acta-pill acta-pill-${metodologia.tipo}">${metodologiaTexto.trim()}</span></div>
+            </div>
+            <div class="acta-field">
+                <div class="acta-label">${tApp('acta_metodologia_desc')}</div>
+                <div class="acta-value">${metodologiaDetalle}</div>
+            </div>
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-red">
+                <span class="acta-heading-num">09</span>
+                <div class="acta-heading-text">
+                    <div class="acta-heading-title">${tApp('acta_riesgos')}</div>
+                    <div class="acta-heading-subtitle">Riesgos identificados del proyecto</div>
+                </div>
+                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+            </div>
+            ${riesgosHtml}
+        </div>
+        
+        <div class="acta-section">
+            <div class="acta-heading acta-heading-purple">
+                <span class="acta-heading-num">10</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_partes')}</div>
                     <div class="acta-heading-subtitle">Roles principales del proyecto</div>
@@ -161,84 +261,8 @@ function renderizarActa() {
             </div>
         </div>
         
-        <div class="acta-section">
-            <div class="acta-heading acta-heading-teal">
-                <span class="acta-heading-num">05</span>
-                <div class="acta-heading-text">
-                    <div class="acta-heading-title">${tApp('acta_presupuesto')}</div>
-                    <div class="acta-heading-subtitle">Presupuesto, contrato y rentabilidad</div>
-                </div>
-                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
-            </div>
-            <div class="acta-grid">
-                <div class="acta-field"><div class="acta-label">${tApp('acta_presupuesto_valor')}</div><div class="acta-value">${a.presupuesto ? formatearMoneda(a.presupuesto) : '-'}</div></div>
-                <div class="acta-field"><div class="acta-label">${tApp('acta_contrato')}</div><div class="acta-value"><strong class="u-color-success">${proyecto.precioVenta ? formatearMoneda(proyecto.precioVenta) : 'No definido'}</strong></div></div>
-                <div class="acta-field"><div class="acta-label">${tApp('acta_moneda_venta')}</div><div class="acta-value">${proyecto.monedaVenta || proyecto.monedaBase}</div></div>
-                <div class="acta-field"><div class="acta-label">${tApp('acta_roi')}</div><div class="acta-value">${a.roi ? a.roi + '%' : '-'}</div></div>
-            </div>
-        </div>
-        
-        <div class="acta-section">
-            <div class="acta-heading acta-heading-yellow">
-                <span class="acta-heading-num">06</span>
-                <div class="acta-heading-text">
-                    <div class="acta-heading-title">${tApp('acta_condiciones')}</div>
-                    <div class="acta-heading-subtitle">Condiciones de pago y hitos financieros</div>
-                </div>
-                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
-            </div>
-            <div class="acta-field"><div class="acta-label">${tApp('acta_condiciones_texto')}</div><div class="acta-value">${escapeHtml(proyecto.condicionesPago || 'No definidas')}</div></div>
-            ${hitosHtml}
-        </div>
-        
-        <div class="acta-section">
-            <div class="acta-heading acta-heading-red">
-                <span class="acta-heading-num">07</span>
-                <div class="acta-heading-text">
-                    <div class="acta-heading-title">${tApp('acta_avales')}</div>
-                    <div class="acta-heading-subtitle">Avales y garantías del proyecto</div>
-                </div>
-                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div>
-            </div>
-            ${avalesHtml}
-        </div>
-        
-        <div class="acta-section">
-            <div class="acta-heading acta-heading-indigo">
-                <span class="acta-heading-num">08</span>
-                <div class="acta-heading-text">
-                    <div class="acta-heading-title">${tApp('acta_aprobaciones')}</div>
-                    <div class="acta-heading-subtitle">Aprobación del acta de constitución</div>
-                </div>
-                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-            </div>
-            <div class="acta-grid">
-                <div class="acta-field"><div class="acta-label">${tApp('acta_aprobado_por')}</div><div class="acta-value">${escapeHtml(a.aprobadoPor || 'Pendiente')}</div></div>
-                <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${a.fechaAprobacion || '-'}</div></div>
-            </div>
-        </div>
-        
-        <div class="acta-section">
-            <div class="acta-heading acta-heading-green">
-                <span class="acta-heading-num">09</span>
-                <div class="acta-heading-text">
-                    <div class="acta-heading-title">${tApp('acta_metodologia')}</div>
-                    <div class="acta-heading-subtitle">Enfoque de gestión del proyecto</div>
-                </div>
-                <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></div>
-            </div>
-            <div class="acta-field">
-                <div class="acta-label">${tApp('acta_metodologia_tipo')}</div>
-                <div class="acta-value"><span class="acta-pill acta-pill-${metodologia.tipo}">${metodologiaTexto.trim()}</span></div>
-            </div>
-            <div class="acta-field">
-                <div class="acta-label">${tApp('acta_metodologia_desc')}</div>
-                <div class="acta-value">${metodologiaDetalle}</div>
-            </div>
-        </div>
-        
         <div class="info-card u-mt-16">
-            <p class="u-p-sm"> Los hitos de pago se gestionan en Finanzas → Venta y Hitos | Los avales se gestionan en Finanzas → Avales y Garantías</p>
+            <p class="u-p-sm"> Los hitos de pago se gestionan en Finanzas → Venta y Hitos | Los avales se gestionan en Finanzas → Avales y Garantías | Los riesgos se gestionan en el panel Riesgos</p>
         </div>
     `;
 }
