@@ -391,6 +391,32 @@
             background: rgba(66, 165, 245, 0.25);
         }
 
+        .panel-add-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 0.5px solid var(--border-color, rgba(255,255,255,0.1));
+            color: var(--text-primary);
+            font-size: 20px;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .panel-add-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-1px);
+        }
+        [data-theme="light"] .panel-add-btn { background: #FFFFFF; border: 1px solid #E2E8F0; color: #1F2937; }
+        [data-theme="light"] .panel-add-btn:hover { background-color: #F1F3F5; color: #2563EB; }
+
         /* Manual de usuario */
         .manual-tema {
             padding: 10px 16px;
@@ -1369,6 +1395,9 @@
             <button class="theme-toggle-sidebar" onclick="mostrarMenuIdiomaAppDashboard()" title="Cambiar idioma">
                 <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
             </button>
+            <button class="theme-toggle-sidebar" onclick="abrirManual()" title="Manual de usuario">
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></span>
+            </button>
         </div>
 
         <!-- Navegación -->
@@ -1426,10 +1455,8 @@
                 </p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" onclick="abrirModalNuevoProyecto()"><i data-feather="plus-circle" class="nav-feather"></i> Nuevo Proyecto</button>
+                <button class="panel-add-btn" onclick="abrirModalNuevoProyecto()" aria-label="Nuevo proyecto" title="Nuevo Proyecto">+</button>
                 <button class="theme-toggle-sidebar" onclick="exportarProyectoCSV()" title="Exportar a CSV"><span><i data-feather="file-text" class="nav-feather"></i></span></button>
-                <button class="btn btn-secondary btn-small" id="languageToggleBtn" onclick="mostrarMenuIdiomaAppDashboard()"><i data-feather="external-link" class="nav-feather"></i> Cambiar idioma</button>
-                <button class="btn btn-help btn-small" onclick="abrirManual()" title="Manual de usuario"><i data-feather="help-circle" class="nav-feather"></i> Ayuda</button>
             </div>
         </div>
 
@@ -2069,8 +2096,6 @@
             es: {
                 titulo_cartera: "Cartera de Proyectos",
                 subtitulo: "Gestión multiproyecto · Datos en tiempo real",
-                btn_nuevo_proyecto: '<i data-feather="plus-circle" class="nav-feather"></i> Nuevo Proyecto',
-                btn_cambiar_idioma: '<i data-feather="external-link" class="nav-feather"></i> Cambiar idioma',
                 stat_total_proyectos: "Total Proyectos",
                 stat_proyectos_activos: "Proyectos Activos",
                 stat_proyectos_completados: "Proyectos Completados",
@@ -2128,8 +2153,6 @@
             en: {
                 titulo_cartera: "Project Portfolio",
                 subtitulo: "Multi-project management · Real-time data",
-                btn_nuevo_proyecto: " New Project",
-                btn_cambiar_idioma: " Change language",
                 stat_total_proyectos: "Total Projects",
                 stat_proyectos_activos: "Active Projects",
                 stat_proyectos_completados: "Completed Projects",
@@ -2187,8 +2210,6 @@
             fr: {
                 titulo_cartera: "Portefeuille de Projets",
                 subtitulo: "Gestion multi-projets · Données en temps réel",
-                btn_nuevo_proyecto: " Nouveau Projet",
-                btn_cambiar_idioma: " Changer de langue",
                 stat_total_proyectos: "Total Projets",
                 stat_proyectos_activos: "Projets Actifs",
                 stat_proyectos_completados: "Projets Terminés",
@@ -2246,8 +2267,6 @@
             de: {
                 titulo_cartera: "Projektportfolio",
                 subtitulo: "Multi-Projektmanagement · Echtzeitdaten",
-                btn_nuevo_proyecto: " Neues Projekt",
-                btn_cambiar_idioma: " Sprache ändern",
                 stat_total_proyectos: "Gesamtprojekte",
                 stat_proyectos_activos: "Aktive Projekte",
                 stat_proyectos_completados: "Abgeschlossene Projekte",
@@ -4111,8 +4130,6 @@
             
             document.querySelector('.page-title h2').textContent = t('titulo_cartera');
             document.querySelector('.page-title p').textContent = t('subtitulo');
-            document.querySelector('.btn-primary').innerHTML = t('btn_nuevo_proyecto');
-            document.getElementById('languageToggleBtn').innerHTML = t('btn_cambiar_idioma');
             
             const statsLabels = document.querySelectorAll('.stat-label');
             if (statsLabels[0]) statsLabels[0].textContent = t('stat_total_proyectos');
