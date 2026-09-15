@@ -1955,37 +1955,6 @@ function enviarEmailPrueba() {
       .catch(err => mostrarToast(' Error: ' + (err?.text || err), 'error'));
 }
 
-// ─── SINCRONIZAR ────────────────────────────────────────────────
-
-function sincronizarElementosGantt() {
-    if (proyecto.hitos && proyecto.hitos.length > 0) {
-        proyecto.hitos.forEach(h => {
-            if (!proyecto.elementosGantt.some(e => e.nombre === h.nombre && e.tipo === 'hito')) {
-                proyecto.elementosGantt.push({
-                    id: Date.now() + Math.random(), tipo: 'hito', nombre: h.nombre,
-                    inicio: h.fecha || new Date().toISOString().split('T')[0],
-                    duracion: 0, progreso: 100, responsable: '', dependeDe: null, predecesores: []
-                });
-            }
-        });
-    }
-    if (proyecto.entregables && proyecto.entregables.length > 0) {
-        proyecto.entregables.forEach(ent => {
-            if (!proyecto.elementosGantt.some(e => e.nombre === ent.nombre && e.tipo === 'entregable')) {
-                proyecto.elementosGantt.push({
-                    id: Date.now() + Math.random(), tipo: 'entregable', nombre: ent.nombre,
-                    inicio: ent.fechaPrevista || new Date().toISOString().split('T')[0],
-                    duracion: ent.duracion || 5, progreso: ent.progreso || 0,
-                    responsable: ent.responsable || '', dependeDe: null, predecesores: []
-                });
-            }
-        });
-    }
-    guardarProyecto();
-    renderizarCronograma();
-    mostrarToast(' Sincronizado', 'success');
-}
-
 function actualizarFechasProyectoDesdeActa() {
     if (proyecto.acta?.fechaInicio && proyecto.elementosGantt) {
         proyecto.elementosGantt.forEach(e => {
@@ -2448,41 +2417,10 @@ function mostrarListadoOrdenado() {
 
 // ─── ANÁLISIS ───────────────────────────────────────────────────
 
-function mostrarAnalisisDesviaciones() {
-    const elementos = proyecto.elementosGantt || [];
-    const conDesv = elementos.filter(e => calcularDesviacion(e) !== 0 && e.finReal);
-    if (conDesv.length === 0) { mostrarToast('Sin desviaciones', 'success'); return; }
-    let html = `<table class="data-table"><thead><tr><th>Elemento</th><th>Fin Plan</th><th>Fin Real</th><th>Desv</th></tr></thead><tbody>`;
-    conDesv.forEach(e => {
-        const d = calcularDesviacion(e);
-        html += `<tr><td>${escapeHtml(e.nombre)}</td><td>${e.inicio?sumarDias(e.inicio,e.duracion):'-'}</td><td>${e.finReal||'-'}</td><td class="${d>0?'cashflow-negative':'cashflow-positive'}">${d>0?'+'+d:d}d</td></tr>`;
-    });
-    html += `</tbody></table>`;
-    document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">
-        <div class="modal-content"><div class="modal-header"><h3> Desviaciones</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>${html}</div></div>`;
-}
-
 function calcularDesviacion(elem) {
     if (!elem.inicio || !elem.finReal) return 0;
     const finPlan = parseLocalDate(sumarDias(elem.inicio, elem.duracion));
     return Math.ceil((parseLocalDate(elem.finReal) - finPlan) / 86400000);
-}
-
-function recalcularCostesPorProgreso() {
-    if (!proyecto.elementosGantt) return;
-    let totalEst = 0, totalReal = 0;
-    proyecto.elementosGantt.forEach(t => {
-        if (t.tipo !== 'hito' && t.recursoAsignado) {
-            const est = t.costeEstimado || 0;
-            const real = est * ((t.progreso || 0) / 100);
-            t.costeReal = real;
-            totalEst += convertirMoneda(est, t.recursoAsignado.moneda || proyecto.monedaBase);
-            totalReal += convertirMoneda(real, t.recursoAsignado.moneda || proyecto.monedaBase);
-        }
-    });
-    guardarProyecto();
-    calcularCashflow();
-    mostrarToast(` Costes: Est ${formatearMoneda(totalEst)} | Real ${formatearMoneda(totalReal)}`, 'success');
 }
 
 function handleFechaRealChange(e) {
