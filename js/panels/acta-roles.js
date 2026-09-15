@@ -37,6 +37,22 @@ function renderizarActa() {
         avalesHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_avales') + '</div><div class="acta-value">' + tApp('acta_sin_avales') + '</div></div>';
     }
     
+    let segurosHtml = '';
+    if (proyecto.seguros && proyecto.seguros.length > 0) {
+        segurosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_seguros') + '</div><div class="acta-value">';
+        proyecto.seguros.forEach(s => {
+            segurosHtml += `<div class="acta-aval">
+                <div class="acta-aval-tipo">${escapeHtml(s.nombre || 'Seguro')} — ${escapeHtml(s.tipo || 'Seguro')}</div>
+                <div class="acta-aval-linea">Coste: ${formatearMoneda(convertirMoneda(s.coste || 0, s.moneda || proyecto.monedaBase))} | Mes: ${s.mes || 1}</div>
+                <div class="acta-aval-linea">Aseguradora: ${escapeHtml(s.proveedor || '-')}</div>
+                ${s.descripcion ? '<div class="acta-aval-linea">' + escapeHtml(s.descripcion) + '</div>' : ''}
+            </div>`;
+        });
+        segurosHtml += `</div></div>`;
+    } else {
+        segurosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_seguros') + '</div><div class="acta-value">' + tApp('acta_sin_seguros') + '</div></div>';
+    }
+    
     let riesgosHtml = '';
     if (proyecto.riesgos && proyecto.riesgos.length > 0) {
         riesgosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_riesgos') + '</div><div class="acta-value">';
@@ -207,11 +223,12 @@ function renderizarActa() {
                 <span class="acta-heading-num">07</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_avales')}</div>
-                    <div class="acta-heading-subtitle">Avales y garantías del proyecto</div>
+                    <div class="acta-heading-subtitle">Avales, garantías y seguros del proyecto</div>
                 </div>
                 <div class="acta-heading-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div>
             </div>
             ${avalesHtml}
+            ${segurosHtml}
         </div>
         
         <div class="acta-section">
