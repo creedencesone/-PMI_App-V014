@@ -2278,6 +2278,7 @@ function confirmarImportarCSV(timestamp) {
         // Limpiar campos auxiliares
         delete e._importIdx;
         delete e._importId;
+        e._imported = true;
         proyecto.elementosGantt.push(e);
     });
 
@@ -2287,6 +2288,18 @@ function confirmarImportarCSV(timestamp) {
     autoScheduler();
     renderizarCronograma();
     mostrarToast(` Importados ${finales.length} elementos`, 'success');
+}
+
+function eliminarElementosImportados() {
+    if (!proyecto.elementosGantt) { mostrarToast('No hay elementos importados', 'info'); return; }
+    const importados = proyecto.elementosGantt.filter(e => e._imported);
+    if (importados.length === 0) { mostrarToast('No hay elementos importados', 'info'); return; }
+    if (!confirm(`¿Eliminar ${importados.length} elemento(s) importado(s)? Esta acción no se puede deshacer.`)) return;
+    proyecto.elementosGantt = proyecto.elementosGantt.filter(e => !e._imported);
+    guardarProyecto();
+    if (typeof autoScheduler === 'function') autoScheduler();
+    renderizarCronograma();
+    mostrarToast(` Eliminados ${importados.length} elemento(s) importado(s)`, 'success');
 }
 
 // ─── LISTADO ORDENADO (imprimible) ────────────────────────────
