@@ -505,8 +505,8 @@
             background: var(--stat-card-bg);
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 14px 14px;
             text-align: center;
             transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, background 0.35s ease;
             border: 0.5px solid var(--border-color);
@@ -519,16 +519,15 @@
             box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45), 0 8px 16px -8px rgba(0, 0, 0, 0.3);
         }
         .stat-number {
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 700;
             color: #007AFF;
-            margin: 8px 0;
+            margin: 2px 0 4px;
         }
         .stat-label {
             font-size: 12px;
             color: var(--text-secondary);
         }
-        .stat-icon { font-size: 28px; }
 
         /* ============================================
            PROJECTS GRID
@@ -1469,32 +1468,26 @@
         <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon"><i data-feather="folder-plus" class="nav-feather"></i></div>
                 <div class="stat-number" id="totalProyectos">0</div>
                 <div class="stat-label">Total Proyectos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i data-feather="check-circle" class="nav-feather"></i></div>
                 <div class="stat-number" id="totalActivos">0</div>
                 <div class="stat-label">Proyectos Activos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i data-feather="x-circle" class="nav-feather"></i></div>
                 <div class="stat-number" id="totalFinalizados">0</div>
                 <div class="stat-label">Proyectos Completados</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i data-feather="alert-triangle" class="nav-feather"></i></div>
                 <div class="stat-number" id="totalRiesgos">0</div>
                 <div class="stat-label">Riesgos Totales</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i data-feather="dollar-sign" class="nav-feather"></i></div>
                 <div class="stat-number" id="valorPortafolio">0</div>
                 <div class="stat-label">Valor Portafolio</div>
             </div>
             <div class="stat-card stat-card--beneficio">
-                <div class="stat-icon"><i data-feather="dollar-sign" class="nav-feather"></i></div>
                 <div class="stat-number" id="beneficioPortafolio">0</div>
                 <div class="stat-label">Beneficio Global</div>
             </div>
