@@ -501,13 +501,25 @@ function renderizarArbolWBS(orden, elementos, headerH) {
             html += `<span class="wbs-toggle-placeholder"></span>`;
         }
         html += `<span class="wbs-icon">${icono}</span>`;
+        const codigo = elem.codigo || (typeof obtenerCodigoElemento === 'function' ? obtenerCodigoElemento(elem, elementos) : '') || '';
+        html += `<span class="wbs-code">${escapeHtml(codigo)}</span>`;
         html += `<span class="wbs-name ${esCritico ? 'wbs-critical' : ''}">${escapeHtml(elem.nombre)}</span>`;
-        if (elem.duracion > 0)
-            html += `<span class="wbs-dur">${
-                elem.tipoDuracion === 'horas' && elem.duracionHoras
-                    ? elem.duracionHoras + 'h'
-                    : (elem.duracion < 1 ? (Math.round(elem.duracion * 100) / 100) + 'd' : elem.duracion + 'd')
-            }</span>`;
+        const durTxt = elem.tipoDuracion === 'horas' && elem.duracionHoras
+            ? elem.duracionHoras + 'h'
+            : (elem.duracion > 0 ? (elem.duracion < 1 ? (Math.round(elem.duracion * 100) / 100) + 'd' : elem.duracion + 'd') : '');
+        const fin = elem.duracion > 0
+            ? (elem.tipo === 'edt' ? sumarDias(elem.inicio, elem.duracion) : sumarDiasHabiles(elem.inicio, elem.duracion))
+            : (elem.inicio || '');
+        const inicioTxt = elem.inicio || '—';
+        const finTxt = fin || '—';
+        if (durTxt || elem.inicio) {
+            html += `<span class="wbs-dates" title="Inicio: ${escapeHtml(inicioTxt)} · Fin: ${escapeHtml(finTxt)}">`;
+            if (durTxt) html += `<span class="wbs-dur">${escapeHtml(durTxt)}</span>`;
+            html += `<span class="wbs-start">${escapeHtml(inicioTxt)}</span>`;
+            html += `<span class="wbs-arrow">→</span>`;
+            html += `<span class="wbs-end">${escapeHtml(finTxt)}</span>`;
+            html += `</span>`;
+        }
         if (esCritico) html += `<span class="wbs-badge-crit">CP</span>`;
         html += `</div>`;
     });

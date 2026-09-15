@@ -505,6 +505,19 @@ body[data-theme="light"] .wbs-toggle { color: rgba(31, 41, 55, 0.3) !important; 
 body[data-theme="light"] .wbs-toggle:hover { color: rgba(31, 41, 55, 0.7) !important; }
 [data-theme="light"] .wbs-dur,
 body[data-theme="light"] .wbs-dur { color: rgba(31, 41, 55, 0.35) !important; }
+[data-theme="light"] .wbs-code,
+body[data-theme="light"] .wbs-code {
+    color: rgba(31, 41, 55, 0.4) !important;
+    background: rgba(31, 41, 55, 0.06) !important;
+}
+[data-theme="light"] .wbs-dates,
+body[data-theme="light"] .wbs-dates { color: rgba(31, 41, 55, 0.4) !important; }
+[data-theme="light"] .wbs-start,
+body[data-theme="light"] .wbs-start,
+[data-theme="light"] .wbs-end,
+body[data-theme="light"] .wbs-end { color: rgba(31, 41, 55, 0.4) !important; }
+[data-theme="light"] .wbs-arrow,
+body[data-theme="light"] .wbs-arrow { color: rgba(31, 41, 55, 0.25) !important; }
 
 [data-theme="light"] .crono-search,
 body[data-theme="light"] .crono-search {
@@ -4210,7 +4223,7 @@ body[data-theme="light"] .cashflow-negative {
 
 /* WBS Tree Panel */
 .crono-wbs-panel {
-    width: 280px;
+    width: 440px;
     min-width: 200px;
     resize: horizontal;
     overflow-y: auto;
@@ -4282,12 +4295,44 @@ body[data-theme="light"] .cashflow-negative {
     text-overflow: ellipsis;
 }
 .wbs-name.wbs-critical { color: #34C759; }
+.wbs-code {
+    font-size: 10px;
+    font-weight: 500;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    padding: 1px 4px;
+    flex-shrink: 0;
+    min-width: 42px;
+    text-align: center;
+    white-space: nowrap;
+}
+.wbs-dates {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.45);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    margin-left: 4px;
+}
+.wbs-start, .wbs-end {
+    color: rgba(255,255,255,0.45);
+}
+.wbs-arrow {
+    color: rgba(255,255,255,0.25);
+    font-size: 9px;
+}
 .wbs-dur {
     font-size: 11px;
     font-weight: 500;
     color: rgba(255,255,255,0.5);
     flex-shrink: 0;
-    margin-left: 4px;
     font-variant-numeric: tabular-nums;
 }
 .wbs-badge-crit {
