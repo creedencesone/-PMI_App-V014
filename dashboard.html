@@ -25,32 +25,32 @@
         }
 
         :root {
-            --bg-gradient-start: #1a1a2e;
-            --bg-gradient-mid: #16213e;
-            --bg-gradient-end: #0f3460;
-            --sidebar-bg: rgba(30, 30, 40, 0.7);
+            --bg-gradient-start: #1E1E1E;
+            --bg-gradient-mid: #222222;
+            --bg-gradient-end: #262626;
+            --sidebar-bg: rgba(45, 45, 45, 0.7);
             --card-bg: rgba(255, 255, 255, 0.08);
             --card-bg-hover: rgba(255, 255, 255, 0.12);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
             --text-muted: rgba(255, 255, 255, 0.5);
             --border-color: rgba(255, 255, 255, 0.1);
-            --input-bg: rgba(255, 255, 255, 0.1);
-            --modal-bg: rgba(30, 30, 40, 0.95);
+            --input-bg: #2D2D2D;
+            --modal-bg: #2D2D2D;
             --stat-card-bg: rgba(255, 255, 255, 0.08);
             --stat-card-bg-hover: rgba(255, 255, 255, 0.12);
             --empty-state-bg: rgba(255, 255, 255, 0.05);
             --nav-hover: rgba(255, 255, 255, 0.1);
             --nav-active: rgba(0, 122, 255, 0.3);
-            --toast-bg: rgba(30, 30, 40, 0.95);
-            --project-footer-bg: rgba(0, 0, 0, 0.2);
+            --toast-bg: #2D2D2D;
+            --project-footer-bg: #262626;
             --alerta-critica-bg: rgba(255, 59, 48, 0.1);
             --alerta-alta-bg: rgba(255, 140, 0, 0.1);
             --alerta-media-bg: rgba(255, 204, 0, 0.1);
             --alerta-baja-bg: rgba(0, 168, 89, 0.1);
             --info-card-bg: rgba(0, 122, 255, 0.15);
-            --scrollbar-track: rgba(255, 255, 255, 0.05);
-            --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+            --scrollbar-track: #262626;
+            --scrollbar-thumb: #3A3A3A;
             --color-primary: #007AFF;
             --color-success: #00A859;
             --color-warning: #FF8C00;
@@ -59,32 +59,32 @@
         }
 
         body.light-mode {
-            --bg-gradient-start: #e8f0fe;
-            --bg-gradient-mid: #dce3f0;
-            --bg-gradient-end: #c5d3e8;
-            --sidebar-bg: rgba(255, 255, 255, 0.85);
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-bg-hover: rgba(255, 255, 255, 0.85);
-            --text-primary: #1a1a2e;
-            --text-secondary: #2d3e50;
-            --text-muted: #5a6e7c;
-            --border-color: rgba(0, 0, 0, 0.1);
-            --input-bg: rgba(255, 255, 255, 0.9);
-            --modal-bg: rgba(255, 255, 255, 0.95);
-            --stat-card-bg: rgba(255, 255, 255, 0.6);
-            --stat-card-bg-hover: rgba(255, 255, 255, 0.8);
-            --empty-state-bg: rgba(255, 255, 255, 0.5);
-            --nav-hover: rgba(0, 0, 0, 0.05);
+            --bg-gradient-start: #F8F9FA;
+            --bg-gradient-mid: #FAFBFC;
+            --bg-gradient-end: #F4F5F7;
+            --sidebar-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --card-bg-hover: #F8F9FA;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --text-muted: #9CA3AF;
+            --border-color: #E2E8F0;
+            --input-bg: #FFFFFF;
+            --modal-bg: #FFFFFF;
+            --stat-card-bg: #FFFFFF;
+            --stat-card-bg-hover: #F8F9FA;
+            --empty-state-bg: #F8F9FA;
+            --nav-hover: #F1F3F5;
             --nav-active: rgba(0, 122, 255, 0.15);
-            --toast-bg: rgba(255, 255, 255, 0.95);
-            --project-footer-bg: rgba(0, 0, 0, 0.05);
+            --toast-bg: #FFFFFF;
+            --project-footer-bg: #F1F3F5;
             --alerta-critica-bg: rgba(255, 59, 48, 0.15);
             --alerta-alta-bg: rgba(255, 140, 0, 0.15);
             --alerta-media-bg: rgba(255, 204, 0, 0.15);
             --alerta-baja-bg: rgba(0, 168, 89, 0.15);
             --info-card-bg: rgba(0, 122, 255, 0.1);
-            --scrollbar-track: rgba(0, 0, 0, 0.05);
-            --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+            --scrollbar-track: #F1F3F5;
+            --scrollbar-thumb: #CBD5E1;
         }
 
         * { font-family: 'Inter', -apple-system, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif; }
@@ -228,7 +228,7 @@
             cursor: pointer;
             border-radius: 12px;
             transition: all 0.2s ease;
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--text-secondary);
             font-weight: 500;
             font-size: 13px;
             background: transparent;
@@ -238,12 +238,12 @@
         }
 
         .nav-button:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--nav-hover);
             color: var(--text-primary);
         }
 
         .nav-button.active {
-            background: rgba(0, 122, 255, 0.3);
+            background: var(--nav-active);
             color: white;
         }
 
@@ -593,7 +593,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(26,26,46,0.8) 0%, rgba(22,22,62,0.5) 100%);
+            background: linear-gradient(135deg, rgba(45,45,45,0.85) 0%, rgba(38,38,38,0.6) 100%);
             z-index: 0;
             pointer-events: none;
             transition: opacity 0.4s ease;
@@ -601,7 +601,7 @@
         }
         .project-card:hover::after { opacity: 0.9; }
         body.light-mode .project-card::after {
-            background: linear-gradient(135deg, rgba(232,240,254,0.85) 0%, rgba(197,211,232,0.65) 100%);
+            background: linear-gradient(135deg, rgba(248,249,250,0.9) 0%, rgba(244,245,247,0.7) 100%);
         }
 
         .project-header, .project-body, .project-footer {
@@ -658,10 +658,10 @@
         .metric {
             text-align: center;
             padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            background: #262626;
             border-radius: 12px;
         }
-        body.light-mode .metric { background: rgba(0, 0, 0, 0.03); }
+        body.light-mode .metric { background: #F1F3F5; }
         .metric-value {
             font-size: 18px;
             font-weight: 700;
