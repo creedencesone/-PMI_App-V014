@@ -1355,6 +1355,10 @@ body[data-theme="light"] .logo img.logo-light {
 
         .panel-title-actions { display: flex; align-items: center; gap: 8px; }
         .panel-add-btn svg { width: 18px; height: 18px; }
+        .panel-add-btn--danger { color: #FF3B30; }
+        .panel-add-btn--danger:hover { background: rgba(255, 59, 48, 0.12); }
+        [data-theme="light"] .panel-add-btn--danger { color: #DC2626; }
+        [data-theme="light"] .panel-add-btn--danger:hover { background: #FEE2E2; }
 
         /* Matrix footer */
         .pm-matrix-footer {
