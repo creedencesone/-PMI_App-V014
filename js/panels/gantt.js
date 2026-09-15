@@ -1969,46 +1969,165 @@ function actualizarFechasProyectoDesdeActa() {
 // ─── EXPORTAR ───────────────────────────────────────────────────
 
 function exportarGantt() {
-    let csv = "ID,Tipo,Nombre,Inicio,Duración,Progreso,Responsable,Predecesores\n";
-    (proyecto.elementosGantt || []).forEach(e => {
-        const preds = (e.predecesores || []).map(p => `${p.id}(${p.tipo})`).join(';');
-        csv += `${e.id},${e.tipo},"${e.nombre}",${e.inicio || ''},${e.duracion},${e.progreso || 0},"${e.responsable || ''}","${preds}"\n`;
+    const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const elementos = proyecto.elementosGantt || [];
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += `<gantt proyecto="${esc(proyecto.nombre)}">\n`;
+    elementos.forEach(e => {
+        xml += `  <elemento id="${esc(e.id)}" tipo="${esc(e.tipo)}" codigo="${esc(e.codigo || '')}" nombre="${esc(e.nombre)}" inicio="${esc(e.inicio || '')}" duracion="${esc(e.duracion)}" duracionHoras="${esc(e.duracionHoras || 0)}" tipoDuracion="${esc(e.tipoDuracion || 'días')}" progreso="${esc(e.progreso || 0)}" responsable="${esc(e.responsable || '')}" dependeDe="${esc(e.dependeDe || '')}">\n`;
+        (e.predecesores || []).forEach(p => {
+            xml += `    <predecesor id="${esc(p.id)}" tipo="${esc(p.tipo)}" retraso="${esc(p.retraso || 0)}"/>\n`;
+        });
+        xml += '  </elemento>\n';
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    xml += '</gantt>\n';
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `gantt_${proyecto.nombre}.csv`;
+    link.download = `gantt_${proyecto.nombre}.xml`;
     link.click();
     URL.revokeObjectURL(link.href);
     mostrarToast(' Exportado', 'success');
 }
 
-// ─── IMPORTAR CSV ─────────────────────────────────────────────
+// ─── IMPORTAR ──────────────────────────────────────────────────
 
-function importarCSV() {
+function importarXML() {
     const html = `<div class="modal u-flex" id="genericModal">
         <div class="modal-content" style="max-width:600px">
             <div class="modal-header">
-                <h3> Importar CSV</h3>
+                <h3> Importar XML</h3>
                 <span class="close-modal" onclick="cerrarModalGeneric()">&times;</span>
             </div>
             <p style="font-size:13px;color:#888;margin:8px 0 16px">
-                Selecciona un archivo CSV exportado de MS Project, Primavera u otra herramienta.
+                Selecciona un archivo XML (exportado de este cronograma u otra herramienta).
                 Las columnas se detectan automáticamente.
             </p>
             <div id="csvDropZone" style="border:2px dashed rgba(255,255,255,0.2);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s"
                  ondragover="this.style.borderColor='#007AFF';event.preventDefault()"
-                 ondrop="event.preventDefault();procesarCSV(event.dataTransfer.files[0])"
+                 ondrop="event.preventDefault();procesarXML(event.dataTransfer.files[0])"
                  onclick="document.getElementById('csvFileInput').click()">
                 <div style="font-size:40px;margin-bottom:8px"></div>
-                <div style="font-weight:500">Arrastra un CSV aquí o haz clic para seleccionar</div>
-                <div style="font-size:11px;color:#666;margin-top:4px">Formatos aceptados: .csv (comas, punto y coma, tabulaciones)</div>
+                <div style="font-weight:500">Arrastra un XML aquí o haz clic para seleccionar</div>
+                <div style="font-size:11px;color:#666;margin-top:4px">Formatos aceptados: .xml</div>
             </div>
-            <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none" onchange="procesarCSV(this.files[0])">
+            <input type="file" id="csvFileInput" accept=".xml,application/xml,text/xml" style="display:none" onchange="procesarXML(this.files[0])">
             <div id="csvPreview" style="margin-top:12px;max-height:300px;overflow:auto;font-size:12px"></div>
         </div>
     </div>`;
     document.getElementById('modalContainer').innerHTML = html;
+}
+
+function procesarXML(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const raw = e.target.result.trim();
+        if (!raw.startsWith('<')) {
+            procesarCSV(file);
+            return;
+        }
+        const doc = new DOMParser().parseFromString(raw, 'application/xml');
+        if (doc.querySelector('parsererror')) {
+            mostrarToast('XML no válido', 'error');
+            return;
+        }
+        const elems = doc.querySelectorAll('elemento');
+        if (!elems.length) {
+            mostrarToast('No se encontraron elementos en el XML', 'error');
+            return;
+        }
+        const nuevos = [];
+        elems.forEach((el, idx) => {
+            const nombre = el.getAttribute('nombre') || '';
+            if (!nombre) return;
+            const id = parseInt(el.getAttribute('id')) || (Date.now() + idx);
+            const duracion = parseFloat(el.getAttribute('duracion')) || 0;
+            const duracionHoras = parseFloat(el.getAttribute('duracionHoras')) || (duracion * 8);
+            const dependeDeRaw = el.getAttribute('dependeDe');
+            const predecesores = [];
+            el.querySelectorAll('predecesor').forEach(p => {
+                predecesores.push({
+                    id: parseInt(p.getAttribute('id')) || 0,
+                    tipo: p.getAttribute('tipo') || 'FS',
+                    retraso: parseInt(p.getAttribute('retraso')) || 0
+                });
+            });
+            nuevos.push({
+                id,
+                tipo: el.getAttribute('tipo') || 'actividad',
+                codigo: el.getAttribute('codigo') || '',
+                nombre,
+                inicio: el.getAttribute('inicio') || '',
+                duracion,
+                duracionOriginal: duracion,
+                tipoDuracion: el.getAttribute('tipoDuracion') || 'días',
+                duracionHoras,
+                horasDia: 8,
+                progreso: parseFloat(el.getAttribute('progreso')) || 0,
+                responsable: el.getAttribute('responsable') || '',
+                recursoAsignado: null,
+                costeEstimado: 0,
+                costeReal: 0,
+                predecesores,
+                dependeDe: (dependeDeRaw && dependeDeRaw !== '' && dependeDeRaw !== 'null') ? parseInt(dependeDeRaw) : null,
+                _importIdx: idx
+            });
+        });
+
+        const wbsMap = {};
+        nuevos.forEach(e => {
+            if (e.codigo && /^\d+(\.\d+)*$/.test(e.codigo)) wbsMap[e.codigo] = e;
+        });
+        nuevos.forEach(e => {
+            if (e.dependeDe == null && e.codigo) {
+                const parts = e.codigo.split('.');
+                if (parts.length > 1) {
+                    const parent = wbsMap[parts.slice(0, -1).join('.')];
+                    if (parent) e.dependeDe = parent.id;
+                }
+            }
+        });
+
+        const idMap = {};
+        nuevos.forEach((e, idx) => { idMap[e.id] = idx; });
+        nuevos.forEach(e => {
+            e.predecesores = e.predecesores.map(p => {
+                const target = idMap[p.id] !== undefined ? nuevos[idMap[p.id]] : null;
+                if (!target) return null;
+                return { id: target.id, tipo: p.tipo, retraso: p.retraso || 0 };
+            }).filter(Boolean);
+            delete e._importIdx;
+        });
+
+        nuevos.forEach(e => {
+            if (e.tipo !== 'edt' && !e.inicio) {
+                e.inicio = proyecto.fechaInicio || new Date().toISOString().split('T')[0];
+            }
+        });
+
+        const pv = document.getElementById('csvPreview');
+        let prevHtml = `<div style="margin-top:8px;font-weight:500"> ${nuevos.length} tareas detectadas</div>`;
+        prevHtml += `<table class="data-table" style="font-size:11px;margin-top:8px;width:100%"><thead><tr><th>#</th><th>Tipo</th><th>Nombre</th><th>Dur</th><th>Inicio</th><th>Preds</th></tr></thead><tbody>`;
+        nuevos.slice(0, 20).forEach((e, i) => {
+            const predStr = e.predecesores.map(p => {
+                const pe = nuevos.find(x => x.id === p.id);
+                return pe ? pe.nombre.substring(0, 15) : '?';
+            }).join(', ') || '—';
+            const durStr = e.tipoDuracion === 'horas' ? e.duracionHoras + 'h' : (e.duracion > 0 ? e.duracion.toFixed(2) + 'd' : '—');
+            prevHtml += `<tr><td>${i+1}</td><td>${e.tipo}</td><td>${escapeHtml(e.nombre.substring(0, 30))}</td><td>${durStr}</td><td>${e.inicio || '—'}</td><td style="font-size:10px">${escapeHtml(predStr)}</td></tr>`;
+        });
+        if (nuevos.length > 20) prevHtml += `<tr><td colspan="6" style="text-align:center;color:#888">... y ${nuevos.length - 20} más</td></tr>`;
+        prevHtml += `</tbody></table>`;
+        prevHtml += `<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+            <button class="btn btn-primary" onclick="confirmarImportarCSV(${Date.now()})"> Importar ${nuevos.length} elementos</button>
+            <button class="btn btn-secondary" onclick="cerrarModalGeneric()">Cancelar</button>
+        </div>`;
+        pv.innerHTML = prevHtml;
+
+        window._csvImportData = { nuevos, rows: nuevos.length };
+    };
+    reader.readAsText(file);
 }
 
 function procesarCSV(file) {
