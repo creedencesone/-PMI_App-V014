@@ -109,14 +109,6 @@
             if (confirm(tApp('confirmar_eliminar_riesgo'))) { proyecto.riesgos = proyecto.riesgos.filter(r => r.id !== id); guardarProyecto(); renderizarRiesgos(); calcularEstadisticasRiesgos(); mostrarToast(tApp('toast_eliminado'), 'success'); }
         }
         
-        function ordenarRiesgos(criterio) {
-            if (!proyecto.riesgos) return;
-            if (criterio === 'probabilidad') proyecto.riesgos.sort((a, b) => b.probabilidad - a.probabilidad);
-            else if (criterio === 'impacto') proyecto.riesgos.sort((a, b) => b.impacto - a.impacto);
-            else if (criterio === 'score') proyecto.riesgos.sort((a, b) => b.score - a.score);
-            renderizarRiesgos(); mostrarToast(` Ordenado por ${criterio}`, 'success');
-        }
-        
         function analizarRiesgos() {
             let criticos = proyecto.riesgos.filter(r => r.nivel === 'Crítico').length;
             mostrarToast(` Análisis: ${criticos} riesgos críticos identificados`, 'info');
@@ -194,9 +186,101 @@
         }
         
         function exportarRiesgos() {
-            let csv = "ID,Riesgo,Categoría,Probabilidad,Impacto,Score,Nivel,Respuesta,Estado\n";
-            (proyecto.riesgos || []).forEach(r => { csv += `${r.id},"${r.nombre}",${r.categoria || ''},${r.probabilidad},${r.impacto},${r.score},${r.nivel},${r.respuesta},${r.estado}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.setAttribute('download', `riesgos_${proyecto.nombre}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); mostrarToast(" Riesgos exportados", 'success');
+            if (!proyecto) {
+                if (typeof mostrarToast === 'function') mostrarToast(tApp('toast_no_proyecto'), 'error');
+                return;
+            }
+            if (typeof mostrarToast === 'function') mostrarToast(" Generando PDF de riesgos...", 'info');
+
+            var panel = document.getElementById('panelRiesgos');
+            if (!panel) return;
+            try {
+                var clone = panel.cloneNode(true);
+                clone.querySelectorAll('.btn, input, select, textarea, button').forEach(function(el) { el.remove(); });
+
+                var canvasOrigen = document.querySelectorAll('#panelRiesgos canvas');
+                var canvasClonados = clone.querySelectorAll('canvas');
+                for (var ci = 0; ci < canvasOrigen.length && ci < canvasClonados.length; ci++) {
+                    try {
+                        var imgData = canvasOrigen[ci].toDataURL('image/png');
+                        var img = document.createElement('img');
+                        img.src = imgData;
+                        img.style.cssText = 'max-width:100%;height:auto';
+                        img.width = canvasOrigen[ci].width;
+                        img.height = canvasOrigen[ci].height;
+                        canvasClonados[ci].parentNode.replaceChild(img, canvasClonados[ci]);
+                    } catch(e) {}
+                }
+
+                var container = document.createElement('div');
+                container.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1200px;background:white;padding:40px;font-family:Arial,sans-serif;color:#333;z-index:9999';
+                container.appendChild(clone);
+                document.body.appendChild(container);
+
+                var nombreProy = proyecto.nombre || localStorage.getItem('proyectoNombre') || 'Proyecto';
+
+                var header = document.createElement('div');
+                header.style.cssText = 'text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #1a237e';
+                header.innerHTML = '<h1 style="margin:0;font-size:24px;color:#1a237e"> Gestión de Riesgos del Proyecto</h1>'
+                    + '<h2 style="margin:8px 0 0;font-size:18px;color:#333">' + escapeHtml(nombreProy) + '</h2>'
+                    + '<p style="margin:5px 0 0;font-size:13px;color:#666">Generado: ' + new Date().toLocaleDateString() + '</p>';
+                clone.insertBefore(header, clone.firstChild);
+
+                var footer = document.createElement('div');
+                footer.style.cssText = 'text-align:center;margin-top:30px;padding-top:15px;border-top:1px solid #ccc;font-size:11px;color:#999';
+                footer.innerHTML = 'Proyecto: ' + escapeHtml(nombreProy) + ' — Gestión de Riesgos — v1.0';
+                clone.appendChild(footer);
+
+                var inlineCss = document.createElement('style');
+                inlineCss.textContent = `
+                    body { font-family: Arial, sans-serif; color: #333; margin:0; padding:0; }
+                    .panel-title { display: block; font-size: 16px; font-weight: bold; color: #1a237e; margin: 20px 0 10px 0; }
+                    .panel-title span { display: flex; align-items: center; gap: 6px; }
+                    .cards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+                    .value-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+                    .value-card .small { font-size: 12px; color: #666; margin-bottom: 4px; }
+                    .value-card .big { font-size: 24px; font-weight: bold; color: #1a237e; }
+                    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px; }
+                    .data-table th { background: #1a237e; color: white; padding: 8px; text-align: left; }
+                    .data-table td { padding: 8px; border-bottom: 1px solid #eee; }
+                    .info-card { border-left: 4px solid #1a237e; padding: 15px; margin-bottom: 20px; background: #f5f5f5; border-radius: 8px; }
+                    .form-row { display: flex; gap: 20px; }
+                    .form-group { flex: 1; }
+                    .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+                    .u-mt-8 { margin-top: 8px; }
+                    .u-mt-24 { margin-top: 24px; }
+                    .u-mb-16 { margin-bottom: 16px; }
+                    .u-mb-24 { margin-bottom: 24px; }
+                    .u-hidden { display: none; }
+                    img { max-width: 100% !important; height: auto !important; }
+                `;
+                clone.insertBefore(inlineCss, clone.firstChild);
+
+                html2canvas(container, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true
+                }).then(function(canvas) {
+                    var imgData = canvas.toDataURL('image/png');
+                    var win = window.open('', '_blank');
+                    if (win) {
+                        win.document.write('<!DOCTYPE html><html><head><title>Riesgos - ' + escapeHtml(nombreProy) + '</title>');
+                        win.document.write('<style>body{margin:0;padding:0;display:flex;justify-content:center;background:#666}img{max-width:100%;height:auto}@media print{body{margin:0;padding:0}img{page-break-inside:avoid}}</style>');
+                        win.document.write('</head><body>');
+                        win.document.write('<img src="' + imgData + '" onload="window.print()">');
+                        win.document.write('</body></html>');
+                        win.document.close();
+                    }
+                    document.body.removeChild(container);
+                    if (typeof mostrarToast === 'function') mostrarToast(" PDF generado correctamente", 'success');
+                }).catch(function(err) {
+                    document.body.removeChild(container);
+                    if (typeof mostrarToast === 'function') mostrarToast('Error al generar PDF: ' + err.message);
+                });
+            } catch (e) {
+                if (typeof mostrarToast === 'function') mostrarToast('Error: ' + e.message);
+            }
         }
         
         // ============================================

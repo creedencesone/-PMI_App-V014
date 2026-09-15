@@ -888,10 +888,10 @@
             <div id="panelRiesgos" class="panel hidden">
                 <div class="panel-title">
                     <span><i data-feather="alert-triangle" class="nav-feather"></i> Gestión de Riesgos del Proyecto</span>
-                    <div>
-                        <button class="btn btn-success btn-small" onclick="analizarRiesgos()"><i data-feather="help-circle" class="nav-feather"></i> Analizar Riesgos</button>
-                        <button class="btn btn-primary btn-small" onclick="abrirModalNuevoRiesgo()"><i data-feather="help-circle" class="nav-feather"></i> Nuevo Riesgo</button>
-                        <button class="btn btn-secondary btn-small" onclick="exportarRiesgos()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                    <div class="panel-title-actions">
+                        <button class="panel-add-btn" onclick="analizarRiesgos()" title="Analizar Riesgos" aria-label="Analizar riesgos"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+                        <button class="panel-add-btn" onclick="abrirModalNuevoRiesgo()" title="Nuevo Riesgo" aria-label="Nuevo riesgo">+</button>
+                        <button class="panel-add-btn" onclick="exportarRiesgos()" title="Exportar a PDF" aria-label="Exportar a PDF"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
                     </div>
                 </div>
                 <div class="cards-grid u-mb-24">
@@ -924,11 +924,6 @@
                 </div>
                 <div class="panel-title u-mt-8">
                     <span><i data-feather="help-circle" class="nav-feather"></i> Lista de Riesgos Identificados</span>
-                    <div>
-                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos('probabilidad')"><i data-feather="help-circle" class="nav-feather"></i> Por Probabilidad</button>
-                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos('impacto')"><i data-feather="help-circle" class="nav-feather"></i> Por Impacto</button>
-                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos('score')"><i data-feather="zap-off" class="nav-feather"></i> Por Score</button>
-                    </div>
                 </div>
                 <table class="data-table" id="tablaRiesgos">
                     <thead><tr><th>ID</th><th>Riesgo</th><th>Categoría</th><th>Probabilidad</th><th>Impacto</th><th>Score</th><th>Nivel</th><th>Respuesta</th><th>Estado</th><th>Plan de acción</th><th>Acciones</th></tr></thead>
@@ -936,7 +931,7 @@
                 </table>
                 <div class="panel-title u-mt-24">
                     <span><i data-feather="dollar-sign" class="nav-feather"></i> Análisis Cuantitativo de Riesgos</span>
-                    <div><button class="btn btn-primary btn-small" onclick="calcularValorEsperado()">Calcular Valor Esperado</button></div>
+                    <div class="panel-title-actions"><button class="panel-add-btn" onclick="calcularValorEsperado()" title="Calcular Valor Esperado" aria-label="Calcular valor esperado"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></button></div>
                 </div>
                 <div class="info-card u-mb-16">
                     <div class="form-row">
@@ -946,7 +941,7 @@
                 </div>
                 <div class="panel-title u-mt-8">
                     <span><i data-feather="help-circle" class="nav-feather"></i> Registro de Acciones de Mitigación</span>
-                    <button class="btn btn-primary btn-small" onclick="abrirModalNuevaAccionMitigacion()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Acción</button>
+                    <button class="panel-add-btn" onclick="abrirModalNuevaAccionMitigacion()" title="Nueva Acción" aria-label="Nueva acción">+</button>
                 </div>
                 <table class="data-table" id="tablaAccionesMitigacion">
                     <thead><tr><th>Riesgo asociado</th><th>Fecha</th><th>Acción tomada</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>

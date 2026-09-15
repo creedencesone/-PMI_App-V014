@@ -1340,6 +1340,9 @@ body[data-theme="light"] .logo img.logo-light {
         [data-theme="light"] .panel-add-btn { background: #FFFFFF; border: 1px solid #E2E8F0; color: #1F2937; }
         [data-theme="light"] .panel-add-btn:hover { background-color: #F1F3F5; color: #2563EB; }
 
+        .panel-title-actions { display: flex; align-items: center; gap: 8px; }
+        .panel-add-btn svg { width: 18px; height: 18px; }
+
         /* Matrix footer */
         .pm-matrix-footer {
             display: flex;
