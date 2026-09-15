@@ -2056,23 +2056,28 @@ function procesarCSV(file) {
         if (semicolon > comma && semicolon > tab) sep = ';';
         if (tab > comma && tab > semicolon) sep = '\t';
         const lines = raw.split(/\r?\n/).filter(l => l.trim());
-        if (lines.length < 2) { mostrarToast('CSV vacío o sin datos', 'error'); return; }
+        if (lines.length < 1) { mostrarToast('CSV vacío o sin datos', 'error'); return; }
         const headers = lines[0].split(sep).map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
         // Mapeo genérico de columnas
-        const colMap = {};
-        const namePatterns = [/^(id|wbs|código|codigo|code|task\s?id)$/i, /^(name|nombre|task\s?name|actividad|activity|tarea)$/i, /^(duration|duración|duracion|dur|work)$/i, /^(start|inicio|start\s?date|begin|comienzo)$/i, /^(finish|fin|end|end\s?date|final|due)$/i, /^(predecessors|predecesores|predecesoras|dependencies|depends|pred|predecesor)$/i, /^(resources|recursos|resource\s?names|asignado|responsible|responsable)$/i, /^(type|tipo|kind)$/i, /^(progress|progreso|%\s?complete|pct|avance)$/i, /^(status|estado)$/i];
+        let colMap = {};
+        const namePatterns = [/^(id|wbs|código|codigo|code|task\s?id|orden|order|nº|n°|no|num|numero|número|item|secuencia|sec|posición|posicion)$/i, /^(name|nombre|task\s?name|actividad|activity|tarea)$/i, /^(duration|duración|duracion|dur|work)$/i, /^(start|inicio|start\s?date|begin|comienzo)$/i, /^(finish|fin|end|end\s?date|final|due)$/i, /^(predecessors|predecesores|predecesoras|dependencies|depends|pred|predecesor)$/i, /^(resources|recursos|resource\s?names|asignado|responsible|responsable)$/i, /^(type|tipo|kind)$/i, /^(progress|progreso|%\s?complete|pct|avance)$/i, /^(status|estado)$/i];
         const colKeys = ['id', 'nombre', 'duracion', 'inicio', 'fin', 'predecesores', 'recurso', 'tipo', 'progreso', 'estado'];
         headers.forEach((h, i) => {
             for (let j = 0; j < namePatterns.length; j++) {
                 if (namePatterns[j].test(h)) { colMap[colKeys[j]] = i; break; }
             }
         });
-        if (colMap.nombre === undefined) { mostrarToast('No se encontró columna de nombre', 'error'); return; }
 
-        const rows = [];
-        for (let i = 1; i < lines.length; i++) {
-            const vals = lines[i].split(sep).map(v => v.replace(/^"|"$/g, '').trim());
-            rows.push(vals);
+        let rows;
+        if (colMap.nombre === undefined) {
+            colMap = { id: 0, nombre: 1, duracion: 2, inicio: 3, fin: 4 };
+            rows = lines.map(l => l.split(sep).map(v => v.replace(/^"|"$/g, '').trim()));
+        } else {
+            rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const vals = lines[i].split(sep).map(v => v.replace(/^"|"$/g, '').trim());
+                rows.push(vals);
+            }
         }
         if (!rows.length) { mostrarToast('Sin datos', 'error'); return; }
 
@@ -2140,10 +2145,18 @@ function procesarCSV(file) {
             const nombre = vals[colMap.nombre];
             if (!nombre) return;
             const durRaw = colMap.duracion !== undefined ? vals[colMap.duracion] : '';
-            const dur = parseDuracion(durRaw);
-            const tipo = detectarTipo(nombre, colMap.tipo !== undefined ? vals[colMap.tipo] : null, dur);
+            let dur = parseDuracion(durRaw);
             const inicio = colMap.inicio !== undefined ? normalizarFecha(vals[colMap.inicio]) : '';
             const finRaw = colMap.fin !== undefined ? normalizarFecha(vals[colMap.fin]) : '';
+            if (dur.duracion === 0 && dur.horas === 0 && inicio && finRaw) {
+                const dIni = parseLocalDate(inicio);
+                const dFin = parseLocalDate(finRaw);
+                if (dIni && dFin && dFin >= dIni) {
+                    const dias = typeof contarDiasHabiles === 'function' ? contarDiasHabiles(dIni, dFin) : Math.round((dFin - dIni) / 86400000);
+                    dur = { duracion: dias, horas: dias * 8, tipo: 'días' };
+                }
+            }
+            const tipo = detectarTipo(nombre, colMap.tipo !== undefined ? vals[colMap.tipo] : null, dur);
             const recurso = colMap.recurso !== undefined ? vals[colMap.recurso] : '';
             const progreso = colMap.progreso !== undefined ? parseFloat(vals[colMap.progreso]) || 0 : 0;
             const preds = colMap.predecesores !== undefined ? parsePredecesores(vals[colMap.predecesores], idx) : [];
@@ -2152,6 +2165,7 @@ function procesarCSV(file) {
                 id: Date.now() + idx,
                 tipo,
                 nombre,
+                codigo: (colMap.id !== undefined ? (vals[colMap.id] || '') : '').toString().trim(),
                 inicio: (tipo !== 'edt' && inicio) ? inicio : '',
                 duracion: tipo === 'hito' ? 0 : dur.duracion,
                 duracionOriginal: tipo === 'hito' ? 0 : dur.duracion,
