@@ -13,6 +13,7 @@
             if(pid === 'cashflow') calcularCashflow();
             if(pid === 'resumengastos') { actualizarResumenGastos(); }
             if(pid === 'cronograma') cargarElementosGantt();
+            if(pid === 'ejecucioncronograma') cargarElementosGanttEjecucion();
             if(pid === 'riesgos') { inicializarRiesgos(); renderizarAccionesMitigacion(); document.getElementById('valorProyectoRiesgos').value = proyecto.precioVenta || 0; calcularValorEsperado(); }
             if(pid === 'stakeholders') renderizarStakeholders();
             if(pid === 'raci') renderizarRACI();

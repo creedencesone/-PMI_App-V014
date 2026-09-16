@@ -703,12 +703,14 @@ function mostrarPanelesSegunMetodologia() {
     
     // Selectores de los dos módulos clave: Cronograma y menú Scrum
     const CRONO = `.nav-header[data-panel="cronograma"]`;
+    const CRONO_EJEC = `.nav-header[data-panel="ejecucionCronograma"]`;
     const SCRUM_MENU = `.nav-header[data-submenu="scrum"]`;
     
     if (metodologia === 'cascada') {
         // Tradicional: SOLO Cronograma (ocultar Scrum Ágil por completo)
         setNavSectionVisibility(SCRUM_MENU, false);
         setNavSectionVisibility(CRONO, true);
+        setNavSectionVisibility(CRONO_EJEC, true);
         panelesCascada.forEach(p => {
             const elemento = document.querySelector(`.nav-header[data-panel="${p}"], .submenu-item[data-panel="${p}"]`);
             if (elemento) { const s = elemento.closest('.nav-section') || elemento; s.style.display = ''; }
@@ -717,6 +719,7 @@ function mostrarPanelesSegunMetodologia() {
     } else if (metodologia === 'agile') {
         // Ágil: SOLO Scrum (ocultar Cronograma por completo)
         setNavSectionVisibility(CRONO, false);
+        setNavSectionVisibility(CRONO_EJEC, false);
         setNavSectionVisibility(SCRUM_MENU, true);
         panelesAgile.forEach(p => {
             const elemento = document.querySelector(`.nav-header[data-panel="${p}"], .submenu-item[data-panel="${p}"]`);
@@ -726,6 +729,7 @@ function mostrarPanelesSegunMetodologia() {
     } else if (metodologia === 'mixto') {
         // Mixto: AMBOS visibles (Cronograma y Scrum)
         setNavSectionVisibility(CRONO, true);
+        setNavSectionVisibility(CRONO_EJEC, true);
         setNavSectionVisibility(SCRUM_MENU, true);
         panelesCascada.forEach(p => {
             const elemento = document.querySelector(`.nav-header[data-panel="${p}"], .submenu-item[data-panel="${p}"]`);

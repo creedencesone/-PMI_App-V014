@@ -56,13 +56,87 @@ let ganttState = {
 let cpmResult = { criticalPath: [], totalFloat: 0 };
 let _cronogramaOriginalHTML = null;
 
+let ganttStateEjecucion = {
+    zoom: 1,
+    collapsed: new Set(),
+    dragPredecesor: null,
+    selectedId: null,
+    editandoDependencia: false,
+    vista: 'gantt',
+    escala: 'día',
+    lineaBaseVisible: null, // id de la línea base activa cuyo barra se superpone en el timeline
+    _buscarTimer: null
+};
+
+let cpmResultEjecucion = { criticalPath: [], totalFloat: 0 };
+let _cronogramaOriginalHTMLEjecucion = null;
+
+let cronogramaActivo = { panelKey: 'planificacion', dataKey: 'elementosGantt' };
+
+const _CTX_CRONO = {
+    planificacion: {
+        panelKey: 'planificacion',
+        dataKey: 'elementosGantt',
+        containerId: 'cronogramaContainer',
+        wbsId: 'wbsTree',
+        timelineId: 'timelinePanel',
+        svgId: 'timelineSvg',
+        buscarId: 'buscarGantt',
+        fechasId: 'cronoFechasProyecto',
+        infoBarId: 'cronogramaInfoBar',
+        zoomLabelId: 'cronoZoomLabel',
+        btnToggleVistaId: 'btnToggleVista',
+        scaleId: 'cronoScaleSelect'
+    },
+    ejecucion: {
+        panelKey: 'ejecucion',
+        dataKey: 'elementosGanttEjecucion',
+        containerId: 'ejecucionCronogramaContainer',
+        wbsId: 'wbsTreeEjecucion',
+        timelineId: 'timelinePanelEjecucion',
+        svgId: 'timelineSvgEjecucion',
+        buscarId: 'buscarGanttEjecucion',
+        fechasId: 'cronoFechasProyectoEjecucion',
+        infoBarId: 'cronogramaInfoBarEjecucion',
+        zoomLabelId: 'cronoZoomLabelEjecucion',
+        btnToggleVistaId: 'btnToggleVistaEjecucion',
+        scaleId: 'cronoScaleSelectEjecucion'
+    }
+};
+
+function _ctxCronograma(panelKey) { return _CTX_CRONO[panelKey || cronogramaActivo.panelKey] || _CTX_CRONO.planificacion; }
+function _getState(ctx) { return ctx.panelKey === 'ejecucion' ? ganttStateEjecucion : ganttState; }
+function _getCpmResult(ctx) { return ctx.panelKey === 'ejecucion' ? cpmResultEjecucion : cpmResult; }
+function _getOrigHTML(ctx) { return ctx.panelKey === 'ejecucion' ? _cronogramaOriginalHTMLEjecucion : _cronogramaOriginalHTML; }
+function _setOrigHTML(ctx, val) { if (ctx.panelKey === 'ejecucion') _cronogramaOriginalHTMLEjecucion = val; else _cronogramaOriginalHTML = val; }
+
+function _normalizarElementosGantt(dataKey) {
+    let arr = proyecto[dataKey] || [];
+    const idsVistos = new Set();
+    const elementosUnicos = [];
+    arr.forEach(e => {
+        if (idsVistos.has(e.id)) return;
+        idsVistos.add(e.id);
+        elementosUnicos.push(e);
+    });
+    if (elementosUnicos.length !== arr.length) {
+        proyecto[dataKey] = elementosUnicos;
+        arr = elementosUnicos;
+        guardarProyecto();
+    }
+    arr.forEach(e => { if (!e.predecesores) e.predecesores = []; });
+    return arr;
+}
+
 function cargarElementosGantt() {
-    if (!proyecto.elementosGantt) proyecto.elementosGantt = [];
-    if (proyecto.elementosGantt.length === 0) {
+    cronogramaActivo = { panelKey: 'planificacion', dataKey: 'elementosGantt' };
+    const dataKey = cronogramaActivo.dataKey;
+    if (!proyecto[dataKey]) proyecto[dataKey] = [];
+    if (proyecto[dataKey].length === 0) {
         const f = proyecto.fechaInicio || new Date().toISOString().split('T')[0];
         const t = Date.now();
         const edtId = t + 1;
-        proyecto.elementosGantt = [
+        proyecto[dataKey] = [
             { id: edtId, tipo: 'edt', nombre: '1. Inicio del Proyecto', inicio: '', duracion: 0, progreso: 0, responsable: '', dependeDe: null, predecesores: [] },
             { id: t + 2, tipo: 'actividad', nombre: 'Acta de Constitución', inicio: f, duracion: 3, progreso: 0, responsable: 'PM', dependeDe: edtId, predecesores: [] },
             { id: t + 3, tipo: 'entregable', nombre: 'Documento del Proyecto', inicio: f, duracion: 7, progreso: 0, responsable: '', dependeDe: edtId, predecesores: [] },
@@ -70,30 +144,29 @@ function cargarElementosGantt() {
         ];
         guardarProyecto();
     }
-    const idsVistos = new Set();
-    const elementosUnicos = [];
-    proyecto.elementosGantt.forEach(e => {
-        if (idsVistos.has(e.id)) return;
-        idsVistos.add(e.id);
-        elementosUnicos.push(e);
-    });
-    if (elementosUnicos.length !== proyecto.elementosGantt.length) {
-        proyecto.elementosGantt = elementosUnicos;
+    _normalizarElementosGantt(dataKey);
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
+}
+
+function cargarElementosGanttEjecucion() {
+    cronogramaActivo = { panelKey: 'ejecucion', dataKey: 'elementosGanttEjecucion' };
+    if (proyecto.elementosGanttEjecucion == null) {
+        proyecto.elementosGanttEjecucion = JSON.parse(JSON.stringify(proyecto.elementosGantt || []));
         guardarProyecto();
     }
-    proyecto.elementosGantt.forEach(e => { if (!e.predecesores) e.predecesores = []; });
-    renderizarCronograma();
+    _normalizarElementosGantt('elementosGanttEjecucion');
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
 }
 
 function sumarDias(f, d) { if (!f) return ''; const p = f.split('-'); const dt = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]) + d); return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); }
 function parseLocalDate(str) { if (!str) return null; const p = str.split('-'); return new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2])); }
 function formatLocalDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function diffDias(a, b) { const ta = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()); const tb = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()); return Math.round((ta - tb) / 86400000); }
-function getNombreElemento(id) { const e = proyecto.elementosGantt?.find(x => x.id === id); return e ? e.nombre : '-'; }
+function getNombreElemento(id, arr) { const data = arr || (proyecto[cronogramaActivo.dataKey] || []); const e = data.find(x => x.id === id); return e ? e.nombre : '-'; }
 function getTipoIcono(t) { return { edt: '', actividad: '', entregable: '', hito: '' }[t] || ''; }
-function _migrarDuracionHoras() {
-    if (!proyecto.elementosGantt) return;
-    proyecto.elementosGantt.forEach(e => {
+function _migrarDuracionHoras(arr) {
+    const data = arr || (proyecto[cronogramaActivo.dataKey] || []);
+    data.forEach(e => {
         if (e.tipoDuracion === 'horas' && e.duracionHoras) {
             const hDia = e.horasDia || 8; const nueva = e.duracionHoras / hDia;
             if (Math.abs(e.duracion - nueva) > 0.001) {
@@ -146,8 +219,8 @@ function normalizarFecha(v) {
 
 // ─── EDT AUTO-CALC ──────────────────────────────────────────────
 
-function recalcularEdtAuto() {
-    const elementos = proyecto.elementosGantt || [];
+function recalcularEdtAuto(arr) {
+    const elementos = arr || (proyecto[cronogramaActivo.dataKey] || []);
     const children = {};
     elementos.forEach(e => { children[e.id] = []; });
     elementos.forEach(e => {
@@ -202,10 +275,11 @@ function recalcularEdtAuto() {
 
 // ─── MOTOR CPM ──────────────────────────────────────────────────
 
-function ejecutarCPM(elementos) {
+function ejecutarCPM(elementos, cpmRef) {
+    const ref = cpmRef || cpmResult;
     const ids = new Set(elementos.map(e => e.id));
     const tasks = elementos.filter(e => e.tipo !== 'edt');
-    if (!tasks.length) { cpmResult = { criticalPath: [], totalFloat: 0 }; return []; }
+    if (!tasks.length) { ref.criticalPath = []; ref.totalFloat = 0; return []; }
     const adj = {}, inDeg = {};
     tasks.forEach(t => { adj[t.id] = []; inDeg[t.id] = 0; });
 
@@ -308,7 +382,8 @@ function ejecutarCPM(elementos) {
         t._critical = criticalPath.includes(t.id);
     });
 
-    cpmResult = { criticalPath, totalFloat: Object.values(float).length ? Math.min(...Object.values(float)) : 0 };
+    ref.criticalPath = criticalPath;
+    ref.totalFloat = Object.values(float).length ? Math.min(...Object.values(float)) : 0;
     return tasks;
 }
 
@@ -326,49 +401,54 @@ function filtrarElementosGantt(elementos, query) {
 }
 
 function buscarCronogramaDebounced() {
-    clearTimeout(ganttState._buscarTimer);
-    ganttState._buscarTimer = setTimeout(renderizarCronograma, 250);
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    const state = _getState(ctx);
+    clearTimeout(state._buscarTimer);
+    state._buscarTimer = setTimeout(() => renderizarCronograma(ctx), 250);
 }
 
 // ─── RENDERIZAR CRONOGRAMA COMPLETO ─────────────────────────────
 
-function renderizarCronograma() {
-    const container = document.getElementById('cronogramaContainer');
+function renderizarCronograma(ctx) {
+    ctx = ctx || _ctxCronograma(cronogramaActivo.panelKey);
+    const container = document.getElementById(ctx.containerId);
     if (!container) return;
+    const state = _getState(ctx);
+    const cpmRef = _getCpmResult(ctx);
 
     // Migrar tareas existentes con tipo horas para usar duración fraccional
-    _migrarDuracionHoras();
+    _migrarDuracionHoras(proyecto[ctx.dataKey]);
 
     // Sync scale selector
-    const sel = document.querySelector('.crono-scale-select');
-    if (sel) sel.value = ganttState.escala;
+    const sel = document.getElementById(ctx.scaleId);
+    if (sel) sel.value = state.escala;
     // Save original Gantt DOM structure on first call
-    if (!_cronogramaOriginalHTML && container.querySelector('#wbsTree')) {
-        _cronogramaOriginalHTML = container.innerHTML;
+    if (!_getOrigHTML(ctx) && container.querySelector('#' + ctx.wbsId)) {
+        _setOrigHTML(ctx, container.innerHTML);
     }
 
-    autoScheduler();
-    recalcularEdtAuto();
-    const elementos = [...(proyecto.elementosGantt || [])];
-    ejecutarCPM(elementos);
+    autoScheduler(proyecto[ctx.dataKey]);
+    recalcularEdtAuto(proyecto[ctx.dataKey]);
+    const elementos = [...((proyecto[ctx.dataKey]) || [])];
+    ejecutarCPM(elementos, cpmRef);
 
-    const q = (document.getElementById('buscarGantt')?.value || '').trim().toLowerCase();
+    const q = (document.getElementById(ctx.buscarId)?.value || '').trim().toLowerCase();
     const elementosVisibles = q ? filtrarElementosGantt(elementos, q) : elementos;
 
-    if (ganttState.vista === 'tarjetas') {
-        renderizarVistaTarjetas(elementosVisibles);
-        renderizarInfoBar();
+    if (state.vista === 'tarjetas') {
+        renderizarVistaTarjetas(elementosVisibles, ctx);
+        renderizarInfoBar(ctx);
         return;
     }
 
     // Restore original HTML if it was replaced by tarjetas view
-    if (_cronogramaOriginalHTML && !container.querySelector('#wbsTree')) {
-        container.innerHTML = _cronogramaOriginalHTML;
+    if (_getOrigHTML(ctx) && !container.querySelector('#' + ctx.wbsId)) {
+        container.innerHTML = _getOrigHTML(ctx);
     }
 
     const fechaInicioProy = calcularInicioProyecto(elementosVisibles);
     const fechaFinProy = calcularFinProyecto(elementosVisibles);
-    const spanFechas = document.getElementById('cronoFechasProyecto');
+    const spanFechas = document.getElementById(ctx.fechasId);
     if (spanFechas) {
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         spanFechas.textContent = ` ${fmt(fechaInicioProy)} → ${fmt(fechaFinProy)} (${Math.round((fechaFinProy - fechaInicioProy) / 86400000)} días naturales)`;
@@ -376,21 +456,21 @@ function renderizarCronograma() {
     const diasTotales = Math.max(1, Math.ceil((fechaFinProy - fechaInicioProy) / 86400000) + 60);
 
     const meses = generarMeses(fechaInicioProy, diasTotales);
-    const anchoDia = ({día:50,semana:14,mes:28,año:6})[ganttState.escala] * ganttState.zoom || 28 * ganttState.zoom;
+    const anchoDia = ({día:50,semana:14,mes:28,año:6})[state.escala] * state.zoom || 28 * state.zoom;
     const anchoTotal = diasTotales * anchoDia;
-    const headerHeight = ganttState.escala === 'día' ? 60 : 40;
+    const headerHeight = state.escala === 'día' ? 60 : 40;
 
     // Orden único para árbol + timeline
-    const ordenArbol = getOrdenArbol(elementosVisibles);
+    const ordenArbol = getOrdenArbol(elementosVisibles, ctx);
 
-    renderizarArbolWBS(ordenArbol, elementosVisibles, headerHeight);
-    renderizarTimelineSVG(ordenArbol, elementosVisibles, fechaInicioProy, diasTotales, anchoDia, meses, anchoTotal);
-    renderizarInfoBar();
-    actualizarZoomLabel();
+    renderizarArbolWBS(ordenArbol, elementosVisibles, headerHeight, ctx);
+    renderizarTimelineSVG(ordenArbol, elementosVisibles, fechaInicioProy, diasTotales, anchoDia, meses, anchoTotal, ctx);
+    renderizarInfoBar(ctx);
+    actualizarZoomLabel(ctx);
 
     // Scroll sincronizado entre WBS y timeline
-    const wbsPanel = document.getElementById('wbsTree');
-    const tlPanel = document.getElementById('timelinePanel');
+    const wbsPanel = document.getElementById(ctx.wbsId);
+    const tlPanel = document.getElementById(ctx.timelineId);
     if (wbsPanel && tlPanel && !wbsPanel._scrollSynced) {
         wbsPanel._scrollSynced = true;
         let syncing = false;
@@ -461,7 +541,8 @@ function generarMeses(fechaInicio, diasTotales) {
 
 // ─── ORDEN COMPARTIDO ÁRBOL + TIMELINE ──────────────────────────
 
-function getOrdenArbol(elementos) {
+function getOrdenArbol(elementos, ctx) {
+    const state = _getState(ctx || _ctxCronograma(cronogramaActivo.panelKey));
     const orden = [];
     const incluidos = new Set();
     function anadir(e) {
@@ -476,31 +557,32 @@ function getOrdenArbol(elementos) {
             .sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
         hijos.forEach(h => {
             anadir(h);
-            if (h.tipo === 'edt' && !ganttState.collapsed.has(h.id)) walk(h.id);
+            if (h.tipo === 'edt' && !state.collapsed.has(h.id)) walk(h.id);
         });
     }
     walk(null);
     elementos.forEach(e => {
         if (incluidos.has(e.id)) return;
         anadir(e);
-        if (e.tipo === 'edt' && !ganttState.collapsed.has(e.id)) walk(e.id);
+        if (e.tipo === 'edt' && !state.collapsed.has(e.id)) walk(e.id);
     });
     return orden;
 }
 
 // ─── ÁRBOL WBS (IZQUIERDA) ──────────────────────────────────────
 
-function renderizarArbolWBS(orden, elementos, headerH) {
-    const el = document.getElementById('wbsTree');
+function renderizarArbolWBS(orden, elementos, headerH, ctx) {
+    const el = document.getElementById(ctx.wbsId);
     if (!el) return;
-    const critSet = new Set(cpmResult.criticalPath || []);
+    const state = _getState(ctx);
+    const critSet = new Set(_getCpmResult(ctx).criticalPath || []);
     let html = `<div style="height:${headerH}px;flex-shrink:0"></div>`;
     orden.forEach(elem => {
         const depth = calcularProfundidad(elem.id, elementos);
         const icono = getTipoIcono(elem.tipo);
         const esCritico = critSet.has(elem.id);
-        const sel = ganttState.selectedId === elem.id ? 'wbs-selected' : '';
-        const colapsado = ganttState.collapsed.has(elem.id);
+        const sel = state.selectedId === elem.id ? 'wbs-selected' : '';
+        const colapsado = state.collapsed.has(elem.id);
         const tieneHijos = elem.tipo === 'edt' && elementos.some(x => x.dependeDe === elem.id);
 
         html += `<div class="wbs-item ${sel}" data-id="${elem.id}" data-type="${elem.tipo}" style="padding-left:${depth * 18}px">`;
@@ -533,35 +615,35 @@ function renderizarArbolWBS(orden, elementos, headerH) {
         html += `</div>`;
     });
     el.innerHTML = html;
-    document.querySelectorAll('.wbs-toggle').forEach(btn => {
+    el.querySelectorAll('.wbs-toggle').forEach(btn => {
         btn.onclick = function(e) {
             e.stopPropagation();
             const id = parseInt(this.dataset.id);
-            if (ganttState.collapsed.has(id)) ganttState.collapsed.delete(id);
-            else ganttState.collapsed.add(id);
-            renderizarCronograma();
+            if (state.collapsed.has(id)) state.collapsed.delete(id);
+            else state.collapsed.add(id);
+            renderizarCronograma(ctx);
         };
     });
-    document.querySelectorAll('.wbs-item').forEach(item => {
+    el.querySelectorAll('.wbs-item').forEach(item => {
         item.onclick = function() {
             const id = parseInt(this.dataset.id);
-            const elem = proyecto.elementosGantt?.find(x => x.id === id);
-            ganttState.selectedId = id;
-            document.querySelectorAll('.wbs-item').forEach(x => x.classList.remove('wbs-selected'));
+            const elem = (proyecto[ctx.dataKey] || []).find(x => x.id === id);
+            state.selectedId = id;
+            el.querySelectorAll('.wbs-item').forEach(x => x.classList.remove('wbs-selected'));
             this.classList.add('wbs-selected');
-            resaltarBarraEnTimeline(id);
+            resaltarBarraEnTimeline(id, ctx);
             if (elem) mostrarDetalleElemento(elem);
         };
     });
     // Doble clic → editar (solo no-EDT; EDTs tienen su propio manejador en edt-panel.js)
-    document.querySelectorAll('.wbs-item[data-type="actividad"], .wbs-item[data-type="entregable"], .wbs-item[data-type="hito"]').forEach(item => {
+    el.querySelectorAll('.wbs-item[data-type="actividad"], .wbs-item[data-type="entregable"], .wbs-item[data-type="hito"]').forEach(item => {
         item.addEventListener('dblclick', function(e) {
             e.stopPropagation();
             editarElementoGantt(parseInt(this.dataset.id));
         });
     });
     // Context menu (clic derecho)
-    document.querySelectorAll('.wbs-item').forEach(item => {
+    el.querySelectorAll('.wbs-item').forEach(item => {
         item.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -582,9 +664,12 @@ function calcularProfundidad(id, elementos) {
     return depth;
 }
 
-function resaltarBarraEnTimeline(id) {
-    document.querySelectorAll('.crono-bar-wrapper').forEach(b => b.classList.remove('bar-selected'));
-    document.querySelectorAll(`.crono-bar-wrapper[data-id="${id}"]`).forEach(b => b.classList.add('bar-selected'));
+function resaltarBarraEnTimeline(id, ctx) {
+    ctx = ctx || _ctxCronograma(cronogramaActivo.panelKey);
+    const svg = document.getElementById(ctx.svgId);
+    if (!svg) return;
+    svg.querySelectorAll('.crono-bar-wrapper').forEach(b => b.classList.remove('bar-selected'));
+    svg.querySelectorAll(`.crono-bar-wrapper[data-id="${id}"]`).forEach(b => b.classList.add('bar-selected'));
 }
 
 // ─── CONTEXT MENU WBS ────────────────────────────────────────────
@@ -643,12 +728,14 @@ document.addEventListener('keydown', function(e) {
 
 // ─── TIMELINE SVG (DERECHA) ─────────────────────────────────────
 
-function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, anchoDia, meses, anchoTotal) {
-    const svg = document.getElementById('timelineSvg');
+function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, anchoDia, meses, anchoTotal, ctx) {
+    const svg = document.getElementById(ctx.svgId);
     if (!svg) return;
+    const state = _getState(ctx);
+    const cpmRef = _getCpmResult(ctx);
 
     const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-    const headerHeight = ganttState.escala === 'día' ? 60 : 40;
+    const headerHeight = state.escala === 'día' ? 60 : 40;
     const rowHeight = 34;
 
     const altoTotal = headerHeight + ordenArbol.length * rowHeight;
@@ -680,7 +767,7 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
     `;
 
     // Grid y cabeceras según escala
-    const escala = ganttState.escala;
+    const escala = state.escala;
 
     if (escala === 'día') {
         // Día: mes arriba, día-semana + día-nº abajo, fines de semana marcados
@@ -847,9 +934,9 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
     }
 
     // Barras de tareas
-    const critSet = new Set(cpmResult.criticalPath || []);
-    const lineaBaseActiva = ganttState.lineaBaseVisible != null
-        ? (proyecto.lineasBase || []).find(lb => lb.id === ganttState.lineaBaseVisible) || null
+    const critSet = new Set(cpmRef.criticalPath || []);
+    const lineaBaseActiva = state.lineaBaseVisible != null
+        ? (proyecto.lineasBase || []).find(lb => lb.id === state.lineaBaseVisible) || null
         : null;
     let barsHtml = '', connectionsHtml = '';
     const barPositions = {};
@@ -869,7 +956,7 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         const dayKey = startOffset;
         // Desplazar la barra si tiene predecesores FS que terminan el mismo día
         const hasSameDayFS = elem.tipo !== 'hito' && elem.predecesores && elem.predecesores.some(p => {
-            const pred = proyecto.elementosGantt?.find(x => x.id === p.id);
+            const pred = (proyecto[ctx.dataKey] || []).find(x => x.id === p.id);
             if (!pred || !pred.inicio || pred.tipo === 'hito') return false;
             if (p.tipo && p.tipo !== 'FS') return false;
             const predEndStr = sumarDiasHabiles(pred.inicio, pred.duracion);
@@ -998,31 +1085,31 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
     svg.innerHTML = defs + gridHtml + connectionsHtml + barsHtml;
 
     // Eventos SVG para drag-to-connect y hover
-    document.querySelectorAll('.crono-drag-handle').forEach(h => {
+    svg.querySelectorAll('.crono-drag-handle').forEach(h => {
         h.addEventListener('mouseenter', function() { this.setAttribute('opacity', '0.6'); });
-        h.addEventListener('mouseleave', function() { if (!ganttState.editandoDependencia) this.setAttribute('opacity', '0'); });
+        h.addEventListener('mouseleave', function() { if (!state.editandoDependencia) this.setAttribute('opacity', '0'); });
         h.addEventListener('mousedown', iniciarDragDependencia);
     });
 
-    document.querySelectorAll('.crono-bar-wrapper').forEach(w => {
+    svg.querySelectorAll('.crono-bar-wrapper').forEach(w => {
         w.addEventListener('mouseenter', function() {
             const handle = this.querySelector('.crono-drag-handle');
-            if (handle && !ganttState.editandoDependencia) handle.setAttribute('opacity', '0.6');
+            if (handle && !state.editandoDependencia) handle.setAttribute('opacity', '0.6');
             this.querySelectorAll('.crono-bar').forEach(b => b.setAttribute('opacity', '0.9'));
         });
         w.addEventListener('mouseleave', function() {
             const handle = this.querySelector('.crono-drag-handle');
-            if (handle && !ganttState.editandoDependencia) handle.setAttribute('opacity', '0');
+            if (handle && !state.editandoDependencia) handle.setAttribute('opacity', '0');
             this.querySelectorAll('.crono-bar').forEach(b => b.setAttribute('opacity', '0.75'));
         });
     });
 
     // Tooltip en flechas
-    document.querySelectorAll('.crono-arrow').forEach(a => {
+    svg.querySelectorAll('.crono-arrow').forEach(a => {
         a.addEventListener('mouseenter', function() {
             const from = getNombreElemento(parseInt(this.dataset.from));
             const to = getNombreElemento(parseInt(this.dataset.to));
-            const toElem = proyecto.elementosGantt?.find(e => e.id == this.dataset.to);
+            const toElem = (proyecto[ctx.dataKey] || []).find(e => e.id == this.dataset.to);
             const dep = toElem?.predecesores?.find(p => p.id == this.dataset.from);
             const tipo = dep ? dep.tipo : 'FS';
             const retraso = dep && dep.retraso ? ` (${dep.retraso > 0 ? '+' : ''}${dep.retraso}d)` : '';
@@ -1046,10 +1133,12 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
 function iniciarDragDependencia(e) {
     e.preventDefault();
     const fromId = parseInt(this.dataset.id);
-    ganttState.editandoDependencia = true;
-    ganttState.dragPredecesor = fromId;
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    const state = _getState(ctx);
+    const svg = document.getElementById(ctx.svgId);
+    state.editandoDependencia = true;
+    state.dragPredecesor = fromId;
 
-    const svg = document.getElementById('timelineSvg');
     const rect = svg.getBoundingClientRect();
 
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -1060,13 +1149,13 @@ function iniciarDragDependencia(e) {
     line.setAttribute('stroke-dasharray', '5,3');
     svg.appendChild(line);
 
-    const fromBar = document.querySelector(`.crono-bar-wrapper[data-id="${fromId}"]`);
+    const fromBar = svg.querySelector(`.crono-bar-wrapper[data-id="${fromId}"]`);
     if (fromBar) fromBar.classList.add('bar-dragging');
 
     function onMove(ev) {
         const cx = ev.clientX - rect.left + svg.parentElement.scrollLeft;
         const cy = ev.clientY - rect.top + svg.parentElement.scrollTop;
-        const fromEl = document.querySelector(`.crono-bar-wrapper[data-id="${fromId}"]`);
+        const fromEl = svg.querySelector(`.crono-bar-wrapper[data-id="${fromId}"]`);
         if (!fromEl) return;
         const fromRect = fromEl.querySelector('.crono-bar')?.getBoundingClientRect();
         if (!fromRect) return;
@@ -1076,12 +1165,12 @@ function iniciarDragDependencia(e) {
         line.setAttribute('d', `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${cy}, ${cx} ${cy}`);
 
         // Hover sobre targets
-        document.querySelectorAll('.crono-bar-wrapper').forEach(w => {
+        svg.querySelectorAll('.crono-bar-wrapper').forEach(w => {
             const r = w.querySelector('.crono-bar')?.getBoundingClientRect();
             if (!r) return;
             if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
                 const id = parseInt(w.dataset.id);
-                if (id !== fromId && proyecto.elementosGantt?.find(el => el.id === id)?.tipo !== 'edt') {
+                if (id !== fromId && (proyecto[ctx.dataKey] || []).find(el => el.id === id)?.tipo !== 'edt') {
                     w.classList.add('bar-target-hover');
                 }
             } else {
@@ -1095,24 +1184,24 @@ function iniciarDragDependencia(e) {
         svg.removeEventListener('mouseup', onUp);
         document.removeEventListener('mouseup', onUp);
 
-        const target = document.querySelector('.bar-target-hover');
+        const target = svg.querySelector('.bar-target-hover');
         if (target) {
             const toId = parseInt(target.dataset.id);
             if (toId && toId !== fromId) {
-                const elem = proyecto.elementosGantt?.find(e => e.id === toId);
+                const elem = (proyecto[ctx.dataKey] || []).find(e => e.id === toId);
                 if (elem && !elem.predecesores?.some(p => p.id === fromId)) {
                     mostrarModalTipoDependencia(fromId, toId);
                 }
             }
         }
 
-        const dragLine = document.getElementById('dragLine');
+        const dragLine = svg.querySelector('#dragLine');
         if (dragLine) dragLine.remove();
-        document.querySelectorAll('.bar-dragging, .bar-target-hover').forEach(el => {
+        svg.querySelectorAll('.bar-dragging, .bar-target-hover').forEach(el => {
             el.classList.remove('bar-dragging', 'bar-target-hover');
         });
-        ganttState.editandoDependencia = false;
-        ganttState.dragPredecesor = null;
+        state.editandoDependencia = false;
+        state.dragPredecesor = null;
     }
 
     svg.addEventListener('mousemove', onMove);
@@ -1189,21 +1278,21 @@ function mostrarModalTipoDependencia(fromId, toId) {
 }
 
 function crearDependencia(fromId, toId, tipo, retraso) {
-    const elem = proyecto.elementosGantt?.find(e => e.id === toId);
+    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === toId);
     if (!elem) return;
     if (!elem.predecesores) elem.predecesores = [];
     if (elem.predecesores.some(p => p.id === fromId)) return;
     elem.predecesores.push({ id: fromId, tipo, retraso });
-    autoScheduler();
+    autoScheduler(proyecto[cronogramaActivo.dataKey]);
     guardarProyecto();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     mostrarToast(` Dependencia ${tipo} creada`, 'success');
 }
 
 // ─── AUTO-SCHEDULER ─────────────────────────────────────────────
 
-function autoScheduler() {
-    const elementos = proyecto.elementosGantt;
+function autoScheduler(arr) {
+    const elementos = arr || (proyecto[cronogramaActivo.dataKey] || []);
     if (!elementos || !elementos.length) return;
     const ids = new Set(elementos.map(e => e.id));
     const tasks = elementos.filter(e => e.tipo !== 'edt');
@@ -1294,7 +1383,7 @@ function autoScheduler() {
 function mostrarModalEditarDependencia(fromId, toId) {
     const fromName = getNombreElemento(fromId);
     const toName = getNombreElemento(toId);
-    const elem = proyecto.elementosGantt?.find(e => e.id === toId);
+    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === toId);
     const dep = elem?.predecesores?.find(p => p.id === fromId);
     if (!dep) return;
     const existing = document.getElementById('genericModal');
@@ -1349,23 +1438,23 @@ function mostrarModalEditarDependencia(fromId, toId) {
     window.guardarEdicionDependencia = function(fId, tId) {
         const tipo = document.getElementById('depEditTipo').value;
         const retraso = parseInt(document.getElementById('depEditRetraso').value) || 0;
-        const e = proyecto.elementosGantt?.find(x => x.id === tId);
+        const e = (proyecto[cronogramaActivo.dataKey] || []).find(x => x.id === tId);
         const d = e?.predecesores?.find(p => p.id === fId);
         if (d) { d.tipo = tipo; d.retraso = retraso; }
-        autoScheduler();
+        autoScheduler(proyecto[cronogramaActivo.dataKey]);
         guardarProyecto();
-        renderizarCronograma();
+        renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
         cerrarModalGeneric();
         mostrarToast(' Dependencia actualizada', 'success');
     };
     window.eliminarDependencia = function(fId, tId) {
-        const e = proyecto.elementosGantt?.find(x => x.id === tId);
+        const e = (proyecto[cronogramaActivo.dataKey] || []).find(x => x.id === tId);
         if (e) {
             e.predecesores = (e.predecesores || []).filter(p => p.id !== fId);
         }
-        autoScheduler();
+        autoScheduler(proyecto[cronogramaActivo.dataKey]);
         guardarProyecto();
-        renderizarCronograma();
+        renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
         cerrarModalGeneric();
         mostrarToast('Dependencia eliminada', 'info');
     };
@@ -1373,15 +1462,16 @@ function mostrarModalEditarDependencia(fromId, toId) {
 
 // ─── INFO BAR ───────────────────────────────────────────────────
 
-function renderizarInfoBar() {
-    const el = document.getElementById('cronogramaInfoBar');
+function renderizarInfoBar(ctx) {
+    const el = document.getElementById(ctx.infoBarId);
     if (!el) return;
-    const critPath = cpmResult.criticalPath || [];
+    const cpmRef = _getCpmResult(ctx);
+    const critPath = cpmRef.criticalPath || [];
     const nombres = critPath.map(id => getNombreElemento(id)).filter(Boolean);
-    const float = cpmResult.totalFloat || 0;
+    const float = cpmRef.totalFloat || 0;
     let critDias = 0, critHoras = 0, todasHoras = true;
     critPath.forEach(id => {
-        const e = proyecto.elementosGantt?.find(x => x.id === id);
+        const e = (proyecto[ctx.dataKey] || []).find(x => x.id === id);
         if (!e) return;
         critDias += e.duracion || 0;
         if (e.tipoDuracion === 'horas' && e.duracionHoras) {
@@ -1397,7 +1487,7 @@ function renderizarInfoBar() {
     el.innerHTML = `
         <span class="info-chip critical"> Ruta crítica: ${nombres.join(' → ') || '—'} (${durStr})</span>
         <span class="info-chip"> Holgura total: ${float.toFixed(1)} días</span>
-        <span class="info-chip"> Elementos: ${proyecto.elementosGantt?.length || 0}</span>
+        <span class="info-chip"> Elementos: ${(proyecto[ctx.dataKey] || []).length}</span>
     `;
 }
 
@@ -1423,51 +1513,61 @@ function ocultarTooltip() {
 }
 
 function zoomGantt(tipo) {
-    if (tipo === 'in') ganttState.zoom = Math.min(ganttState.zoom + 0.3, 3);
-    else ganttState.zoom = Math.max(ganttState.zoom - 0.3, 0.4);
-    actualizarZoomLabel();
-    renderizarCronograma();
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    const state = _getState(ctx);
+    if (tipo === 'in') state.zoom = Math.min(state.zoom + 0.3, 3);
+    else state.zoom = Math.max(state.zoom - 0.3, 0.4);
+    actualizarZoomLabel(ctx);
+    renderizarCronograma(ctx);
 }
 
-function actualizarZoomLabel() {
-    const lbl = document.getElementById('cronoZoomLabel');
-    if (lbl) lbl.textContent = Math.round(ganttState.zoom * 100) + '%';
+function actualizarZoomLabel(ctx) {
+    const ctxLocal = ctx || _ctxCronograma(cronogramaActivo.panelKey);
+    const lbl = document.getElementById(ctxLocal.zoomLabelId);
+    if (lbl) lbl.textContent = Math.round(_getState(ctxLocal).zoom * 100) + '%';
 }
 
 function cambiarEscala(escala) {
-    ganttState.escala = escala;
-    renderizarCronograma();
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    _getState(ctx).escala = escala;
+    renderizarCronograma(ctx);
 }
 
 function colapsarTodos() {
-    (proyecto.elementosGantt || []).filter(e => e.tipo === 'edt').forEach(e => ganttState.collapsed.add(e.id));
-    renderizarCronograma();
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    const state = _getState(ctx);
+    (proyecto[ctx.dataKey] || []).filter(e => e.tipo === 'edt').forEach(e => state.collapsed.add(e.id));
+    renderizarCronograma(ctx);
 }
 
 function expandirTodos() {
-    ganttState.collapsed.clear();
-    renderizarCronograma();
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    _getState(ctx).collapsed.clear();
+    renderizarCronograma(ctx);
 }
 
 // ─── VISTA TARJETAS ──────────────────────────────────────────────
 
 function toggleVistaCronograma() {
-    ganttState.vista = ganttState.vista === 'gantt' ? 'tarjetas' : 'gantt';
-    renderizarCronograma();
-    const btn = document.getElementById('btnToggleVista');
-    if (btn) btn.textContent = ganttState.vista === 'gantt' ? ' Tarjetas' : ' Gantt';
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    const state = _getState(ctx);
+    state.vista = state.vista === 'gantt' ? 'tarjetas' : 'gantt';
+    renderizarCronograma(ctx);
+    const btn = document.getElementById(ctx.btnToggleVistaId);
+    if (btn) btn.textContent = state.vista === 'gantt' ? ' Tarjetas' : ' Gantt';
 }
 
-function renderizarVistaTarjetas(elementos) {
-    const container = document.getElementById('cronogramaContainer');
+function renderizarVistaTarjetas(elementos, ctx) {
+    const container = document.getElementById(ctx.containerId);
     if (!container) return;
+    const cpmRef = _getCpmResult(ctx);
 
     // Ensure WBS codes are set (safe inline version, no re-render)
     elementos.forEach(e => {
         if (!e.codigo) e.codigo = String(e.id).slice(-4);
     });
 
-    const critSet = new Set(cpmResult.criticalPath || []);
+    const critSet = new Set(cpmRef.criticalPath || []);
     const noEdts = elementos.filter(e => e.tipo !== 'edt');
 
     // Build parent lookup for grouping
@@ -1514,7 +1614,7 @@ function renderizarVistaTarjetas(elementos) {
             const icono = getTipoIcono(elem.tipo);
             const esCritico = critSet.has(elem.id);
             const pct = elem.progreso || 0;
-            const critOrder = esCritico ? (cpmResult.criticalPath.indexOf(elem.id) + 1) : 0;
+            const critOrder = esCritico ? (cpmRef.criticalPath.indexOf(elem.id) + 1) : 0;
             html += `<div class="tv-card ${esCritico ? 'tv-card-critical' : ''}" data-id="${elem.id}" data-type="${elem.tipo}">
                 ${critOrder > 0 ? `<div class="tv-card-order">${critOrder}</div>` : ''}
                 <div class="tv-card-header">
@@ -1643,7 +1743,7 @@ function renderizarVistaTarjetas(elementos) {
 function abrirModalNuevoElementoGantt(parentId) {
     const hoy = new Date().toISOString().split('T')[0];
     let edtOptions = '<option value="">-- Ninguno --</option>';
-    (proyecto.elementosGantt || []).filter(e => e.tipo === 'edt').forEach(edt => {
+    (proyecto[cronogramaActivo.dataKey] || []).filter(e => e.tipo === 'edt').forEach(edt => {
         const sel = edt.id === parentId ? ' selected' : '';
         edtOptions += `<option value="${edt.id}"${sel}>${escapeHtml(edt.nombre)}</option>`;
     });
@@ -1736,14 +1836,14 @@ function guardarNuevoElementoGantt() {
             dependeDe, recursoAsignado: recursoInfo, horasDia, costeEstimado, costeReal: 0,
             predecesores: []
         };
-        if (!proyecto.elementosGantt) proyecto.elementosGantt = [];
-        proyecto.elementosGantt.push(nuevo);
+        if (!proyecto[cronogramaActivo.dataKey]) proyecto[cronogramaActivo.dataKey] = [];
+        proyecto[cronogramaActivo.dataKey].push(nuevo);
         console.debug('[gantt] NUEVO elemento añadido:', nuevo.nombre, '| tipo:', nuevo.tipo, '| inicio:', JSON.stringify(nuevo.inicio), '| dependeDe:', nuevo.dependeDe, '| duracion:', nuevo.duracion);
-        autoScheduler();
+        autoScheduler(proyecto[cronogramaActivo.dataKey]);
         recalcularEdtAuto();
         guardarProyecto();
-        renderizarCronograma();
-        reordenarNumeracionElementos();
+        renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
+        reordenarNumeracionElementos(proyecto[cronogramaActivo.dataKey], _ctxCronograma(cronogramaActivo.panelKey));
         calcularCashflow();
         if (tipo !== 'edt' && recursoInfo?.id) {
             const r = proyecto.equipo?.find(x => x.id == recursoInfo.id);
@@ -1759,11 +1859,11 @@ function guardarNuevoElementoGantt() {
 }
 
 function editarElementoGantt(id) {
-    const elem = proyecto.elementosGantt?.find(e => e.id === id);
+    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === id);
     if (!elem) return;
-    const codigo = elem.codigo || obtenerCodigoElemento(elem, proyecto.elementosGantt) || '';
+    const codigo = elem.codigo || obtenerCodigoElemento(elem, proyecto[cronogramaActivo.dataKey]) || '';
     let edtOpts = '<option value="">-- Ninguno --</option>';
-    (proyecto.elementosGantt || []).filter(e => e.tipo === 'edt' && e.id !== elem.id).forEach(edt => {
+    (proyecto[cronogramaActivo.dataKey] || []).filter(e => e.tipo === 'edt' && e.id !== elem.id).forEach(edt => {
         edtOpts += `<option value="${edt.id}" ${elem.dependeDe === edt.id ? 'selected' : ''}>${escapeHtml(edt.nombre)}</option>`;
     });
     const html = `<div class="modal-content modal-sm">
@@ -1809,7 +1909,7 @@ function editarElementoGantt(id) {
 
 function guardarEdicionElementoGantt() {
     const id = parseInt(document.getElementById('editId').value);
-    const elem = proyecto.elementosGantt?.find(e => e.id === id);
+    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === id);
     if (!elem) return;
     elem.tipo = document.getElementById('editTipo').value;
     elem.nombre = document.getElementById('editNombre').value;
@@ -1843,10 +1943,10 @@ function guardarEdicionElementoGantt() {
         elem.costeEstimado = 0;
     }
     elem.dependeDe = parseInt(document.getElementById('editDependeDe').value) || null;
-    autoScheduler();
+    autoScheduler(proyecto[cronogramaActivo.dataKey]);
     recalcularEdtAuto();
     guardarProyecto();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     if (elem.tipo !== 'edt' && elem.recursoAsignado?.id) {
         const r = proyecto.equipo?.find(x => x.id == elem.recursoAsignado.id);
         if (r?.email) {
@@ -1857,25 +1957,27 @@ function guardarEdicionElementoGantt() {
     }
     cerrarModalGeneric();
     mostrarToast(' Actualizado', 'success');
-    reordenarNumeracionElementos();
+    reordenarNumeracionElementos(proyecto[cronogramaActivo.dataKey], _ctxCronograma(cronogramaActivo.panelKey));
 }
 
 function eliminarElementoGantt(id) {
     if (confirm('¿Eliminar este elemento?')) {
-        proyecto.elementosGantt = proyecto.elementosGantt.filter(e => e.id !== id);
-        proyecto.elementosGantt.forEach(e => {
+        proyecto[cronogramaActivo.dataKey] = (proyecto[cronogramaActivo.dataKey] || []).filter(e => e.id !== id);
+        proyecto[cronogramaActivo.dataKey].forEach(e => {
             if (e.predecesores) e.predecesores = e.predecesores.filter(p => p.id !== id);
         });
-        autoScheduler();
+        autoScheduler(proyecto[cronogramaActivo.dataKey]);
         recalcularEdtAuto();
         guardarProyecto();
-        renderizarCronograma();
+        renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
         mostrarToast(' Eliminado', 'success');
     }
 }
 
 function editarElementoMultiple() {
-    const checkboxes = document.querySelectorAll('.select-elemento:checked');
+    const ctxActual = _ctxCronograma(cronogramaActivo.panelKey);
+    const container = document.getElementById(ctxActual.containerId);
+    const checkboxes = container ? container.querySelectorAll('.select-elemento:checked') : document.querySelectorAll('.select-elemento:checked');
     if (checkboxes.length === 0) { mostrarToast('Selecciona elementos', 'warning'); return; }
     const ids = Array.from(checkboxes).map(cb => parseInt(cb.dataset.id));
     const html = `<div class="modal-content modal-500">
@@ -1893,34 +1995,37 @@ function aplicarEdicionMultiple(ids) {
     const d = document.getElementById('multiDuracion')?.value;
     const des = parseInt(document.getElementById('multiDesplazar')?.value) || 0;
     ids.forEach(id => {
-        const e = proyecto.elementosGantt?.find(x => x.id === id);
+        const e = (proyecto[cronogramaActivo.dataKey] || []).find(x => x.id === id);
         if (!e) return;
         if (r) e.responsable = r;
         if (d && !isNaN(parseInt(d))) e.duracion = parseInt(d);
         if (des && e.inicio) e.inicio = sumarDias(e.inicio, des);
     });
-    autoScheduler();
+    autoScheduler(proyecto[cronogramaActivo.dataKey]);
     recalcularEdtAuto();
     guardarProyecto();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     cerrarModalGeneric();
     mostrarToast(` ${ids.length} actualizados`, 'success');
 }
 
 function seleccionarTodosElementos() {
-    const checkAll = document.getElementById('seleccionarTodos');
-    document.querySelectorAll('.select-elemento').forEach(cb => cb.checked = checkAll.checked);
+    const container = document.getElementById(_ctxCronograma(cronogramaActivo.panelKey).containerId);
+    if (!container) return;
+    const checkAll = container.querySelector('#seleccionarTodos');
+    container.querySelectorAll('.select-elemento').forEach(cb => cb.checked = checkAll.checked);
 }
 
 function ordenarElementosGantt(criterio) {
-    if (!proyecto.elementosGantt) return;
-    if (criterio === 'fecha') proyecto.elementosGantt.sort((a, b) => (a.inicio || '').localeCompare(b.inicio || ''));
+    const data = proyecto[cronogramaActivo.dataKey];
+    if (!data) return;
+    if (criterio === 'fecha') data.sort((a, b) => (a.inicio || '').localeCompare(b.inicio || ''));
     else if (criterio === 'tipo') {
         const ord = { edt: 1, actividad: 2, entregable: 3, hito: 4 };
-        proyecto.elementosGantt.sort((a, b) => (ord[a.tipo] || 5) - (ord[b.tipo] || 5));
+        data.sort((a, b) => (ord[a.tipo] || 5) - (ord[b.tipo] || 5));
     }
     guardarProyecto();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     mostrarToast(' Ordenado', 'success');
 }
 
@@ -1989,7 +2094,7 @@ function actualizarFechasProyectoDesdeActa() {
             if (!e.inicioReal) e.inicio = proyecto.acta.fechaInicio;
         });
         guardarProyecto();
-        renderizarCronograma();
+        renderizarCronograma(_ctxCronograma('planificacion'));
         mostrarToast(' Fechas sincronizadas desde el acta', 'success');
     }
 }
@@ -2540,14 +2645,15 @@ function confirmarImportarCSV(timestamp) {
     mostrarToast(` Importados ${finales.length} elementos`, 'success');
 }
 
-function limpiarCronograma() {
-    const total = (proyecto.elementosGantt || []).length;
+function limpiarCronograma(ctx) {
+    const ctxLocal = ctx || _ctxCronograma(cronogramaActivo.panelKey);
+    const total = (proyecto[ctxLocal.dataKey] || []).length;
     if (total === 0) { mostrarToast('El cronograma ya está vacío', 'info'); return; }
     if (!confirm(`¿Estás seguro de que quieres eliminar TODO el cronograma?\n\nSe borrarán ${total} elemento(s) (EDT, actividades, entregables e hitos).\n\nEsta acción NO se puede deshacer ni recuperar.`)) return;
-    proyecto.elementosGantt = [];
+    proyecto[ctxLocal.dataKey] = [];
     guardarProyecto();
-    if (typeof autoScheduler === 'function') autoScheduler();
-    renderizarCronograma();
+    if (typeof autoScheduler === 'function') autoScheduler(proyecto[ctxLocal.dataKey]);
+    renderizarCronograma(ctxLocal);
     mostrarToast(` Cronograma eliminado (${total} elementos)`, 'success');
 }
 
@@ -2695,7 +2801,7 @@ function handleFechaRealChange(e) {
     const id = parseInt(e.target.dataset.id);
     const tipo = e.target.dataset.tipo;
     const valor = e.target.value;
-    const el = proyecto.elementosGantt?.find(x => x.id === id);
+    const el = (proyecto[cronogramaActivo.dataKey] || []).find(x => x.id === id);
     if (!el) return;
     if (tipo === 'inicio') el.inicioReal = valor || null;
     else if (tipo === 'fin') {
@@ -2705,13 +2811,13 @@ function handleFechaRealChange(e) {
         }
     }
     guardarProyecto();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     calcularCashflow();
     mostrarToast(` Fecha real actualizada`, 'success');
 }
 
 function editarFechasReales(id) {
-    const elem = proyecto.elementosGantt?.find(e => e.id === id);
+    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === id);
     if (!elem) return;
     const html = `<div class="modal-content" style="max-width:450px;">
         <div class="modal-header"><h3> Avance Real</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
@@ -2725,7 +2831,7 @@ function editarFechasReales(id) {
 }
 
 function guardarFechasReales(id) {
-    const elem = proyecto.elementosGantt?.find(e => e.id === id);
+    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === id);
     if (!elem) return;
     elem.inicioReal = document.getElementById('realInicio').value || null;
     elem.finReal = document.getElementById('realFin').value || null;
@@ -2734,7 +2840,7 @@ function guardarFechasReales(id) {
         elem.duracionReal = Math.ceil((parseLocalDate(elem.finReal) - parseLocalDate(elem.inicioReal)) / 86400000);
     }
     guardarProyecto();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     cerrarModalGeneric();
     mostrarToast(' Avance registrado', 'success');
 }
@@ -2750,7 +2856,7 @@ function mostrarDetalleElemento(elem) {
     const dependencias = (elem.predecesores || []).map(p => getNombreElemento(p.id)).filter(Boolean).join(', ') || '—';
     const predsTipo = (elem.predecesores || []).map(p => `${getNombreElemento(p.id)} (${p.tipo})`).join(', ') || '—';
     const codigo = elem.codigo || '';
-    const esCritico = cpmResult.criticalPath?.includes(elem.id);
+    const esCritico = _getCpmResult(_ctxCronograma(cronogramaActivo.panelKey)).criticalPath?.includes(elem.id);
     // Duración real en días naturales (incluye fines de semana)
     let duracionReal = elem.duracion;
     if (elem.inicio && elem.duracion > 0) {
@@ -2815,7 +2921,7 @@ function abrirModalLineaBase() {
         listaHtml = '<div style="padding:16px;font-size:13px;color:var(--text-muted);text-align:center">Aún no hay líneas base guardadas.</div>';
     } else {
         listaHtml = lineas.map(lb => {
-            const visible = ganttState.lineaBaseVisible === lb.id;
+            const visible = _getState(_ctxCronograma(cronogramaActivo.panelKey)).lineaBaseVisible === lb.id;
             const nTareas = (lb.elementos || []).length;
             return `<div style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(128,128,128,0.15)">
                 <div style="flex:1;min-width:0">
@@ -2866,7 +2972,7 @@ function guardarLineaBase() {
         mostrarToast(' Introduce un nombre para la línea base', 'error');
         return;
     }
-    const elementos = (proyecto.elementosGantt || []).map(e => JSON.parse(JSON.stringify(e)));
+    const elementos = (proyecto[cronogramaActivo.dataKey] || []).map(e => JSON.parse(JSON.stringify(e)));
     const lineas = _getLineasBase();
     lineas.push({
         id: Date.now(),
@@ -2880,8 +2986,10 @@ function guardarLineaBase() {
 }
 
 function toggleLineaBaseVisible(id) {
-    ganttState.lineaBaseVisible = ganttState.lineaBaseVisible === id ? null : id;
-    renderizarCronograma();
+    const ctx = _ctxCronograma(cronogramaActivo.panelKey);
+    const state = _getState(ctx);
+    state.lineaBaseVisible = state.lineaBaseVisible === id ? null : id;
+    renderizarCronograma(ctx);
     abrirModalLineaBase();
 }
 
@@ -2890,10 +2998,11 @@ function eliminarLineaBase(id) {
     if (!lb) return;
     if (!confirm(` ¿Eliminar la línea base "${lb.nombre}"?`)) return;
     proyecto.lineasBase = _getLineasBase().filter(x => x.id !== id);
-    if (ganttState.lineaBaseVisible === id) ganttState.lineaBaseVisible = null;
+    const state = _getState(_ctxCronograma(cronogramaActivo.panelKey));
+    if (state.lineaBaseVisible === id) state.lineaBaseVisible = null;
     guardarProyecto();
     abrirModalLineaBase();
-    renderizarCronograma();
+    renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
 }
 
 function _desvioDias(base, actual) {
@@ -2920,7 +3029,7 @@ function compararLineaBase(id) {
     if (existing) existing.remove();
 
     const baseList = lb.elementos || [];
-    const actualList = proyecto.elementosGantt || [];
+    const actualList = proyecto[cronogramaActivo.dataKey] || [];
     const baseById = new Map(baseList.map(e => [e.id, e]));
     const actualById = new Map(actualList.map(e => [e.id, e]));
 

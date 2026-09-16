@@ -2698,10 +2698,9 @@ function exportarSprints() {
     URL.revokeObjectURL(link.href);
     mostrarToast(" Sprints exportados a CSV", 'success');
 }
-function reordenarNumeracionElementos() {
-    if (!proyecto.elementosGantt) return;
-    
-    const elementos = proyecto.elementosGantt;
+function reordenarNumeracionElementos(arr, ctx) {
+    const elementos = arr || proyecto.elementosGantt;
+    if (!elementos) return;
     
     // Función para obtener elementos hijos de un EDT
     function obtenerHijos(edtId, tipo = null) {
@@ -2776,7 +2775,7 @@ function reordenarNumeracionElementos() {
     });
     
     guardarProyecto();
-    if (typeof renderizarCronograma === 'function') renderizarCronograma();
+    if (typeof renderizarCronograma === 'function') renderizarCronograma(ctx);
     mostrarToast(" Códigos jerárquicos reordenados", 'success');
 }
 // ============================================

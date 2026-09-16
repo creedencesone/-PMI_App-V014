@@ -359,7 +359,7 @@ function fijarClicEnEDT() {
 // Sobrescribir renderizado del cronograma
 if (typeof renderizarCronograma === 'function') {
     var origCrono = renderizarCronograma;
-    renderizarCronograma = function() { origCrono(); fijarClicEnEDT(); };
+    renderizarCronograma = function(ctx) { origCrono(ctx); if (!ctx || ctx.panelKey !== 'ejecucion') fijarClicEnEDT(); };
 }
 
 setTimeout(fijarClicEnEDT, 1500);
