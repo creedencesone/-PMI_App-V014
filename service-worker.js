@@ -1,4 +1,4 @@
-const CACHE = 'pmi-mind-v9';
+const CACHE = 'pmi-mind-v10';
 const PRECACHE_URLS = [
     '/',
     '/index.html',

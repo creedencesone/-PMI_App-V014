@@ -134,6 +134,14 @@ function contarDiasHabiles(inicio, fin) {
     }
     return n;
 }
+function normalizarFecha(v) {
+    if (!v) return '';
+    const d = new Date(v);
+    if (!isNaN(d.getTime())) return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) return m[3] + '-' + String(parseInt(m[2])).padStart(2, '0') + '-' + String(parseInt(m[1])).padStart(2, '0');
+    return v;
+}
 
 // ─── EDT AUTO-CALC ──────────────────────────────────────────────
 
@@ -2027,53 +2035,184 @@ function procesarXML(file) {
             procesarCSV(file);
             return;
         }
-        const doc = new DOMParser().parseFromString(raw, 'application/xml');
+        const rawNoNS = raw.replace(/\sxmlns(:\w+)?=["'][^"']*["']/g, '');
+        const doc = new DOMParser().parseFromString(rawNoNS, 'application/xml');
         if (doc.querySelector('parsererror')) {
             mostrarToast('XML no válido', 'error');
             return;
         }
-        const elems = doc.querySelectorAll('elemento');
-        if (!elems.length) {
-            mostrarToast('No se encontraron elementos en el XML', 'error');
+
+        const norm = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const getAttr = (item, names) => {
+            const attrMap = {};
+            for (let i = 0; i < item.attributes.length; i++) {
+                const a = item.attributes[i];
+                attrMap[norm(a.name)] = a.value;
+            }
+            for (const n of names) {
+                if (attrMap[norm(n)] !== undefined) return attrMap[norm(n)];
+            }
+            return '';
+        };
+        const getChild = (item, names) => {
+            const childTags = Array.from(item.children).map(c => norm(c.tagName));
+            for (const n of names) {
+                const idx = childTags.indexOf(norm(n));
+                if (idx !== -1) {
+                    const t = item.children[idx].textContent.trim();
+                    if (t !== '') return t;
+                }
+            }
+            return '';
+        };
+        const getVal = (item, names) => getAttr(item, names) || getChild(item, names);
+
+        const root = doc.documentElement;
+        let items = null;
+        const tags = ['elemento', 'Task', 'tarea', 'actividad', 'activity', 'item', 'fila', 'row', 'entry', '*|Task', '*|elemento', '*|tarea'];
+        for (const t of tags) {
+            const found = doc.querySelectorAll(t);
+            if (found.length) { items = Array.from(found); break; }
+        }
+        if (!items) {
+            const namesOk = new Set(['task', 'elemento', 'tarea', 'actividad', 'activity', 'item', 'fila', 'row', 'entry']);
+            items = Array.from(doc.getElementsByTagName('*')).filter(el => {
+                const ln = (el.localName || el.tagName || '').toLowerCase();
+                return namesOk.has(ln);
+            });
+        }
+        if (!items) {
+            items = Array.from(root.children).filter(c => /nombre|name|taskname|inicio|start|fecha|date|duracion|duration/i.test(c.textContent));
+        }
+        if (!items || !items.length) {
+            const allTags = Array.from(doc.getElementsByTagName('*')).map(e => (e.localName || e.tagName || '').toLowerCase());
+            const countMap = {};
+            allTags.forEach(t => { countMap[t] = (countMap[t] || 0) + 1; });
+            const top = Object.entries(countMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, n]) => t + '(' + n + ')').join(', ');
+            console.warn('[procesarXML] Sin tareas detectadas. Raíz:', root.tagName, '| Namespace:', root.namespaceURI || '(ninguno)', '| Tags:', top, '| Bytes:', raw.length);
+            mostrarToast('No se encontraron tareas en el XML. Raíz: <' + root.tagName + '> Tags: ' + (top || 'ninguno'), 'error');
             return;
         }
+
+        const parsearDuracionISO = v => {
+            if (!v) return null;
+            const s = String(v).trim();
+            if (/^\d+(\.\d+)?$/.test(s)) return { duracion: parseFloat(s), horas: parseFloat(s) * 8, tipo: 'días' };
+            const m = s.match(/^P(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i);
+            if (!m) return null;
+            const dias = parseFloat(m[1]) || 0;
+            const horas = parseFloat(m[2]) || 0;
+            const mins = parseFloat(m[3]) || 0;
+            const segs = parseFloat(m[4]) || 0;
+            const totalHoras = horas + mins / 60 + segs / 3600;
+            return { duracion: dias + totalHoras / 8, horas: totalHoras, tipo: 'días' };
+        };
+
         const nuevos = [];
-        elems.forEach((el, idx) => {
-            const nombre = el.getAttribute('nombre') || '';
+        items.forEach((item, idx) => {
+            const uidRaw = getVal(item, ['uid']);
+            const idRaw = getVal(item, ['id']);
+            if (uidRaw === '0' || idRaw === '0') return;
+            const nombre = getVal(item, ['nombre', 'name', 'taskname', 'task_name', 'actividad', 'title', 'descripcion']);
             if (!nombre) return;
-            const id = parseInt(el.getAttribute('id')) || (Date.now() + idx);
-            const duracion = parseFloat(el.getAttribute('duracion')) || 0;
-            const duracionHoras = parseFloat(el.getAttribute('duracionHoras')) || (duracion * 8);
-            const dependeDeRaw = el.getAttribute('dependeDe');
+            const id = parseInt(uidRaw) || parseInt(idRaw) || (Date.now() + idx);
+            const codigo = getVal(item, ['codigo', 'código', 'wbs', 'code', 'id', 'orden', 'outline']);
+            const inicio = normalizarFecha(getVal(item, ['inicio', 'start', 'fechainicio', 'start_date', 'begin', 'comienzo', 'plannedstart']));
+            const fin = normalizarFecha(getVal(item, ['fin', 'finish', 'fechafin', 'end', 'end_date', 'final', 'due', 'plannedfinish']));
+            const durRaw = getVal(item, ['duracion', 'duración', 'duration', 'dur', 'work']);
+            const tipoRaw = getVal(item, ['tipo', 'type', 'kind']);
+            const progresoRaw = getVal(item, ['progreso', 'progress', 'percentcomplete', 'percent', 'avance', 'pct']);
+            const responsable = getVal(item, ['responsable', 'resource', 'resources', 'asignado', 'owner']);
+            const durHorasRaw = getVal(item, ['duracionhoras', 'hours', 'horas']);
+            const tipoDurRaw = getVal(item, ['tipoduracion', 'durationtype']);
+
+            let dur = durRaw ? parsearDuracionISO(durRaw) : null;
+            if (!dur) dur = { duracion: parseFloat(durRaw) || 0, horas: 0, tipo: 'días' };
+            if (dur.duracion === 0 && inicio && fin) {
+                const dIni = parseLocalDate(inicio);
+                const dFin = parseLocalDate(fin);
+                if (dIni && dFin && dFin >= dIni) {
+                    const dias = typeof contarDiasHabiles === 'function' ? contarDiasHabiles(dIni, dFin) : Math.round((dFin - dIni) / 86400000);
+                    dur = { duracion: dias, horas: dias * 8, tipo: 'días' };
+                }
+            }
+
+            let tipo = 'actividad';
+            const isMsProjectType = ['0', '1', '2'].includes(tipoRaw);
+            if (tipoRaw && !isMsProjectType) {
+                tipo = tipoRaw;
+            } else {
+                const summary = getVal(item, ['summary', 'issummary']);
+                const milestone = getVal(item, ['milestone']);
+                if (summary === '1' || norm(summary) === 'true') tipo = 'edt';
+                else if (milestone === '1' || norm(milestone) === 'true') tipo = 'hito';
+            }
+
             const predecesores = [];
-            el.querySelectorAll('predecesor').forEach(p => {
-                predecesores.push({
-                    id: parseInt(p.getAttribute('id')) || 0,
-                    tipo: p.getAttribute('tipo') || 'FS',
-                    retraso: parseInt(p.getAttribute('retraso')) || 0
+            const links = item.querySelectorAll('PredecessorLink');
+            if (links.length) {
+                links.forEach(l => {
+                    const puid = getVal(l, ['predecessoruid', 'predecessor_uid', 'uid']);
+                    const typeRaw = getVal(l, ['type']);
+                    const tipoMap = { '1': 'FS', '2': 'SS', '3': 'FF', '4': 'SF' };
+                    predecesores.push({ id: parseInt(puid) || 0, tipo: tipoMap[typeRaw] || 'FS', retraso: 0 });
                 });
-            });
+            } else {
+                const predChildren = item.querySelectorAll('predecesor');
+                if (predChildren.length) {
+                    predChildren.forEach(p => {
+                        predecesores.push({
+                            id: parseInt(p.getAttribute('id')) || 0,
+                            tipo: p.getAttribute('tipo') || 'FS',
+                            retraso: parseInt(p.getAttribute('retraso')) || 0
+                        });
+                    });
+                } else {
+                    const predRaw = getVal(item, ['predecesores', 'predecessors']);
+                    if (predRaw) {
+                        predRaw.split(/[,;]/).forEach(p => {
+                            const m = p.trim().match(/^(\d+)\s*(FS|SS|FF|SF)?/i);
+                            if (m) predecesores.push({ id: parseInt(m[1]), tipo: (m[2] || 'FS').toUpperCase(), retraso: 0 });
+                        });
+                    }
+                }
+            }
+
+            const parentUid = getVal(item, ['dependeDe', 'parenttaskuid', 'parent_uid']);
+            const outlineRaw = getVal(item, ['outlinelevel', 'outline_level']);
+
             nuevos.push({
                 id,
-                tipo: el.getAttribute('tipo') || 'actividad',
-                codigo: el.getAttribute('codigo') || '',
+                tipo,
+                codigo,
                 nombre,
-                inicio: el.getAttribute('inicio') || '',
-                duracion,
-                duracionOriginal: duracion,
-                tipoDuracion: el.getAttribute('tipoDuracion') || 'días',
-                duracionHoras,
+                inicio,
+                duracion: tipo === 'hito' ? 0 : dur.duracion,
+                duracionOriginal: tipo === 'hito' ? 0 : dur.duracion,
+                tipoDuracion: tipoDurRaw || dur.tipo || 'días',
+                duracionHoras: parseFloat(durHorasRaw) || dur.horas,
                 horasDia: 8,
-                progreso: parseFloat(el.getAttribute('progreso')) || 0,
-                responsable: el.getAttribute('responsable') || '',
+                progreso: parseFloat(progresoRaw) || 0,
+                responsable,
                 recursoAsignado: null,
                 costeEstimado: 0,
                 costeReal: 0,
                 predecesores,
-                dependeDe: (dependeDeRaw && dependeDeRaw !== '' && dependeDeRaw !== 'null') ? parseInt(dependeDeRaw) : null,
-                _importIdx: idx
+                dependeDe: parentUid ? parseInt(parentUid) : null,
+                _importIdx: idx,
+                _outlineLevel: parseInt(outlineRaw) || 0
             });
         });
+
+        const hasOutline = nuevos.some(e => e._outlineLevel > 0);
+        if (hasOutline) {
+            const stack = [];
+            nuevos.forEach(e => {
+                while (stack.length && stack[stack.length - 1]._outlineLevel >= e._outlineLevel) stack.pop();
+                if (stack.length) e.dependeDe = stack[stack.length - 1].id;
+                stack.push(e);
+            });
+        }
 
         const wbsMap = {};
         nuevos.forEach(e => {
@@ -2098,6 +2237,7 @@ function procesarXML(file) {
                 return { id: target.id, tipo: p.tipo, retraso: p.retraso || 0 };
             }).filter(Boolean);
             delete e._importIdx;
+            delete e._outlineLevel;
         });
 
         nuevos.forEach(e => {
@@ -2194,17 +2334,6 @@ function procesarCSV(file) {
                 }
             });
             return preds;
-        }
-
-        // Normalizar fecha a YYYY-MM-DD
-        function normalizarFecha(v) {
-            if (!v) return '';
-            const d = new Date(v);
-            if (!isNaN(d.getTime())) return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-            // Intentar DD/MM/YYYY o DD-MM-YYYY
-            const m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-            if (m) return m[3] + '-' + String(parseInt(m[2])).padStart(2, '0') + '-' + String(parseInt(m[1])).padStart(2, '0');
-            return v;
         }
 
         // Determinar tipo
