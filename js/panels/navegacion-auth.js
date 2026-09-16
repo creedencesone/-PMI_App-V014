@@ -526,7 +526,7 @@ function setActiveProceso(fase, opts) {
     const FASE_PANEL_INICIAL = {
         'Inicio': 'Acta',
         'Planificación': 'Cronograma',
-        'Ejecución': 'SprintBacklog',
+        'Ejecución': (typeof proyecto !== 'undefined' && proyecto?.metodologia?.tipo === 'agile') ? 'SprintBacklog' : 'EjecucionCronograma',
         'Monitoreo y Control': 'Salud',
         'Cierre': 'Lecciones'
     };

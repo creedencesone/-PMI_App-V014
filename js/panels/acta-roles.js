@@ -717,7 +717,7 @@ function mostrarPanelesSegunMetodologia() {
         });
         
     } else if (metodologia === 'agile') {
-        // Ágil: SOLO Scrum (ocultar Cronograma por completo)
+        // Ágil: SOLO Scrum (Cronograma de Ejecución es para proyectos tradicionales o mixtos)
         setNavSectionVisibility(CRONO, false);
         setNavSectionVisibility(CRONO_EJEC, false);
         setNavSectionVisibility(SCRUM_MENU, true);
