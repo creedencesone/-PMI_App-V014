@@ -49,6 +49,7 @@ let ganttState = {
     editandoDependencia: false,
     vista: 'gantt',
     escala: 'día',
+    lineaBaseVisible: null, // id de la línea base activa cuyo barra se superpone en el timeline
     _buscarTimer: null
 };
 
@@ -847,6 +848,9 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
 
     // Barras de tareas
     const critSet = new Set(cpmResult.criticalPath || []);
+    const lineaBaseActiva = ganttState.lineaBaseVisible != null
+        ? (proyecto.lineasBase || []).find(lb => lb.id === ganttState.lineaBaseVisible) || null
+        : null;
     let barsHtml = '', connectionsHtml = '';
     const barPositions = {};
     const dayUsage = {}; // acumula píxeles usados por día para desplazar tareas intra-día
@@ -884,6 +888,22 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         const barY = y - barH / 2;
 
         barsHtml += `<g class="crono-bar-wrapper" data-id="${elem.id}">`;
+
+        if (lineaBaseActiva) {
+            const be = lineaBaseActiva.elementos.find(x => x.id === elem.id);
+            if (be && be.inicio) {
+                const baseStartDate = parseLocalDate(be.inicio);
+                const baseStartOffset = Math.max(0, Math.round((baseStartDate - fechaInicio) / 86400000));
+                const baseW = Math.max(be.duracion > 0 ? (() => {
+                    const endStr = sumarDiasHabiles(be.inicio, be.duracion);
+                    const endDate = parseLocalDate(endStr);
+                    const calDays = endDate ? Math.round((endDate - baseStartDate) / 86400000) : be.duracion;
+                    return Math.max(calDays, be.duracion) * anchoDia;
+                })() : 8, 4);
+                const baseX = baseStartOffset * anchoDia;
+                barsHtml += `<rect class="crono-bar-base" data-id="${elem.id}" x="${baseX}" y="${barY - 7}" width="${Math.max(baseW, 8)}" height="4" rx="2" fill="none" stroke="#FFB800" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.85"/>`;
+            }
+        }
 
         // Sombra
         barsHtml += `<rect x="${x + 1}" y="${barY + 1}" width="${Math.max(w, 8)}" height="${barH}" rx="4" fill="rgba(0,0,0,0.2)" style="fill:rgba(0,0,0,0.2)"/>`;
@@ -2776,4 +2796,227 @@ function mostrarDetalleElemento(elem) {
     </div>`;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${html}</div>`;
     document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
+}
+
+// ─── LÍNEA BASE ────────────────────────────────────────────────
+
+function _getLineasBase() {
+    if (!proyecto.lineasBase) proyecto.lineasBase = [];
+    return proyecto.lineasBase;
+}
+
+function abrirModalLineaBase() {
+    const existing = document.getElementById('genericModal');
+    if (existing) existing.remove();
+
+    const lineas = _getLineasBase();
+    let listaHtml = '';
+    if (lineas.length === 0) {
+        listaHtml = '<div style="padding:16px;font-size:13px;color:var(--text-muted);text-align:center">Aún no hay líneas base guardadas.</div>';
+    } else {
+        listaHtml = lineas.map(lb => {
+            const visible = ganttState.lineaBaseVisible === lb.id;
+            const nTareas = (lb.elementos || []).length;
+            return `<div style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(128,128,128,0.15)">
+                <div style="flex:1;min-width:0">
+                    <div style="font-weight:600;font-size:13px">${escapeHtml(lb.nombre)} ${visible ? '<span style="font-size:10px;background:#FFB80022;color:#B8860B;padding:1px 6px;border-radius:8px;border:1px solid #B8860B55">EN CRONOGRAMA</span>' : ''}</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${lb.fecha} · ${nTareas} tareas</div>
+                </div>
+                <button class="btn btn-small btn-secondary" onclick="toggleLineaBaseVisible(${lb.id})">${visible ? 'Ocultar' : 'Ver'}</button>
+                <button class="btn btn-small btn-primary" onclick="compararLineaBase(${lb.id})">Comparar</button>
+                <button class="btn btn-small btn-danger" onclick="eliminarLineaBase(${lb.id})">Eliminar</button>
+            </div>`;
+        }).join('');
+    }
+
+    const hoy = formatLocalDate(new Date());
+    const html = `<div class="modal-content modal-500">
+        <div class="modal-header">
+            <h3> Línea Base</h3>
+            <span class="close-modal" onclick="cerrarModalGeneric()">&times;</span>
+        </div>
+        <div style="padding:16px">
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+                Guarda el cronograma <strong>tal y como está ahora</strong> como línea base. Después podrás comparar y calcular los desvíos.
+            </div>
+            <div class="form-group">
+                <label>Nombre de la nueva línea base</label>
+                <div style="display:flex;gap:8px">
+                    <input type="text" id="lineaBaseNombre" class="u-input" style="flex:1" placeholder="Ej: Línea base inicial" value="Línea base ${hoy}" onkeydown="if(event.key==='Enter')guardarLineaBase()">
+                    <button class="btn btn-primary" onclick="guardarLineaBase()"> Guardar</button>
+                </div>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Líneas base guardadas</div>
+            ${listaHtml}
+        </div>
+    </div>`;
+
+    const div = document.createElement('div');
+    div.id = 'genericModal';
+    div.className = 'modal';
+    div.style.display = 'flex';
+    div.innerHTML = html;
+    document.body.appendChild(div);
+    div.onclick = (e) => { if (e.target === div) cerrarModalGeneric(); };
+}
+
+function guardarLineaBase() {
+    const nombre = (document.getElementById('lineaBaseNombre')?.value || '').trim();
+    if (!nombre) {
+        mostrarToast(' Introduce un nombre para la línea base', 'error');
+        return;
+    }
+    const elementos = (proyecto.elementosGantt || []).map(e => JSON.parse(JSON.stringify(e)));
+    const lineas = _getLineasBase();
+    lineas.push({
+        id: Date.now(),
+        nombre,
+        fecha: formatLocalDate(new Date()),
+        elementos
+    });
+    guardarProyecto();
+    abrirModalLineaBase();
+    mostrarToast(` Línea base "${nombre}" guardada`, 'success');
+}
+
+function toggleLineaBaseVisible(id) {
+    ganttState.lineaBaseVisible = ganttState.lineaBaseVisible === id ? null : id;
+    renderizarCronograma();
+    abrirModalLineaBase();
+}
+
+function eliminarLineaBase(id) {
+    const lb = _getLineasBase().find(x => x.id === id);
+    if (!lb) return;
+    if (!confirm(` ¿Eliminar la línea base "${lb.nombre}"?`)) return;
+    proyecto.lineasBase = _getLineasBase().filter(x => x.id !== id);
+    if (ganttState.lineaBaseVisible === id) ganttState.lineaBaseVisible = null;
+    guardarProyecto();
+    abrirModalLineaBase();
+    renderizarCronograma();
+}
+
+function _desvioDias(base, actual) {
+    if (!base || !actual) return null;
+    const b = parseLocalDate(base);
+    const a = parseLocalDate(actual);
+    if (!b || !a) return null;
+    return diffDias(a, b);
+}
+
+function _fmtDesvio(dias) {
+    if (dias === null || dias === undefined || isNaN(dias)) return '<span style="color:var(--text-muted)">—</span>';
+    if (dias === 0) return '<span style="color:var(--text-muted)">0 d</span>';
+    const signo = dias > 0 ? '+' : '';
+    const color = dias > 0 ? '#E53935' : '#00A859';
+    const label = dias > 0 ? 'retraso' : 'adelanto';
+    return `<span style="color:${color};font-weight:600" title="${label}">${signo}${dias} d</span>`;
+}
+
+function compararLineaBase(id) {
+    const lb = _getLineasBase().find(x => x.id === id);
+    if (!lb) return;
+    const existing = document.getElementById('genericModal');
+    if (existing) existing.remove();
+
+    const baseList = lb.elementos || [];
+    const actualList = proyecto.elementosGantt || [];
+    const baseById = new Map(baseList.map(e => [e.id, e]));
+    const actualById = new Map(actualList.map(e => [e.id, e]));
+
+    const filas = [];
+    baseList.forEach(be => {
+        const ae = actualById.get(be.id);
+        const nombre = ae ? ae.nombre : be.nombre;
+        const tipo = ae ? ae.tipo : be.tipo;
+        const icono = getTipoIcono(tipo);
+        const finBase = be.inicio ? (be.duracion > 0 ? sumarDiasHabiles(be.inicio, be.duracion) : be.inicio) : null;
+        const finAct = ae && ae.inicio ? (ae.duracion > 0 ? sumarDiasHabiles(ae.inicio, ae.duracion) : ae.inicio) : null;
+        const dIni = _desvioDias(be.inicio, ae?.inicio);
+        const dFin = _desvioDias(finBase, finAct);
+        if (!ae) {
+            filas.push({ nombre, tipo, icono, eliminada: true, html: `
+                <tr style="opacity:0.6">
+                    <td>${icono} ${escapeHtml(nombre)}</td>
+                    <td>${be.inicio || '—'}</td>
+                    <td colspan="2" style="color:#E53935;font-weight:600">Eliminada del cronograma</td>
+                    <td>${finBase || '—'}</td>
+                    <td colspan="2"><span style="color:#E53935;font-weight:600">—</span></td>
+                </tr>` });
+            return;
+        }
+        const durBase = be.duracion || 0;
+        const durAct = ae.duracion || 0;
+        const dDur = durAct - durBase;
+        filas.push({ nombre, tipo, html: `
+            <tr>
+                <td>${icono} ${escapeHtml(nombre)}</td>
+                <td>${be.inicio || '—'}</td>
+                <td>${ae.inicio || '—'}</td>
+                <td>${_fmtDesvio(dIni)}</td>
+                <td>${finBase || '—'}</td>
+                <td>${finAct || '—'}</td>
+                <td>${_fmtDesvio(dFin)}</td>
+                <td>${durBase}d → ${durAct}d ${dDur !== 0 ? _fmtDesvio(dDur) : ''}</td>
+            </tr>` });
+    });
+    actualList.forEach(ae => {
+        if (!baseById.has(ae.id)) {
+            filas.push({ nombre: ae.nombre, nueva: true, html: `
+                <tr style="opacity:0.85">
+                    <td>${getTipoIcono(ae.tipo)} ${escapeHtml(ae.nombre)}</td>
+                    <td colspan="2" style="color:#00A859;font-weight:600">Nueva tarea</td>
+                    <td>${_fmtDesvio(null)}</td>
+                    <td>—</td>
+                    <td>${ae.inicio || '—'}</td>
+                    <td>${_fmtDesvio(null)}</td>
+                    <td>— → ${ae.duracion || 0}d</td>
+                </tr>` });
+        }
+    });
+
+    const retrasadas = filas.filter(f => !f.eliminada && !f.nueva && f.html.includes('retraso')).length;
+    const adelantadas = filas.filter(f => f.html.includes('adelanto')).length;
+    const resumen = `<div style="display:flex;gap:16px;font-size:12px;margin-bottom:10px;flex-wrap:wrap">
+        <span><strong>${filas.length}</strong> tareas comparadas</span>
+        <span style="color:#E53935"><strong>${retrasadas}</strong> con retraso</span>
+        <span style="color:#00A859"><strong>${adelantadas}</strong> adelantadas</span>
+        <span>Línea base: <strong>${escapeHtml(lb.nombre)}</strong> (${lb.fecha})</span>
+    </div>`;
+
+    const html = `<div class="modal-content modal-700">
+        <div class="modal-header">
+            <h3> Comparar con Línea Base</h3>
+            <span class="close-modal" onclick="cerrarModalGeneric()">&times;</span>
+        </div>
+        <div style="padding:16px">
+            ${resumen}
+            <div style="overflow:auto;max-height:420px">
+                <table class="data-table" style="font-size:12px;width:100%;border-collapse:collapse">
+                    <thead><tr>
+                        <th style="text-align:left">Tarea</th>
+                        <th>Inicio base</th>
+                        <th>Inicio act.</th>
+                        <th>Desvío inicio</th>
+                        <th>Fin base</th>
+                        <th>Fin act.</th>
+                        <th>Desvío fin</th>
+                        <th>Duración</th>
+                    </tr></thead>
+                    <tbody>${filas.map(f => f.html).join('')}</tbody>
+                </table>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:8px">
+                Desvío positivo = retraso · negativo = adelanto (días naturales). Las tareas EDT con fechas calculadas pueden mostrar desvíos heredados de sus hijos.
+            </div>
+        </div>
+    </div>`;
+
+    const div = document.createElement('div');
+    div.id = 'genericModal';
+    div.className = 'modal';
+    div.style.display = 'flex';
+    div.innerHTML = html;
+    document.body.appendChild(div);
+    div.onclick = (e) => { if (e.target === div) cerrarModalGeneric(); };
 }
