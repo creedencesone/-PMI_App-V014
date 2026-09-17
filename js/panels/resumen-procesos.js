@@ -357,7 +357,8 @@ function exportarResumenGastos() {
 
         function renderizarProcesos() {
             const grid = document.getElementById('procesosGrid');
-            if (!proyecto.procesos) proyecto.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
+            if (typeof sincronizarProcesosConPMBOK === 'function') sincronizarProcesosConPMBOK(proyecto);
+            else if (!proyecto.procesos) proyecto.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
 
             const expandidos = new Set();
             document.querySelectorAll('.pmbok-col.expanded').forEach(col => {

@@ -151,6 +151,18 @@
             });
         }
 
+        function contarProcesosCompletados(proyecto) {
+            if (!Array.isArray(PROCESOS_PMBOK) || !proyecto || !Array.isArray(proyecto.procesos)) return 0;
+            const viejos = proyecto.procesos.filter(Boolean);
+            const porCodigo = new Map(viejos.map(p => [String(p.codigo), p]));
+            const porNombre = new Map(viejos.map(p => [p.nombre, p]));
+            const porId = new Map(viejos.map(p => [String(p.id), p]));
+            return PROCESOS_PMBOK.filter(p => {
+                const previo = porCodigo.get(String(p.codigo)) || porNombre.get(p.nombre) || porId.get(String(p.id));
+                return previo && previo.completado === true;
+            }).length;
+        }
+
         function seedProyectosDemo() {
             const demos = [
                 {

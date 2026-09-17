@@ -1,4 +1,4 @@
-const CACHE = 'pmi-mind-v19';
+const CACHE = 'pmi-mind-v20';
 const PRECACHE_URLS = [
     '/',
     '/index.html',
@@ -7,6 +7,11 @@ const PRECACHE_URLS = [
     '/styles.css',
     '/auth.js',
     '/js/services/DataService.js',
+    '/js/config-global.js?v=20260917a',
+    '/js/panels/resumen-procesos.js?v=20260917a',
+    '/js/panels/panel-salud.js?v=20260917a',
+    '/js/panels/panel-informe.js?v=20260917a',
+    '/js/panels/venta-cashflow.js?v=20260917a',
     '/js/panels/agenda.js',
     '/js/panels/acta-roles.js?v=20260916h',
     '/js/panels/edt-panel.js?v=20260916h',

@@ -649,7 +649,7 @@ async function exportarSaludPDF() {
        function calcularProgresoGeneral() {
     // 1. Progreso de PROCESOS PMBOK (referencia fija desde config-global)
     const totalProcesos = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
-    const procesosCompletados = ((proyecto.procesos || []).filter(p => p.completado)).length;
+    const procesosCompletados = (typeof contarProcesosCompletados === 'function') ? contarProcesosCompletados(proyecto) : (proyecto.procesos || []).filter(p => p.completado).length;
     const progresoProcesos = procesosCompletados / totalProcesos;
     
     // 2. Progreso de ENTREGABLES (desde el cronograma Gantt)
@@ -691,7 +691,7 @@ function diagnosticarProgreso() {
     let actividades = elementos.filter(e => e.tipo === 'actividad');
     let entregables = elementos.filter(e => e.tipo === 'entregable');
     let hitos = elementos.filter(e => e.tipo === 'hito');
-    const procesos = proyecto.procesos || [];
+    const procesosCompletados = (typeof contarProcesosCompletados === 'function') ? contarProcesosCompletados(proyecto) : (proyecto.procesos || []).filter(p => p.completado).length;
     const totalProcesos = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
     
     // Calcular porcentajes
@@ -707,7 +707,7 @@ function diagnosticarProgreso() {
         progEnt = suma / (entregables.length * 100);
     }
     
-    let progProc = procesos.filter(p => p.completado).length / totalProcesos;
+    let progProc = procesosCompletados / totalProcesos;
     
     let progHit = 0;
     if (hitos.length > 0) {
@@ -735,7 +735,7 @@ function diagnosticarProgreso() {
                 </tr>
                 <tr class="u-border-bottom">
                     <td class="u-p-8"><strong> Procesos:</strong></td>
-                    <td class="u-p-8">${procesos.filter(p => p.completado).length}/${totalProcesos}</td>
+                    <td class="u-p-8">${procesosCompletados}/${totalProcesos}</td>
                     <td class="u-p-8">${(progProc * 100).toFixed(0)}%</td>
                     <td class="u-p-8">Aporta: ${(progProc * 0.2 * 100).toFixed(0)}%</td>
                 </tr>
@@ -754,7 +754,7 @@ function diagnosticarProgreso() {
                 <strong> ¿Qué significa?</strong><br>
                 • ${actividades.length === 0 ? ' No tienes ACTIVIDADES en el Gantt. Créalas para que aporten 40%.' : ' Tienes actividades.'}<br>
                 • ${entregables.length === 0 ? ' No tienes ENTREGABLES en el Gantt. Créalos para que aporten 30%.' : ' Tienes entregables.'}<br>
-                • ${procesos.filter(p => p.completado).length === totalProcesos ? ' Todos los procesos completados.' : ' Te faltan ' + (totalProcesos - procesos.filter(p => p.completado).length) + ' procesos por completar.'}<br>
+                • ${procesosCompletados === totalProcesos ? ' Todos los procesos completados.' : ' Te faltan ' + (totalProcesos - procesosCompletados) + ' procesos por completar.'}<br>
                 • ${hitos.length === 0 ? ' No tienes HITOS en el Gantt. Créalos para que aporten 10%.' : ' Tienes hitos.'}
             </div>
         </div>
