@@ -457,7 +457,7 @@ function renderizarCronograma(ctx) {
     // Rendimiento: "año" itera años en vez de días para no congelar.
     const MAX_DIAS = 5000, MAX_ANCHO = 150000;
     const diasTotales = Math.min(MAX_DIAS, Math.max(1, Math.ceil((fechaFinProy - fechaInicioProy) / 86400000) + 60));
-    if (diasTotales > 300 && state.escala !== 'año') { state.escala = 'año'; }
+    if (diasTotales > 300 && state.escala === 'día') { state.escala = 'año'; }
     const meses = generarMeses(fechaInicioProy, diasTotales);
     // Rendimiento: "año" itera años en vez de días para no congelar.
     const anchoDia = ({día:50,semana:14,mes:28,año:6})[state.escala] * state.zoom || 28 * state.zoom;
