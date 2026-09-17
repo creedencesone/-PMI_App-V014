@@ -1023,7 +1023,7 @@
              <div id="panelRoles" class="panel hidden"><div class="panel-title"><span><i data-feather="user-plus" class="nav-feather"></i> Roles</span></div><div class="info-cards" id="rolesContent"></div></div>
 
             <div id="panelEquipo" class="panel hidden">
-                <div class="panel-title"><span><i data-feather="user-plus" class="nav-feather"></i> Equipo</span><button class="btn btn-primary btn-small" onclick="abrirModalEquipo()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button><button class="btn btn-secondary btn-small" onclick="importarCatalogoEquipo()"><i data-feather="shopping-bag" class="nav-feather"></i> Catálogo</button></div>
+                <div class="panel-title"><span><i data-feather="user-plus" class="nav-feather"></i> Equipo</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalEquipo()" title="Añadir miembro" aria-label="Añadir miembro">+</button><button class="panel-add-btn" onclick="importarCatalogoEquipo()" title="Catálogo de equipo" aria-label="Catálogo de equipo"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button></div></div>
                 <table class="data-table">
                     <thead><tr><th>Foto</th><th>Nombre</th><th>Rol</th><th>Email</th><th>Teléfono</th><th>Coste/h</th><th>Moneda</th><th>Horas/mes</th><th>Acciones</th></tr></thead>
                     <tbody id="equipoBody"></tbody>
