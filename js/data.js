@@ -47,7 +47,7 @@ function cargarProyecto() {
     
     // Actualizar interfaz
     document.getElementById('projectName').innerHTML = proyecto.nombre;
-    document.getElementById('projectDesc').innerHTML = proyecto.descripcion || '';
+    document.getElementById('projectDesc') && (document.getElementById('projectDesc').innerHTML = proyecto.descripcion || '');
     document.getElementById('monedaBase').value = proyecto.monedaBase;
     document.getElementById('precioVenta').value = proyecto.precioVenta;
     document.getElementById('monedaVenta').value = proyecto.monedaVenta;

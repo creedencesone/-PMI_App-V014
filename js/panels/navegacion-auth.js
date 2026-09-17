@@ -217,7 +217,7 @@
         sincronizarActaConProyecto();
     }
     document.getElementById('projectName').innerHTML = proyecto.nombre;
-    document.getElementById('projectDesc').innerHTML = proyecto.descripcion || '';
+    document.getElementById('projectDesc') && (document.getElementById('projectDesc').innerHTML = proyecto.descripcion || '');
     const monedaBaseSelect = document.getElementById('monedaBase');
     if(monedaBaseSelect) monedaBaseSelect.innerHTML = Object.keys(MONEDAS).map(m => `<option value="${m}" ${proyecto.monedaBase === m ? 'selected' : ''}>${m} - ${MONEDAS[m]}</option>`).join('');
     const monedaVentaSelect = document.getElementById('monedaVenta');
