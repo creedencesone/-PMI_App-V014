@@ -413,6 +413,7 @@ function renderizarCronograma(ctx) {
     ctx = ctx || _ctxCronograma(cronogramaActivo.panelKey);
     const container = document.getElementById(ctx.containerId);
     if (!container) return;
+    try {
     const state = _getState(ctx);
     const cpmRef = _getCpmResult(ctx);
 
@@ -500,6 +501,10 @@ function renderizarCronograma(ctx) {
             const panelW = tlPanel.clientWidth;
             tlPanel.scrollLeft = Math.max(0, xHoy - panelW / 2);
         }
+    }
+    } catch(e) {
+        console.error('[renderizarCronograma]', e);
+        if (container) container.innerHTML = '<div class="u-error" style="padding:20px">⚠️ Error al renderizar el cronograma: <code>' + e.message + '</code></div>';
     }
 }
 
