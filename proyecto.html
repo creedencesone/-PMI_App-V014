@@ -1031,7 +1031,7 @@
             </div>
 
                         <div id="panelMateriales" class="panel hidden">
-                <div class="panel-title"><span><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</span><button class="btn btn-primary btn-small" onclick="abrirModalMaterial()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button><button class="btn btn-secondary btn-small" onclick="importarCatalogoMaterial()"><i data-feather="shopping-bag" class="nav-feather"></i> Catálogo</button><button class="btn btn-success btn-small" onclick="actualizarArancelesMateriales()"><i data-feather="external-link" class="nav-feather"></i> Actualizar</button></div>
+                <div class="panel-title"><span><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalMaterial()" title="Añadir material" aria-label="Añadir material">+</button><button class="panel-add-btn" onclick="importarCatalogoMaterial()" title="Catálogo de materiales" aria-label="Catálogo de materiales"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button><button class="panel-add-btn" onclick="actualizarArancelesMateriales()" title="Actualizar aranceles" aria-label="Actualizar aranceles"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div>
                 <div class="u-overflow-x-auto">
                     <table class="data-table data-table--wide">
                         <thead>
@@ -1058,16 +1058,16 @@
             </div>
 
             <div id="panelServicios" class="panel hidden">
-                <div class="panel-title"><span><i data-feather="pen-tool" class="nav-feather"></i> Servicios</span><button class="btn btn-primary btn-small" onclick="abrirModalServicio()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
+                <div class="panel-title"><span><i data-feather="pen-tool" class="nav-feather"></i> Servicios</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalServicio()" title="Añadir servicio" aria-label="Añadir servicio">+</button></div></div>
                 <table class="data-table"><thead><tr><th>Nombre</th><th>Proveedor</th><th>Cantidad</th><th>Coste</th><th>Moneda</th><th>Impuesto</th><th>Total</th><th>Mes</th><th>Acciones</th></tr></thead><tbody id="serviciosBody"></tbody></table>
             </div>
                         <!-- PANEL VIAJES -->
             <div id="panelViajes" class="panel hidden">
                 <div class="panel-title">
                     <span><i data-feather="external-link" class="nav-feather"></i> Gestión de Viajes del Proyecto</span>
-                    <div>
-                        <button class="btn btn-primary btn-small" onclick="abrirModalViaje()"><i data-feather="help-circle" class="nav-feather"></i> Nuevo Viaje</button>
-                        <button class="btn btn-secondary btn-small" onclick="exportarViajes()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+                    <div class="panel-title-actions">
+                        <button class="panel-add-btn" onclick="abrirModalViaje()" title="Nuevo viaje" aria-label="Nuevo viaje">+</button>
+                        <button class="panel-add-btn" onclick="exportarViajes()" title="Exportar viajes" aria-label="Exportar viajes"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
                     </div>
                 </div>
 
@@ -1101,7 +1101,7 @@
             </div>
 
             <div id="panelOrganigrama" class="panel hidden">
-                <div class="panel-title"><span><i data-feather="users" class="nav-feather"></i> Organigrama</span><button class="btn btn-primary btn-small" onclick="abrirModalOrganigrama(null)"><i data-feather="plus" class="nav-feather"></i> Añadir</button></div>
+                <div class="panel-title"><span><i data-feather="users" class="nav-feather"></i> Organigrama</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalOrganigrama(null)" title="Añadir miembro" aria-label="Añadir miembro">+</button></div></div>
                 <div id="organigramaContent"></div>
             </div>
 
@@ -1246,11 +1246,11 @@
 <div id="panelLogistica" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="map-pin" class="nav-feather"></i> Logística - Simulador 3D de Cubicaje</span>
-        <div>
-            <button class="btn btn-success btn-small" onclick="window.appLogistica?.guardarEstado()"><i data-feather="download-cloud" class="nav-feather"></i> Guardar</button>
-            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cargarEstado()"><i data-feather="help-circle" class="nav-feather"></i> Cargar</button>
-            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.exportarCSV()"><i data-feather="file-text" class="nav-feather"></i> CSV</button>
-            <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.exportarPDF()"><i data-feather="help-circle" class="nav-feather"></i> PDF</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="window.appLogistica?.guardarEstado()" title="Guardar estado" aria-label="Guardar estado"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></button>
+            <button class="panel-add-btn" onclick="window.appLogistica?.cargarEstado()" title="Cargar estado" aria-label="Cargar estado"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+            <button class="panel-add-btn" onclick="window.appLogistica?.exportarCSV()" title="Exportar CSV" aria-label="Exportar CSV"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+            <button class="panel-add-btn" onclick="window.appLogistica?.exportarPDF()" title="Exportar PDF" aria-label="Exportar PDF"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6"/><path d="M9 11h2"/></svg></button>
         </div>
     </div>
 
