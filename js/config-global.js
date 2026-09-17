@@ -139,6 +139,18 @@
 
 
 
+        function sincronizarProcesosConPMBOK(proyecto) {
+            if (!proyecto || !Array.isArray(PROCESOS_PMBOK)) return;
+            const viejos = Array.isArray(proyecto.procesos) ? proyecto.procesos.filter(Boolean) : [];
+            const porCodigo = new Map(viejos.map(p => [String(p.codigo), p]));
+            const porNombre = new Map(viejos.map(p => [p.nombre, p]));
+            const porId = new Map(viejos.map(p => [String(p.id), p]));
+            proyecto.procesos = PROCESOS_PMBOK.map(p => {
+                const previo = porCodigo.get(String(p.codigo)) || porNombre.get(p.nombre) || porId.get(String(p.id));
+                return previo ? { ...p, completado: previo.completado === true } : { ...p };
+            });
+        }
+
         function seedProyectosDemo() {
             const demos = [
                 {

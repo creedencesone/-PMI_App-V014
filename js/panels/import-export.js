@@ -90,7 +90,7 @@ function inicializarEstructuraProyecto(proy) {
     if (!proy.riesgos) proy.riesgos = [];
     if (!proy.accionesMitigacion) proy.accionesMitigacion = [];
     if (!proy.elementosGantt) proy.elementosGantt = [];
-    if (!proy.procesos || proy.procesos.length === 0) proy.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
+    sincronizarProcesosConPMBOK(proy);
     if (!proy.monedaVenta) proy.monedaVenta = proy.monedaBase || 'EUR';
     if (!proy.condicionesPago) proy.condicionesPago = "";
     if (!proy.acta) proy.acta = {};

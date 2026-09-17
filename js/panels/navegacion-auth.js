@@ -144,7 +144,7 @@
         if(!proyecto.riesgos) proyecto.riesgos = [];
         if(!proyecto.accionesMitigacion) proyecto.accionesMitigacion = [];
         if(!proyecto.elementosGantt) proyecto.elementosGantt = [];
-        if(!proyecto.procesos || proyecto.procesos.length === 0) proyecto.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
+        sincronizarProcesosConPMBOK(proyecto);
         if(!proyecto.monedaVenta) proyecto.monedaVenta = proyecto.monedaBase;
         if(!proyecto.condicionesPago) proyecto.condicionesPago = "";
         if(!proyecto.acta) proyecto.acta = {};
