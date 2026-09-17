@@ -844,12 +844,12 @@ body[data-theme="light"] .logo img.logo-light {
         .proceso-tab {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 7px 14px;
-            border-radius: 20px;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 28px;
             border: 1.5px solid transparent;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 17px;
             font-weight: 600;
             white-space: nowrap;
             color: var(--text-secondary);
@@ -874,8 +874,8 @@ body[data-theme="light"] .logo img.logo-light {
         }
         .proceso-tab.action-tab .nav-feather,
         .proceso-tab.action-tab i {
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
             flex-shrink: 0;
         }
 
