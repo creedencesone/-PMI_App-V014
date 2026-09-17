@@ -368,12 +368,14 @@ function exportarResumenGastos() {
             const grupos = {};
             proyecto.procesos.forEach(p => { if (!grupos[p.grupo]) grupos[p.grupo] = []; grupos[p.grupo].push(p); });
 
-            const ordenGrupos = (typeof FASE_COLORS !== 'undefined') ? Object.keys(FASE_COLORS) : Object.keys(grupos);
+            const COLORS_FASES = {"Inicio":"#E54D42","Planificación":"#F59E0B","Ejecución":"#EAB308","Monitoreo y Control":"#10B981","Cierre":"#065F46"};
+         const ORDEN_FASES = ["Inicio","Planificación","Ejecución","Monitoreo y Control","Cierre"];
+         const ordenGrupos = ORDEN_FASES;
 
             let html = '<div class="pmbok-board">';
             ordenGrupos.forEach(grupo => {
                 const procesos = grupos[grupo] || [];
-                const faseColor = (typeof FASE_COLORS !== 'undefined' && FASE_COLORS[grupo]) ? FASE_COLORS[grupo] : '#007AFF';
+                const faseColor = (COLORS_FASES && COLORS_FASES[grupo]) ? COLORS_FASES[grupo] : '#007AFF';
                 const iconoFase = ICONOS_FASE[grupo] || ICONO_DOMINIO_DEFAULT;
 
                 const MAX_VISIBLES = 5;
