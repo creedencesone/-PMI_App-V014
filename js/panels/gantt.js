@@ -453,12 +453,12 @@ function renderizarCronograma(ctx) {
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         spanFechas.textContent = ` ${fmt(fechaInicioProy)} → ${fmt(fechaFinProy)} (${Math.round((fechaFinProy - fechaInicioProy) / 86400000)} días naturales)`;
     }
-    // Rendimiento: cap DOM/SVG para evitar congelar; usar escala "año" para rangos mayores.
-    const MAX_DIAS = 5000;
-    const MAX_ANCHO = 150000;
+    // Rendimiento: "año" itera años en vez de días para no congelar.
+    const MAX_DIAS = 5000, MAX_ANCHO = 150000;
     const diasTotales = Math.min(MAX_DIAS, Math.max(1, Math.ceil((fechaFinProy - fechaInicioProy) / 86400000) + 60));
-
+    if (diasTotales > 300 && state.escala !== 'año') { state.escala = 'año'; }
     const meses = generarMeses(fechaInicioProy, diasTotales);
+    // Rendimiento: "año" itera años en vez de días para no congelar.
     const anchoDia = ({día:50,semana:14,mes:28,año:6})[state.escala] * state.zoom || 28 * state.zoom;
     const anchoTotal = Math.min(diasTotales * anchoDia, MAX_ANCHO);
     const headerHeight = state.escala === 'día' ? 60 : 40;
