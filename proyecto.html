@@ -547,12 +547,11 @@
             </div>
 
             <div id="panelVenta" class="panel hidden">
-                <div class="panel-title"><span><i data-feather="help-circle" class="nav-feather"></i> Venta</span></div>
+                <div class="panel-title"><span><i data-feather="help-circle" class="nav-feather"></i> Venta</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalHitoFinanciero2()" title="Añadir hito financiero" aria-label="Añadir hito financiero">+</button></div></div>
                 <div class="form-row"><div class="form-group"><label>Precio Venta</label><input type="number" id="precioVenta2" onchange="actualizarVenta2()" aria-label="Precio de venta"></div>
                 <div class="form-group"><label>Moneda</label><select id="monedaVenta2" onchange="actualizarVenta2()" aria-label="Moneda de venta"></select></div></div>
                 <div class="form-group"><label>Condiciones</label><textarea rows="2" id="condicionesPago2" aria-label="Condiciones de pago"></textarea></div>
                 <div id="hitosList2"></div>
-                <button class="btn btn-primary btn-small" onclick="abrirModalHitoFinanciero2()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button>
             </div>
 
             <div id="panelCashflow" class="panel hidden">
