@@ -527,7 +527,6 @@
         container.innerHTML = `
             <div class="info-card u-text-center">
                 <p> No hay avales registrados</p>
-                <button class="btn btn-primary btn-small" onclick="abrirModalAval()"> Añadir Aval</button>
             </div>
         `;
         return;
@@ -543,7 +542,6 @@
             <div class="info-card" style="display: inline-block; padding: 8px 16px;">
                 <strong> Costes totales de avales:</strong> ${formatearMoneda(totalCostesAvales)}
             </div>
-            <button class="btn btn-primary btn-small" onclick="abrirModalAval()"> Nuevo Aval</button>
         </div>
         <div class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));">
             ${proyecto.avales.map(a => {
