@@ -930,43 +930,16 @@ body[data-theme="light"] .logo img.logo-light {
         }
 
         .header {
-            position: relative;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 28px;
             flex-wrap: wrap;
             gap: 16px;
-            padding: 40px 16px 20px;
-            background: var(--bg-color, #F9FAFB);
-            border-radius: 12px;
         }
 
-        .project-title h2 {
-            font-size: 48px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            opacity: 0.12;
-            color: var(--text-primary, #1F2937);
-            pointer-events: none;
-            user-select: none;
-            text-transform: uppercase;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 0;
-        }
-        .project-title {
-            position: relative;
-            width: 100%;
-            text-align: center;
-            overflow: hidden;
-            height: 80px;
-        }
+        .project-title h2 { opacity: 0.4; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+        .project-title { width: 100%; overflow: visible; height: auto; }
 
         /* Botones */
         .btn {
