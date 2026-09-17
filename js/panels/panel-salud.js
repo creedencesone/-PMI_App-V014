@@ -156,6 +156,7 @@ function actualizarPanelSalud() {
     }
     
     let procesosCompletados = (proyecto.procesos || []).filter(p => p.completado).length;
+    const TOTAL_PROCESOS_REF = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
     let tieneProcesosCompletados = procesosCompletados > 0;
     
     // ============================================
@@ -260,7 +261,7 @@ function actualizarPanelSalud() {
             EAC = Math.max(EAC, AC);
         }
     } else if (tieneProcesosCompletados && BAC > 0) {
-        let totalProcesos = proyecto.procesos.length;
+        const totalProcesos = TOTAL_PROCESOS_REF;
         let progresoPorProcesos = procesosCompletados / totalProcesos;
         EV = BAC * progresoPorProcesos;
         PV = BAC * progresoPorProcesos;
@@ -646,10 +647,10 @@ async function exportarSaludPDF() {
 }
         
        function calcularProgresoGeneral() {
-    // 1. Progreso de PROCESOS PMBOK
-    let totalProcesos = proyecto.procesos?.length || 49;
-    let procesosCompletados = (proyecto.procesos || []).filter(p => p.completado).length;
-    let progresoProcesos = procesosCompletados / totalProcesos;
+    // 1. Progreso de PROCESOS PMBOK (referencia fija desde config-global)
+    const totalProcesos = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
+    const procesosCompletados = ((proyecto.procesos || []).filter(p => p.completado)).length;
+    const progresoProcesos = procesosCompletados / totalProcesos;
     
     // 2. Progreso de ENTREGABLES (desde el cronograma Gantt)
     let entregables = (proyecto.elementosGantt || []).filter(e => e.tipo === 'entregable');
@@ -690,7 +691,8 @@ function diagnosticarProgreso() {
     let actividades = elementos.filter(e => e.tipo === 'actividad');
     let entregables = elementos.filter(e => e.tipo === 'entregable');
     let hitos = elementos.filter(e => e.tipo === 'hito');
-    let procesos = proyecto.procesos || [];
+    const procesos = proyecto.procesos || [];
+    const totalProcesos = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
     
     // Calcular porcentajes
     let progAct = 0;
@@ -705,7 +707,7 @@ function diagnosticarProgreso() {
         progEnt = suma / (entregables.length * 100);
     }
     
-    let progProc = procesos.filter(p => p.completado).length / (procesos.length || 49);
+    let progProc = procesos.filter(p => p.completado).length / totalProcesos;
     
     let progHit = 0;
     if (hitos.length > 0) {
@@ -733,7 +735,7 @@ function diagnosticarProgreso() {
                 </tr>
                 <tr class="u-border-bottom">
                     <td class="u-p-8"><strong> Procesos:</strong></td>
-                    <td class="u-p-8">${procesos.filter(p => p.completado).length}/${procesos.length}</td>
+                    <td class="u-p-8">${procesos.filter(p => p.completado).length}/${totalProcesos}</td>
                     <td class="u-p-8">${(progProc * 100).toFixed(0)}%</td>
                     <td class="u-p-8">Aporta: ${(progProc * 0.2 * 100).toFixed(0)}%</td>
                 </tr>
@@ -752,7 +754,7 @@ function diagnosticarProgreso() {
                 <strong> ¿Qué significa?</strong><br>
                 • ${actividades.length === 0 ? ' No tienes ACTIVIDADES en el Gantt. Créalas para que aporten 40%.' : ' Tienes actividades.'}<br>
                 • ${entregables.length === 0 ? ' No tienes ENTREGABLES en el Gantt. Créalos para que aporten 30%.' : ' Tienes entregables.'}<br>
-                • ${procesos.filter(p => p.completado).length === procesos.length ? ' Todos los procesos completados.' : ' Te faltan ' + (procesos.length - procesos.filter(p => p.completado).length) + ' procesos por completar.'}<br>
+                • ${procesos.filter(p => p.completado).length === totalProcesos ? ' Todos los procesos completados.' : ' Te faltan ' + (totalProcesos - procesos.filter(p => p.completado).length) + ' procesos por completar.'}<br>
                 • ${hitos.length === 0 ? ' No tienes HITOS en el Gantt. Créalos para que aporten 10%.' : ' Tienes hitos.'}
             </div>
         </div>

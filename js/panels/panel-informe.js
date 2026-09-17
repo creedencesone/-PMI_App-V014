@@ -126,7 +126,8 @@ function actualizarInformeCompleto() {
                 let actividades = elementosGantt.filter(e => e.tipo === 'actividad');
                 let entregables = elementosGantt.filter(e => e.tipo === 'entregable');
                 let hitos = elementosGantt.filter(e => e.tipo === 'hito');
-                let procProgreso = (proyecto.procesos || []).filter(p => p.completado).length / ((proyecto.procesos || []).length || 49) * 100;
+let procProgreso = (proyecto.procesos || []).filter(p => p.completado).length / (typeof PROCESOS_PMBOK !== 'undefined' ? PROCESOS_PMBOK.length : 40) * 100;
+
                 let actProgreso = actividades.length > 0 ? actividades.reduce((s, e) => s + (e.progreso || 0), 0) / actividades.length : 0;
                 let entProgreso = entregables.length > 0 ? entregables.reduce((s, e) => s + (e.progreso || 0), 0) / entregables.length : 0;
                 let hitosCompletados = hitos.filter(e => e.progreso >= 100).length;
@@ -140,7 +141,7 @@ function actualizarInformeCompleto() {
             EAC = Math.max(EAC, AC);
         }
     } else if ((proyecto.procesos || []).filter(p => p.completado).length > 0 && BAC > 0) {
-        let totalProcesos = proyecto.procesos.length;
+        const totalProcesos = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
         let procesosCompletados = (proyecto.procesos || []).filter(p => p.completado).length;
         let progresoPorProcesos = procesosCompletados / totalProcesos;
         EV = BAC * progresoPorProcesos;
@@ -169,7 +170,7 @@ function actualizarInformeCompleto() {
     let actividades = elementosGantt.filter(e => e.tipo === 'actividad');
     let entregables = elementosGantt.filter(e => e.tipo === 'entregable');
     let hitos = elementosGantt.filter(e => e.tipo === 'hito');
-    let procProgreso = (proyecto.procesos || []).filter(p => p.completado).length / ((proyecto.procesos || []).length || 49) * 100;
+    let procProgreso = (proyecto.procesos || []).filter(p => p.completado).length / (typeof PROCESOS_PMBOK !== 'undefined' ? PROCESOS_PMBOK.length : 40) * 100;
     let actProgreso = actividades.length > 0 ? actividades.reduce((s, e) => s + (e.progreso || 0), 0) / actividades.length : 0;
     let entProgreso = entregables.length > 0 ? entregables.reduce((s, e) => s + (e.progreso || 0), 0) / entregables.length : 0;
     let hitosCompletados = hitos.filter(e => e.progreso >= 100).length;

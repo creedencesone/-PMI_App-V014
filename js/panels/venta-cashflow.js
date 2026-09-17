@@ -965,7 +965,7 @@ function calcularCashflow() {
     const _dashStats = document.getElementById('dashboardStats');
     if (_dashStats) _dashStats.innerHTML = `
         <tr><th>Stakeholders</th><td>${proyecto.stakeholders?.length || 0}</td></tr>
-        <tr><th>Procesos</th><td>${proyecto.procesos?.filter(p => p.completado).length || 0}/49</td></tr>
+        <tr><th>Procesos</th><td>${proyecto.procesos?.filter(p => p.completado).length || 0}/{(typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40}</td></tr>
         <tr><th>Equipo</th><td>${proyecto.equipo?.length || 0}</td></tr>
         <tr><th>Materiales</th><td>${proyecto.materiales?.length || 0}</td></tr>
         <tr><th>Riesgos</th><td>${proyecto.riesgos?.length || 0}</td></tr>
