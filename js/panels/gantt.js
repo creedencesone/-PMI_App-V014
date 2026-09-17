@@ -1324,17 +1324,10 @@ function autoScheduler(arr) {
         }
     });
     if (!proyInicio) proyInicio = new Date();
-    // Inicializar fechas: con predecesores → empiezan desde proyInicio; sin ellos → mantienen su fecha
+    // Inicializar fechas: respetar la fecha manual de cada tarea; las dependencias solo pueden retrasarla
     const taskDate = {};
     tasks.forEach(t => {
-        const hasPreds = t.predecesores && t.predecesores.some(p => ids.has(p.id));
-        if (hasPreds) {
-            taskDate[t.id] = new Date(proyInicio);
-        } else if (t.inicio) {
-            taskDate[t.id] = parseLocalDate(t.inicio);
-        } else {
-            taskDate[t.id] = new Date(proyInicio);
-        }
+        taskDate[t.id] = t.inicio ? parseLocalDate(t.inicio) : new Date(proyInicio);
     });
     // Aplicar dependencias en orden topológico
     orden.forEach(id => {
@@ -1368,10 +1361,16 @@ function autoScheduler(arr) {
             }
         });
     });
-    // Escribir fechas de vuelta a los elementos, asegurando que no caigan en fin de semana
+    // Escribir fechas de vuelta a los elementos: la fecha manual se respeta tal cual;
+    // solo se normaliza a día hábil cuando la fecha proviene del cálculo de dependencias
     tasks.forEach(t => {
-        const d = siguienteDiaHabil(taskDate[t.id] || proyInicio);
-        const fechaStr = formatLocalDate(d);
+        const manual = parseLocalDate(t.inicio);
+        let fechaStr;
+        if (manual && !(taskDate[t.id] > manual)) {
+            fechaStr = formatLocalDate(manual);
+        } else {
+            fechaStr = formatLocalDate(siguienteDiaHabil(taskDate[t.id] || proyInicio));
+        }
         if (t.inicio !== fechaStr) {
             t.inicio = fechaStr;
         }

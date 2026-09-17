@@ -1,4 +1,4 @@
-const CACHE = 'pmi-mind-v15';
+const CACHE = 'pmi-mind-v16';
 const PRECACHE_URLS = [
     '/',
     '/index.html',
@@ -12,7 +12,7 @@ const PRECACHE_URLS = [
     '/js/panels/edt-panel.js?v=20260916h',
     '/js/panels/scrum.js?v=20260916h',
     '/js/panels/navegacion-auth.js?v=20260916h',
-    '/js/panels/gantt.js?v=20260916c',
+    '/js/panels/gantt.js?v=20260916i',
     '/manifest.json',
     '/icons/icon-192.png',
     '/icons/icon-512.png'
