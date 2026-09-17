@@ -939,7 +939,7 @@ body[data-theme="light"] .logo img.logo-light {
         }
 
         .project-title h2 { font-size: 14px; font-weight: 600; letter-spacing: -0.3px; }
-        .project-title p { font-size: 7px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; }
+        .project-title p { display: none; font-size: 7px; color: rgba(255, 255, 255, 0.6); margin-top: 4px; }
 
         /* Botones */
         .btn {
