@@ -21,3 +21,6 @@ backend/database.sqlite
 # Archivos temporales y backups
 *.backup*
 Packing List.pdf
+
+# Playwright MCP artifacts
+.playwright-mcp/

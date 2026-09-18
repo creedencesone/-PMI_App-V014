@@ -1,8 +1,22 @@
         function inicializarRiesgos() {
             if (!proyecto.riesgos) proyecto.riesgos = [];
             if (!proyecto.accionesMitigacion) proyecto.accionesMitigacion = [];
+            normalizarRiesgos();
             renderizarRiesgos();
             calcularEstadisticasRiesgos();
+        }
+        
+        function normalizarRiesgos() {
+            // Migra datos legacy (seeds antiguos guardados sin score/nivel)
+            if (!proyecto || !Array.isArray(proyecto.riesgos)) return;
+            let cambio = false;
+            proyecto.riesgos.forEach(r => {
+                let prob = r.probabilidad || 1, imp = r.impacto || 1;
+                let score = r.score || (prob * imp);
+                let nivel = r.nivel || (score >= 20 ? 'Crítico' : score >= 12 ? 'Alto' : score >= 6 ? 'Medio' : 'Bajo');
+                if (r.score !== score || r.nivel !== nivel) { r.score = score; r.nivel = nivel; cambio = true; }
+            });
+            if (cambio) guardarProyecto();
         }
         
         function renderizarRiesgos() {
@@ -111,8 +125,40 @@
         }
         
         function analizarRiesgos() {
-            let criticos = proyecto.riesgos.filter(r => r.nivel === 'Crítico').length;
-            mostrarToast(` Análisis: ${criticos} riesgos críticos identificados`, 'info');
+            if (!proyecto) { mostrarToast(tApp('toast_no_proyecto'), 'error'); return; }
+            if (!Array.isArray(proyecto.riesgos) || proyecto.riesgos.length === 0) {
+                mostrarToast(' No hay riesgos registrados para analizar. Añade un riesgo primero.', 'info');
+                return;
+            }
+            normalizarRiesgos();
+            calcularEstadisticasRiesgos();
+            const criticos = proyecto.riesgos.filter(r => r.nivel === 'Crítico');
+            const altos = proyecto.riesgos.filter(r => r.nivel === 'Alto');
+            const medios = proyecto.riesgos.filter(r => r.nivel === 'Medio');
+            const bajos = proyecto.riesgos.filter(r => r.nivel === 'Bajo');
+            const recomendacion = {
+                Crítico: 'Prioridad máxima: implementar plan de respuesta inmediato y seguimiento semanal.',
+                Alto: 'Planificar respuesta de mitigación y revisar en cada seguimiento del proyecto.',
+                Medio: 'Vigilar de cerca: definir acciones preventivas y revisión mensual.',
+                Bajo: 'Aceptar y documentar; revisar en hitos relevantes.'
+            };
+            const lista = [criticos, altos, medios, bajos].flat().map(r => `<div class="info-card ${r.nivel === 'Crítico' ? 'vc-red' : r.nivel === 'Alto' ? 'vc-orange' : r.nivel === 'Medio' ? 'vc-yellow' : 'vc-green'}" style="padding:10px 14px;margin-bottom:8px;">
+                <strong>${escapeHtml(r.nombre)}</strong> <span class="pm-tag">${r.nivel} · Score ${r.score}</span><br>
+                <span style="font-size:13px;color:#555">${recomendacion[r.nivel] || ''}</span>
+            </div>`).join('');
+            const modalHtml = `<div class="modal-content"><div class="modal-header"><h3> Análisis de Riesgos</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
+                <div class="cards-grid u-mb-16">
+                    <div class="value-card vc-red"><div class="small">Riesgos Críticos</div><div class="big" id="totalRiesgosCriticos">${criticos.length}</div></div>
+                    <div class="value-card vc-orange"><div class="small">Riesgos Altos</div><div class="big" id="totalRiesgosAltos">${altos.length}</div></div>
+                    <div class="value-card vc-yellow"><div class="small">Riesgos Medios</div><div class="big" id="totalRiesgosMedios">${medios.length}</div></div>
+                    <div class="value-card vc-green"><div class="small">Riesgos Bajos</div><div class="big" id="totalRiesgosBajos">${bajos.length}</div></div>
+                </div>
+                <div class="form-group"><label>Recomendaciones automáticas</label>${lista || '<div class="info-card">No hay riesgos que analizar.</div>'}</div>
+                <button class="btn btn-primary" onclick="cerrarModalGeneric()">Cerrar</button>
+            </div>`;
+            document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+            document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
+            mostrarToast(` Análisis completado: ${criticos.length} críticos, ${altos.length} altos, ${medios.length} medios, ${bajos.length} bajos`, 'success');
         }
         
         function renderizarMatrizRiesgos() {
