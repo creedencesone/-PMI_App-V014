@@ -29,6 +29,7 @@ const items = [
     'logo.svg',
     'css',           // estilos adicionales si existen
     'icons',         // iconos de la PWA
+    'img',           // imágenes (capturas del manual de usuario, etc.)
     'manifest.json',
     'service-worker.js',
     'Packing List.pdf',

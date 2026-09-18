@@ -20,6 +20,8 @@ const manualTemasES = [
             { tipo: 'texto', valor: 'El panel de cartera muestra todos los proyectos con sus indicadores clave: estado, presupuesto, fechas y progreso.' },
             { tipo: 'subtitulo', valor: 'Crear proyecto' },
             { tipo: 'texto', valor: 'Pulsa el botón + (icono "Nuevo Proyecto") en la cabecera de la cartera e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.' },
+            { tipo: 'imagen', valor: 'img/manual/crear-proyecto.png', alt: 'Botón + (Nuevo Proyecto) en la cabecera de la cartera' },
+            { tipo: 'imagen', valor: 'img/manual/nuevo-proyecto-modal.png', alt: 'Modal de nuevo proyecto con los campos a rellenar' },
             { tipo: 'subtitulo', valor: 'Editar / Eliminar' },
             { tipo: 'texto', valor: 'Usa los botones  y  en cada tarjeta de proyecto. Solo los administradores pueden eliminar proyectos.' },
             { tipo: 'subtitulo', valor: 'Filtros y búsqueda' },
@@ -63,7 +65,8 @@ const manualTemasES = [
             { tipo: 'subtitulo', valor: 'Gráficos profesionales' },
             { tipo: 'texto', valor: 'Los gráficos de cashflow e informes usan Chart.js con estilo profesional: gradientes, cutout 55%, hoverOffset 16, borderRadius 6 y puntos con borde blanco. Los colores de texto se adaptan automáticamente al tema (claro/oscuro).' },
             { tipo: 'subtitulo', valor: 'Monedas' },
-            { tipo: 'texto', valor: 'La vista de Monedas es una pantalla única: cabecera con botones de icono para actualizar tasas (↻) y guardar (✓), fila de chips con el total de monedas, fuente, última actualización y moneda base, más una tabla de tasas con búsqueda y filtro por región. La sección "Avanzado" (plegable) incluye evolución histórica, precio de venta y condiciones de pago, proveedor de tasas, actualización automática y botones para probar conexión, exportar e importar CSV.' }
+            { tipo: 'texto', valor: 'La vista de Monedas es una pantalla única: cabecera con botones de icono para actualizar tasas (↻) y guardar (✓), fila de chips con el total de monedas, fuente, última actualización y moneda base, más una tabla de tasas con búsqueda y filtro por región. La sección "Avanzado" (plegable) incluye evolución histórica, precio de venta y condiciones de pago, proveedor de tasas, actualización automática y botones para probar conexión, exportar e importar CSV.' },
+            { tipo: 'imagen', valor: 'img/manual/monedas.png', alt: 'Vista de Monedas con chips, tabla de tasas y sección Avanzado' }
         ]
     },
     {
@@ -78,6 +81,7 @@ const manualTemasES = [
                 'Agrega elementos con el botón + (icono "Nuevo elemento"). Edita y elimina con los botones correspondientes.',
                 'Las dependencias se arrastran entre elementos para establecer relaciones secuenciales.'
             ]},
+            { tipo: 'imagen', valor: 'img/manual/gantt.png', alt: 'Panel Cronograma (Gantt) con el botón + para añadir elementos' },
             { tipo: 'subtitulo', valor: 'Duración en horas' },
             { tipo: 'texto', valor: 'Cada tarea puede configurarse con tipo de duración "Días" u "Horas". Las tareas en horas se convierten a días fraccionales (duraciónHoras / horasDia), ocupando un ancho proporcional en el Gantt. Si la duración es menor a 1 día, la barra se muestra con el tamaño mínimo.' },
             { tipo: 'subtitulo', valor: 'Días hábiles' },
@@ -169,7 +173,8 @@ const manualTemasES = [
             { tipo: 'subtitulo', valor: 'Cálculos EVM' },
             { tipo: 'texto', valor: 'El AC (Actual Cost) se calcula como costeTotal × % tiempo transcurrido (prorrateo temporal). EAC se calcula siempre como BAC / CPI. Los EDTs se filtran del peso para EV. La desviación del cronograma usa sumarDiasHabiles() en lugar de setDate + duración.' },
             { tipo: 'subtitulo', valor: 'Exportación a PDF' },
-            { tipo: 'texto', valor: 'Usa el botón con el icono de impresora para exportar el informe a PDF. Los gráficos Chart.js se capturan automáticamente como imágenes.' }
+            { tipo: 'texto', valor: 'Usa el botón con el icono de impresora para exportar el informe a PDF. Los gráficos Chart.js se capturan automáticamente como imágenes.' },
+            { tipo: 'imagen', valor: 'img/manual/informes.png', alt: 'Panel de Informes con el botón de exportación a PDF' }
         ]
     },
     {
@@ -293,6 +298,7 @@ const manualTemasES = [
                 'El archivo es autónomo: incluye Chart.js vía CDN y toda la información necesaria.',
                 'Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.'
             ]},
+            { tipo: 'imagen', valor: 'img/manual/compartir.png', alt: 'Botón de compartir en el panel de Salud del Proyecto' },
             { tipo: 'subtitulo', valor: 'Contenido del dashboard público' },
             { tipo: 'texto', valor: 'Incluye: nombre del proyecto, presupuesto, ingreso previsto, duración, riesgos, equipo, tareas con progreso y un gráfico doughnut de porcentaje completado.' },
             { tipo: 'subtitulo', valor: 'Diferencia clave' },
@@ -335,7 +341,8 @@ const manualTemasES = [
         contenido: [
             { tipo: 'texto', valor: 'El panel de Equipo gestiona los miembros del proyecto con su coste por hora, moneda y horas mensuales.' },
             { tipo: 'subtitulo', valor: 'Añadir miembros' },
-            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un miembro del equipo. El icono de libro abre el catálogo de equipo para importar perfiles predefinidos.' }
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un miembro del equipo. El icono de libro abre el catálogo de equipo para importar perfiles predefinidos.' },
+            { tipo: 'imagen', valor: 'img/manual/equipo.png', alt: 'Panel de Equipo con el botón + para añadir miembros' }
         ]
     },
     {
@@ -1244,6 +1251,8 @@ function mostrarManualTema(temaId) {
             html += `<div class="manual-subtitulo">${c.valor}</div>`;
         } else if (c.tipo === 'lista') {
             html += `<ul class="manual-lista">${c.items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+        } else if (c.tipo === 'imagen') {
+            html += `<img class="manual-imagen" src="${c.valor}" alt="${c.alt || ''}" loading="lazy">`;
         }
     });
     cont.innerHTML = html;

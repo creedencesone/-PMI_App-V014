@@ -4669,6 +4669,15 @@ body[data-theme="light"] .cashflow-negative {
     color: var(--text-secondary);
     margin-bottom: 12px;
 }
+.manual-imagen {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 12px 0 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
 .manual-lista {
     margin: 8px 0 16px 20px;
     font-size: 13px;
