@@ -5136,3 +5136,103 @@ body[data-theme="light"] .cashflow-negative {
         min-width: 260px;
     }
 }
+
+/* ============================================
+   Vista Monedas simplificada
+   ============================================ */
+.monedas-resumen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 13px;
+}
+.monedas-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary, rgba(255,255,255,0.7));
+}
+.monedas-chip select {
+    background: transparent;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.15));
+    border-radius: 8px;
+    color: inherit;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+.monedas-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.monedas-toolbar input[type="text"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.15));
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    color: inherit;
+    font-size: 13px;
+}
+.monedas-toolbar select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.15));
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    color: inherit;
+    font-size: 13px;
+}
+.monedas-avanzado {
+    margin-top: 20px;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0;
+}
+.monedas-avanzado summary {
+    cursor: pointer;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.monedas-avanzado summary::-webkit-details-marker { display: none; }
+.monedas-avanzado summary:hover { opacity: 0.85; }
+.monedas-avanzado[open] summary { border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); }
+.monedas-seccion {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));
+}
+.monedas-seccion:last-child { border-bottom: none; }
+.monedas-seccion h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.monedas-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+@keyframes monedaSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

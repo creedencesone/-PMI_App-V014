@@ -351,199 +351,129 @@
 </div>
               
             <div id="panelMonedas" class="panel hidden">
-                <div class="panel-header">
-                    <div class="panel-header-main">
-                        <h3 class="panel-title-text"><i data-feather="external-link" class="nav-feather"></i> Monedas y Tipos de Cambio</h3>
-                        <span class="panel-subtitle">Gestión de divisas, tasas de cambio y evolución histórica</span>
-                    </div>
-                    <div class="panel-actions">
-                        <button class="btn btn-primary" onclick="actualizarTiposCambioAuto()" id="btnActualizarTipos">
-                            <span class="btn-icon"><i data-feather="refresh-cw" class="nav-feather"></i></span>
-                            <span class="btn-text">Actualizar Tasas</span>
-                        </button>
-                        <button class="btn btn-secondary" onclick="actualizarTiposCambio()" id="btnGuardarTipos">
-                            <span class="btn-icon"><i data-feather="download-cloud" class="nav-feather"></i></span>
-                            <span class="btn-text">Guardar Cambios</span>
-                        </button>
+                <div class="panel-title">
+                    <span><i data-feather="external-link" class="nav-feather"></i> Monedas y Tipos de Cambio</span>
+                    <div class="panel-title-actions">
+                        <button class="panel-add-btn" onclick="actualizarTiposCambioAuto()" id="btnActualizarTipos" title="Actualizar tasas" aria-label="Actualizar tasas"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+                        <button class="panel-add-btn" onclick="actualizarTiposCambio()" id="btnGuardarTipos" title="Guardar cambios" aria-label="Guardar cambios"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
                     </div>
                 </div>
 
-                <div class="monedas-dashboard">
-                    <div class="stats-row">
-                        <div class="stat-card">
-                            <div class="stat-icon stat-icon-blue"><i data-feather="dollar-sign" class="nav-feather"></i></div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="statTotalMonedas">--</div>
-                                <div class="stat-label">Monedas disponibles</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon stat-icon-green"><i data-feather="wifi-off" class="nav-feather"></i></div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="statFuenteActiva">--</div>
-                                <div class="stat-label">Fuente de datos</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon stat-icon-orange"><i data-feather="stop-circle" class="nav-feather"></i></div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="statUltimaAct">--</div>
-                                <div class="stat-label">Última actualización</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon stat-icon-purple"><i data-feather="dollar-sign" class="nav-feather"></i></div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="statMonedaBase">EUR</div>
-                                <div class="stat-label">Moneda base</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="monedas-tabs">
-                        <div class="tab-buttons">
-                            <button class="tab-btn active" data-tab="tab-tasas" onclick="cambiarTabMonedas('tab-tasas')">
-                                <span><i data-feather="help-circle" class="nav-feather"></i></span> Tasas de Cambio
-                            </button>
-                            <button class="tab-btn" data-tab="tab-evolucion" onclick="cambiarTabMonedas('tab-evolucion')">
-                                <span><i data-feather="trending-up" class="nav-feather"></i></span> Evolución Histórica
-                            </button>
-                            <button class="tab-btn" data-tab="tab-config" onclick="cambiarTabMonedas('tab-config')">
-                                <span><i data-feather="pen-tool" class="nav-feather"></i></span> Configuración
-                            </button>
-                        </div>
-
-                        <div class="tab-panels">
-                            <div class="tab-panel active" id="tab-tasas">
-                                <div class="table-toolbar">
-                                    <div class="toolbar-search">
-                                        <input type="text" id="searchMoneda" placeholder="Buscar moneda..." oninput="filtrarMonedas(this.value)">
-                                    </div>
-                                    <div class="toolbar-actions">
-                                        <select id="filterRegion" onchange="filtrarPorRegion(this.value)">
-                                            <option value="">Todas las regiones</option>
-                                            <option value="europe">🇪🇺 Europa</option>
-                                            <option value="americas"><i data-feather="external-link" class="nav-feather"></i> Américas</option>
-                                            <option value="asia"><i data-feather="external-link" class="nav-feather"></i> Asia</option>
-                                            <option value="africa"><i data-feather="external-link" class="nav-feather"></i> África</option>
-                                            <option value="oceania"><i data-feather="cloud-rain" class="nav-feather"></i> Oceanía</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="table-container" id="tiposCambioContainer"></div>
-                            </div>
-
-                            <div class="tab-panel" id="tab-evolucion">
-                                <div class="evolucion-controls">
-                                    <div class="control-group">
-                                        <label>Moneda a comparar</label>
-                                        <select id="monedaComparar" onchange="actualizarGraficoEvolucionMoneda()"></select>
-                                    </div>
-                                    <div class="control-group">
-                                        <label>Período</label>
-                                        <select id="periodoGraficoMoneda" onchange="actualizarGraficoEvolucionMoneda()">
-                                            <option value="7">Últimos 7 días</option>
-                                            <option value="30" selected>Últimos 30 días</option>
-                                            <option value="90">Últimos 90 días</option>
-                                            <option value="180">Últimos 6 meses</option>
-                                            <option value="365">Último año</option>
-                                        </select>
-                                    </div>
-                                    <div class="control-group">
-                                        <label>&nbsp;</label>
-                                        <button class="btn btn-primary u-w-full" onclick="actualizarGraficoEvolucionMoneda()">
-                                            <span><i data-feather="refresh-cw" class="nav-feather"></i></span> Actualizar Gráfico
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="chart-wrapper">
-                                    <canvas id="evolucionMonedaChart"></canvas>
-                                </div>
-                                <div class="chart-info" id="infoEvolucionMoneda">
-                                    <div class="info-item">
-                                        <span class="info-label">Tasa actual:</span>
-                                        <span class="info-value" id="evoTasaActual">--</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">Cambio período:</span>
-                                        <span class="info-value" id="evoCambioPeriodo">--</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">Máximo:</span>
-                                        <span class="info-value" id="evoMaximo">--</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="info-label">Mínimo:</span>
-                                        <span class="info-value" id="evoMinimo">--</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="tab-panel" id="tab-config">
-                                <div class="config-sections">
-                                    <div class="config-card">
-                                        <h4><i data-feather="map-pin" class="nav-feather"></i> Moneda Base del Proyecto</h4>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Moneda Base</label>
-                                                <select id="monedaBase" onchange="cambiarMonedaBaseYActualizar()"></select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="config-card">
-                                        <h4><i data-feather="dollar-sign" class="nav-feather"></i> Precio de Venta y Condiciones</h4>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Precio Venta</label>
-                                                <input type="number" id="precioVenta" onchange="actualizarVenta()" step="0.01" min="0">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Moneda Venta</label>
-                                                <select id="monedaVenta" onchange="actualizarVenta()"></select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Condiciones de pago</label>
-                                            <textarea rows="3" id="condicionesPago" placeholder="Ej: 30% anticipo, 40% hito intermedio, 30% entrega final"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <div class="config-card">
-                                        <h4><i data-feather="pen-tool" class="nav-feather"></i> Fuentes de Datos y Opciones</h4>
-                                        <div class="form-row">
-                                            <div class="form-group">
-                                                <label>Proveedor de tasas</label>
-                                                <select id="proveedorTasas" onchange="cambiarProveedorTasas(this.value)">
-                                                    <option value="auto"><i data-feather="refresh-cw" class="nav-feather"></i> Automático (múltiples fuentes)</option>
-                                                    <option value="frankfurter"><i data-feather="map-pin" class="nav-feather"></i> Frankfurter API (BCE)</option>
-                                                    <option value="exchangerate"><i data-feather="external-link" class="nav-feather"></i> ExchangeRate-API</option>
-                                                    <option value="currencyapi"><i data-feather="dollar-sign" class="nav-feather"></i> CurrencyAPI</option>
-                                                    <option value="manual"><i data-feather="help-circle" class="nav-feather"></i> Solo manual</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Actualización automática</label>
-                                                <select id="autoUpdateInterval" onchange="configurarAutoUpdate(this.value)">
-                                                    <option value="0">Desactivada</option>
-                                                    <option value="3600000">Cada hora</option>
-                                                    <option value="86400000" selected>Diaria</option>
-                                                    <option value="604800000">Semanal</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="config-actions">
-                                            <button class="btn btn-secondary" onclick="probarConexionAPI()"><i data-feather="help-circle" class="nav-feather"></i> Probar conexión</button>
-                                            <button class="btn btn-secondary" onclick="exportarTiposCambio()"><i data-feather="help-circle" class="nav-feather"></i> Exportar CSV</button>
-                                            <button class="btn btn-secondary" onclick="importarTiposCambio()"><i data-feather="help-circle" class="nav-feather"></i> Importar CSV</button>
-                                            <input type="file" id="importTiposCambioFile" accept=".csv" style="display:none" onchange="procesarImportTiposCambio(event)">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="monedas-resumen">
+                    <span class="monedas-chip"><span id="statTotalMonedas">--</span> monedas</span>
+                    <span class="monedas-chip">Fuente: <span id="statFuenteActiva">--</span></span>
+                    <span class="monedas-chip">Actualizado: <span id="statUltimaAct">--</span></span>
+                    <span class="monedas-chip">Base:
+                        <select id="monedaBase" onchange="cambiarMonedaBaseYActualizar()"></select>
+                    </span>
                 </div>
+
+                <div class="monedas-toolbar">
+                    <input type="text" id="searchMoneda" placeholder="Buscar moneda..." oninput="filtrarMonedas(this.value)">
+                    <select id="filterRegion" onchange="filtrarPorRegion(this.value)">
+                        <option value="">Todas las regiones</option>
+                        <option value="europe">🇪🇺 Europa</option>
+                        <option value="americas"><i data-feather="external-link" class="nav-feather"></i> Américas</option>
+                        <option value="asia"><i data-feather="external-link" class="nav-feather"></i> Asia</option>
+                        <option value="africa"><i data-feather="external-link" class="nav-feather"></i> África</option>
+                        <option value="oceania"><i data-feather="cloud-rain" class="nav-feather"></i> Oceanía</option>
+                    </select>
+                </div>
+                <div class="table-container" id="tiposCambioContainer"></div>
+
+                <details class="monedas-avanzado" ontoggle="if(this.open && typeof actualizarGraficoEvolucionMoneda==='function'){setTimeout(actualizarGraficoEvolucionMoneda,100)}">
+                    <summary><i data-feather="settings" class="nav-feather"></i> Avanzado</summary>
+
+                    <div class="monedas-seccion">
+                        <h4><i data-feather="trending-up" class="nav-feather"></i> Evolución Histórica</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Moneda a comparar</label>
+                                <select id="monedaComparar" onchange="actualizarGraficoEvolucionMoneda()"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Período</label>
+                                <select id="periodoGraficoMoneda" onchange="actualizarGraficoEvolucionMoneda()">
+                                    <option value="7">Últimos 7 días</option>
+                                    <option value="30" selected>Últimos 30 días</option>
+                                    <option value="90">Últimos 90 días</option>
+                                    <option value="180">Últimos 6 meses</option>
+                                    <option value="365">Último año</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="evolucionMonedaChart"></canvas>
+                        </div>
+                        <div class="chart-info" id="infoEvolucionMoneda">
+                            <div class="info-item">
+                                <span class="info-label">Tasa actual:</span>
+                                <span class="info-value" id="evoTasaActual">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Cambio período:</span>
+                                <span class="info-value" id="evoCambioPeriodo">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Máximo:</span>
+                                <span class="info-value" id="evoMaximo">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Mínimo:</span>
+                                <span class="info-value" id="evoMinimo">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monedas-seccion">
+                        <h4><i data-feather="dollar-sign" class="nav-feather"></i> Precio de Venta y Condiciones</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Precio Venta</label>
+                                <input type="number" id="precioVenta" onchange="actualizarVenta()" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Moneda Venta</label>
+                                <select id="monedaVenta" onchange="actualizarVenta()"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Condiciones de pago</label>
+                            <textarea rows="3" id="condicionesPago" placeholder="Ej: 30% anticipo, 40% hito intermedio, 30% entrega final"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="monedas-seccion">
+                        <h4><i data-feather="pen-tool" class="nav-feather"></i> Fuentes de Datos y Opciones</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Proveedor de tasas</label>
+                                <select id="proveedorTasas" onchange="cambiarProveedorTasas(this.value)">
+                                    <option value="auto"><i data-feather="refresh-cw" class="nav-feather"></i> Automático (múltiples fuentes)</option>
+                                    <option value="frankfurter"><i data-feather="map-pin" class="nav-feather"></i> Frankfurter API (BCE)</option>
+                                    <option value="exchangerate"><i data-feather="external-link" class="nav-feather"></i> ExchangeRate-API</option>
+                                    <option value="currencyapi"><i data-feather="dollar-sign" class="nav-feather"></i> CurrencyAPI</option>
+                                    <option value="manual"><i data-feather="help-circle" class="nav-feather"></i> Solo manual</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Actualización automática</label>
+                                <select id="autoUpdateInterval" onchange="configurarAutoUpdate(this.value)">
+                                    <option value="0">Desactivada</option>
+                                    <option value="3600000">Cada hora</option>
+                                    <option value="86400000" selected>Diaria</option>
+                                    <option value="604800000">Semanal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="monedas-acciones">
+                            <button class="btn btn-secondary" onclick="probarConexionAPI()"><i data-feather="help-circle" class="nav-feather"></i> Probar conexión</button>
+                            <button class="btn btn-secondary" onclick="exportarTiposCambio()"><i data-feather="help-circle" class="nav-feather"></i> Exportar CSV</button>
+                            <button class="btn btn-secondary" onclick="importarTiposCambio()"><i data-feather="help-circle" class="nav-feather"></i> Importar CSV</button>
+                            <input type="file" id="importTiposCambioFile" accept=".csv" style="display:none" onchange="procesarImportTiposCambio(event)">
+                        </div>
+                    </div>
+                </details>
             </div>
 
             <div id="panelVenta" class="panel hidden">
