@@ -2,7 +2,7 @@
             const tbody = document.getElementById('comunicacionesBody');
             if (!proyecto.comunicaciones) proyecto.comunicaciones = [];
             if (proyecto.comunicaciones.length === 0) { tbody.innerHTML = '<tr><td colspan="7">No hay comunicaciones</td></tr>'; return; }
-            tbody.innerHTML = proyecto.comunicaciones.map(c => `<tr><td>${c.fecha || '-'}</td><td><span class="badge-pais">${c.tipo || '-'}</span></td><td>${escapeHtml(c.con || '')}</td><td><strong>${escapeHtml(c.asunto || '')}</strong></td><td>${escapeHtml((c.contenido || '').substring(0, 100))}${(c.contenido || '').length > 100 ? '...' : ''}</td><td>${c.archivoNombre ? `<span class="edit-btn" onclick="descargarArchivoComunicacion(${c.id})"> ${escapeHtml(c.archivoNombre)}</span>` : '-'}</td><td><span class="edit-btn" onclick="editarComunicacion(${c.id})"></span><span class="delete-btn" onclick="eliminarComunicacion(${c.id})"></span></td></tr>`).join('');
+            tbody.innerHTML = proyecto.comunicaciones.map(c => `<tr><td>${formatearFechaEspa(c.fecha)}</td><td><span class="badge-pais">${c.tipo || '-'}</span></td><td>${escapeHtml(c.con || '')}</td><td><strong>${escapeHtml(c.asunto || '')}</strong></td><td>${escapeHtml((c.contenido || '').substring(0, 100))}${(c.contenido || '').length > 100 ? '...' : ''}</td><td>${c.archivoNombre ? `<span class="edit-btn" onclick="descargarArchivoComunicacion(${c.id})"> ${escapeHtml(c.archivoNombre)}</span>` : '-'}</td><td><span class="edit-btn" onclick="editarComunicacion(${c.id})"></span><span class="delete-btn" onclick="eliminarComunicacion(${c.id})"></span></td></tr>`).join('');
         }
         
         function abrirModalNuevaComunicacion() {

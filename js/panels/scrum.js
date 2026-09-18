@@ -412,7 +412,7 @@ function renderizarSprintBacklog() {
             const progreso = puntosPlanificados > 0 ? (puntosCompletados / puntosPlanificados) * 100 : 0;
             
             document.getElementById('sprintNombre').innerHTML = ` ${sprintActivo.nombre || 'Sprint Actual'}`;
-            document.getElementById('sprintDetalles').innerHTML = `${sprintActivo.fechaInicio || '-'} → ${sprintActivo.fechaFin || '-'}`;
+            document.getElementById('sprintDetalles').innerHTML = `${formatearFechaEspa(sprintActivo.fechaInicio)} → ${formatearFechaEspa(sprintActivo.fechaFin)}`;
             document.getElementById('sprintPuntosPlanificados').innerHTML = puntosPlanificados;
             document.getElementById('sprintPuntosCompletados').innerHTML = puntosCompletados;
             document.getElementById('sprintProgreso').innerHTML = progreso.toFixed(1);
@@ -450,7 +450,7 @@ function renderizarSprintBacklog() {
                 <div>
                     <strong>[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
                     <div style="font-size: 10px; color: ${h.prioridad === 'Alta' ? '#FF3B30' : (h.prioridad === 'Media' ? '#FF8C00' : '#00A859')}">
-                        ${h.prioridad} | ${h.fechaCreacion?.split('T')[0] || '-'}
+                        ${h.prioridad} | ${formatearFechaEspa(h.fechaCreacion?.split('T')[0])}
                     </div>
                 </div>
                 <div>
@@ -1476,7 +1476,7 @@ function renderizarBurndown() {
     if (burndownBody) {
         burndownBody.innerHTML = sprintActivo.registroDiario.map((r, idx) => `
             <tr>
-                <td>Día ${r.dia} (${r.fecha || '-'})</td>
+                <td>Día ${r.dia} (${formatearFechaEspa(r.fecha)})</td>
                 <td>${r.puntosRestantes || 0}</td>
                 <td style="background: rgba(0,168,89,0.15);">
                     <input type="number" id="puntosDia_${idx}" value="${r.puntosCompletadosHoy || 0}" min="0" style="width: 80px; background: rgba(255,255,255,0.1); border-radius: 6px; color: ${document.documentElement.getAttribute('data-theme') === 'light' ? '#1a1a2e' : 'white'};">
@@ -1706,8 +1706,8 @@ function renderizarVelocityTracking() {
                 const eficiencia = s.puntosPlanificados > 0 ? ((s.puntosCompletados / s.puntosPlanificados) * 100).toFixed(1) : 0;
                 return `<tr>
                     <td>${escapeHtml(s.nombre)}</td>
-                    <td>${s.fechaInicio || '-'}</td>
-                    <td>${s.fechaFinReal || s.fechaFin || '-'}</td>
+                    <td>${formatearFechaEspa(s.fechaInicio)}</td>
+                    <td>${formatearFechaEspa(s.fechaFinReal || s.fechaFin)}</td>
                     <td>${s.puntosPlanificados || 0}</td>
                     <td>${s.puntosCompletados || 0}</td>
                     <td class="${s.puntosCompletados >= s.puntosPlanificados ? 'cashflow-positive' : 'cashflow-negative'}">${s.puntosCompletados || 0}</td>
@@ -1776,7 +1776,7 @@ function renderizarRetrospectives() {
                         <span class="delete-btn" onclick="eliminarRetrospectiva(${r.id})"></span>
                     </div>
                     <div class="details u-mt-8">
-                        <div><strong> Fecha:</strong> ${r.fecha || '-'}</div>
+                        <div><strong> Fecha:</strong> ${formatearFechaEspa(r.fecha)}</div>
                         <div><strong> Asistentes:</strong> ${escapeHtml(r.asistentes?.join(', ') || '-')}</div>
                     </div>
                     <div class="u-mt-12">
@@ -1814,7 +1814,7 @@ function abrirModalRetrospectiva() {
                 <label>Sprint</label>
                 <select id="retroSprintId">
                     <option value="">-- Seleccionar sprint --</option>
-                    ${sprintsSinRetro.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)} (${s.fechaInicio} → ${s.fechaFin})</option>`).join('')}
+                    ${sprintsSinRetro.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)} (${formatearFechaEspa(s.fechaInicio)} → ${formatearFechaEspa(s.fechaFin)})</option>`).join('')}
                     ${sprintsSinRetro.length === 0 ? '<option disabled>No hay sprints completados sin retrospectiva</option>' : ''}
                 </select>
             </div>
@@ -2501,8 +2501,8 @@ function renderizarListadoSprints() {
         return `<tr>
             <td>#${s.id}</td>
             <td><strong>${escapeHtml(s.nombre || 'Sprint sin nombre')}</strong>${s.esActivo ? ' <span class="badge-progreso" style="font-size: 9px;">Actual</span>' : ''}</td>
-            <td>${s.fechaInicio || '-'}</td>
-            <td>${s.fechaFinMostrar}</td>
+            <td>${formatearFechaEspa(s.fechaInicio)}</td>
+            <td>${formatearFechaEspa(s.fechaFinMostrar)}</td>
             <td>${estadoBadge}</td>
             <td>${s.puntosPlanificadosMostrar}</td>
             <td>${s.puntosCompletadosMostrar}</td>
@@ -2641,7 +2641,7 @@ function verDetalleSprint(id) {
             </div>
             
             <div class="info-card u-mb-16">
-                <div><strong> Período:</strong> ${sprint.fechaInicio || '-'} → ${sprint.fechaFinReal || sprint.fechaFin || '-'}</div>
+                <div><strong> Período:</strong> ${formatearFechaEspa(sprint.fechaInicio)} → ${formatearFechaEspa(sprint.fechaFinReal || sprint.fechaFin)}</div>
                 <div><strong> Puntos:</strong> ${sprint.puntosCompletados || 0}/${sprint.puntosPlanificados || 0} (${sprint.puntosPlanificados > 0 ? ((sprint.puntosCompletados / sprint.puntosPlanificados) * 100).toFixed(1) : 0}%)</div>
                 <div><strong> Velocidad:</strong> ${sprint.puntosCompletados || 0} pts</div>
                 <div><strong> Eficiencia:</strong> ${sprint.puntosPlanificados > 0 ? ((sprint.puntosCompletados / sprint.puntosPlanificados) * 100).toFixed(1) : 0}%</div>
@@ -2668,7 +2668,7 @@ function verDetalleSprint(id) {
             ${retrospectiva ? `
             <div class="info-card">
                 <h4> Retrospectiva</h4>
-                <div><strong> Fecha:</strong> ${retrospectiva.fecha || '-'}</div>
+                <div><strong> Fecha:</strong> ${formatearFechaEspa(retrospectiva.fecha)}</div>
                 <div><strong> Valoración:</strong> ${retrospectiva.valoracion || '-'}/5</div>
                 <div><strong> Lo que salió bien:</strong><br>${(retrospectiva.bien || []).map(b => `• ${escapeHtml(b)}<br>`).join('')}</div>
                 <div><strong> Cosas a mejorar:</strong><br>${(retrospectiva.mejorar || []).map(m => `• ${escapeHtml(m)}<br>`).join('')}</div>

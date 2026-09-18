@@ -149,7 +149,7 @@ function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal,
                     </div>
                 </div>
                 <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px;">
-                     ${elemento.inicio || '-'} → ${fechaFin}
+                     ${formatearFechaEspa(elemento.inicio)} → ${formatearFechaEspa(fechaFin)}
                 </div>
                 <div style="margin: 8px 0;">
                     <div style="background: var(--progress-bg); border-radius: 10px; height: 4px; overflow: hidden;">

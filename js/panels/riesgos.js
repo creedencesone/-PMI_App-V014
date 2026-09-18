@@ -285,7 +285,7 @@
             if (!proyecto.accionesMitigacion || proyecto.accionesMitigacion.length === 0) { tbody.innerHTML = '<tr><td colspan="6">No hay acciones</td></tr>'; return; }
             tbody.innerHTML = proyecto.accionesMitigacion.map(a => `<tr>
                 <td><strong>${escapeHtml(a.riesgoNombre)}</strong></td>
-                <td>${a.fecha || '-'}</td>
+                <td>${formatearFechaEspa(a.fecha)}</td>
                 <td>${escapeHtml(a.accion || '-')}</td>
                 <td>${escapeHtml(a.responsable || '-')}</td>
                 <td><span class="badge-${a.estado === 'Completada' ? 'completado' : 'progreso'}">${a.estado || 'Pendiente'}</span></td>
@@ -335,7 +335,7 @@
                 header.style.cssText = 'text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #1a237e';
                 header.innerHTML = '<h1 style="margin:0;font-size:24px;color:#1a237e"> Gestión de Riesgos del Proyecto</h1>'
                     + '<h2 style="margin:8px 0 0;font-size:18px;color:#333">' + escapeHtml(nombreProy) + '</h2>'
-                    + '<p style="margin:5px 0 0;font-size:13px;color:#666">Generado: ' + new Date().toLocaleDateString() + '</p>';
+                    + '<p style="margin:5px 0 0;font-size:13px;color:#666">Generado: ' + new Date().toLocaleDateString('es-ES') + '</p>';
                 clone.insertBefore(header, clone.firstChild);
 
                 var footer = document.createElement('div');

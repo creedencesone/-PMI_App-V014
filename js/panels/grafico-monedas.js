@@ -265,7 +265,7 @@ async function actualizarGraficoEvolucionMoneda() {
     const infoDiv = document.getElementById('infoEvolucionMoneda');
     infoDiv.innerHTML = `
         <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
-            <div><strong> Período:</strong> ${fechas[0]} → ${fechas[fechas.length-1]}</div>
+            <div><strong> Período:</strong> ${formatearFechaEspa(fechas[0])} → ${formatearFechaEspa(fechas[fechas.length-1])}</div>
             <div><strong> Inicio:</strong> 1 ${monedaBase} = ${valorInicial.toFixed(4)} ${moneda}</div>
             <div><strong> Actual:</strong> 1 ${monedaBase} = ${valorFinal.toFixed(4)} ${moneda}</div>
             <div><strong style="color: ${variacionColor};">${variacionIcono} Variación:</strong> ${variacion >= 0 ? '+' : ''}${variacion.toFixed(2)}%</div>

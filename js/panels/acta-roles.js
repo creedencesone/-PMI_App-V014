@@ -28,7 +28,7 @@ function renderizarActa() {
                 <div class="acta-aval-tipo">${estadoIcon} ${escapeHtml(a.tipo)}</div>
                 <div class="acta-aval-linea">${escapeHtml(a.entidad || 'Entidad no especificada')}</div>
                 <div class="acta-aval-linea">Importe: ${formatearMoneda(convertirMoneda(a.importe, a.moneda))}</div>
-                <div class="acta-aval-linea">Emisión: ${a.fechaEmision || '-'} | Vence: ${a.fechaVencimiento || '-'}</div>
+                <div class="acta-aval-linea">Emisión: ${formatearFechaEspa(a.fechaEmision)} | Vence: ${formatearFechaEspa(a.fechaVencimiento)}</div>
                 <div class="acta-aval-linea">Ref: ${escapeHtml(a.referencia || '-')}</div>
             </div>`;
         });
@@ -81,7 +81,7 @@ function renderizarActa() {
             const nombres = { diseno: ' Diseño', desarrollo: ' Desarrollo', pruebas: ' Pruebas', implementacion: ' Implementación' };
             return nombres[f] || f;
         }).join(', ') || 'Ninguna';
-        metodologiaDetalle = ` Transición: ${metodologia.fechaTransicion || 'No definida'} |  Fases Ágiles: ${fasesTexto}`;
+        metodologiaDetalle = ` Transición: ${metodologia.fechaTransicion ? formatearFechaEspa(metodologia.fechaTransicion) : 'No definida'} |  Fases Ágiles: ${fasesTexto}`;
     }
     
     const actaIniciales = (nombre) => {
@@ -98,7 +98,7 @@ function renderizarActa() {
                 <span class="acta-pill">${tApp('acta_codigo')}: ${escapeHtml(a.codigo || '-')}</span>
                 <span class="acta-pill">${tApp('acta_pais')}: ${escapeHtml(proyecto.pais || a.pais || 'No especificado')}</span>
                 <span class="acta-pill">${tApp('acta_inicio')}: ${a.fechaInicio ? formatearFechaEspa(a.fechaInicio) : '-'}</span>
-                <span class="acta-pill">${tApp('acta_fin')}: ${a.fechaFin || proyecto.fechaFinPlan || '-'}</span>
+                <span class="acta-pill">${tApp('acta_fin')}: ${formatearFechaEspa(a.fechaFin || proyecto.fechaFinPlan)}</span>
                 <span class="acta-pill">${tApp('acta_moneda')}: ${a.moneda || proyecto.monedaBase}</span>
             </div>
         </div>
@@ -117,7 +117,7 @@ function renderizarActa() {
                 <div class="acta-field"><div class="acta-label">${tApp('acta_codigo')}</div><div class="acta-value">${escapeHtml(a.codigo || '-')}</div></div>
                 <div class="acta-field"><div class="acta-label">${tApp('acta_pais')}</div><div class="acta-value">${escapeHtml(proyecto.pais || a.pais || 'No especificado')}</div></div>
                 <div class="acta-field"><div class="acta-label">${tApp('acta_inicio')}</div><div class="acta-value">${a.fechaInicio ? formatearFechaEspa(a.fechaInicio) : '-'}</div></div>
-                <div class="acta-field"><div class="acta-label">${tApp('acta_fin')}</div><div class="acta-value">${a.fechaFin || proyecto.fechaFinPlan || '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_fin')}</div><div class="acta-value">${formatearFechaEspa(a.fechaFin || proyecto.fechaFinPlan)}</div></div>
                 <div class="acta-field"><div class="acta-label">${tApp('acta_moneda')}</div><div class="acta-value">${a.moneda || proyecto.monedaBase}</div></div>
             </div>
         </div>
@@ -242,7 +242,7 @@ function renderizarActa() {
             </div>
             <div class="acta-grid">
                 <div class="acta-field"><div class="acta-label">${tApp('acta_aprobado_por')}</div><div class="acta-value">${escapeHtml(a.aprobadoPor || 'Pendiente')}</div></div>
-                <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${a.fechaAprobacion || '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${formatearFechaEspa(a.fechaAprobacion)}</div></div>
             </div>
         </div>
         

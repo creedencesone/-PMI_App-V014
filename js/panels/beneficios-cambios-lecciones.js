@@ -52,7 +52,7 @@ function renderizarBeneficios() {
                 <div class="item-card">
                     <div>
                         <strong>${escapeHtml(h.nombre)}</strong><br>
-                         ${h.fecha || '-'} |  Meta: ${formatearMoneda(h.meta)} |  Real: ${formatearMoneda(h.real || 0)}
+                         ${formatearFechaEspa(h.fecha)} |  Meta: ${formatearMoneda(h.meta)} |  Real: ${formatearMoneda(h.real || 0)}
                     </div>
                     <div>
                         <span class="edit-btn" onclick="editarHitoBeneficio(${h.id})"></span>
@@ -338,7 +338,7 @@ function renderizarCambios() {
     tbody.innerHTML = cambios.map(c => `
         <tr>
             <td>#${c.id}</td>
-            <td>${c.fecha || '-'}</td>
+            <td>${formatearFechaEspa(c.fecha)}</td>
             <td>${escapeHtml(c.solicitante || '-')}</td>
             <td>${escapeHtml(c.descripcion || '-').substring(0, 50)}</td>
             <td>${c.impacto || '-'}</td>
@@ -767,7 +767,7 @@ function verHistorialVersiones(id) {
                 <thead><tr><th>Versión</th><th>Fecha</th><th>Usuario</th></tr></thead>
                 <tbody>
                     ${elemento.historialVersiones.map(h => `
-                        <tr><td>v${h.version}</td><td>${h.fecha.split('T')[0]}</td><td>${h.usuario}</td></tr>
+                        <tr><td>v${h.version}</td><td>${formatearFechaEspa(h.fecha?.split('T'.split('T')[0])[0])}</td><td>${h.usuario}</td></tr>
                     `).join('')}
                 </tbody>
             </table>

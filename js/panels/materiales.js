@@ -56,7 +56,7 @@
         if (m.plazoSuministro && m.plazoSuministro > 0) {
             let recepcionInfo = '';
             if (m.fechaRecepcionEstimada) {
-                recepcionInfo = `<br><small style="font-size: 9px; color: #00A859;"> Recibe: ${m.fechaRecepcionEstimada}</small>`;
+                recepcionInfo = `<br><small style="font-size: 9px; color: #00A859;"> Recibe: ${formatearFechaEspa(m.fechaRecepcionEstimada)}</small>`;
             } else if (m.mesRecepcion) {
                 recepcionInfo = `<br><small style="font-size: 9px; color: #00A859;"> Recibe: Mes ${m.mesRecepcion}</small>`;
             }
@@ -604,7 +604,7 @@ function guardarMaterial() {
     let pesoMsg = ` | Peso: ${pesoUnitario} kg/unidad`;
     
     if (plazoSuministro > 0) {
-        msgPago += `  Plazo suministro: ${plazoSuministro} días → Recepción: ${nuevoMaterial.fechaRecepcionEstimada || 'calculada'}`;
+        msgPago += `  Plazo suministro: ${plazoSuministro} días → Recepción: ${nuevoMaterial.fechaRecepcionEstimada ? formatearFechaEspa(nuevoMaterial.fechaRecepcionEstimada) : 'calculada'}`;
     }
     
     mostrarToast(` Material "${nombre}" guardado${msgPago}${hsCodeMsg}${pesoMsg}`, "success");
@@ -783,7 +783,7 @@ function guardarMaterial() {
             
             ${material.fechaRecepcionEstimada ? `
             <div class="info-card-modal" style="margin-bottom: 12px; padding: 8px; background: rgba(0,122,255,0.1);">
-                <small> <strong>Fecha de recepción estimada actual:</strong> ${material.fechaRecepcionEstimada}</small>
+                <small> <strong>Fecha de recepción estimada actual:</strong> ${formatearFechaEspa(material.fechaRecepcionEstimada)}</small>
             </div>
             ` : ''}
             

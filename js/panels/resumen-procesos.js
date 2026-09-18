@@ -123,7 +123,7 @@ function actualizarResumenGastos() {
             categoria: " Viajes",
             subcategoria: v.destino || "Desplazamiento",
             concepto: `${v.nombre} - ${v.motivo || 'Sin motivo'}`,
-            mes: v.fechaSalida ? new Date(v.fechaSalida).toLocaleDateString() : `Mes ${v.mes || 1}`,
+            mes: v.fechaSalida ? new Date(v.fechaSalida).toLocaleDateString('es-ES') : `Mes ${v.mes || 1}`,
             importe: total
         });
     });
@@ -164,7 +164,7 @@ function actualizarResumenGastos() {
                 categoria: " Personal",
                 subcategoria: "Tareas",
                 concepto: tarea.nombre,
-                mes: tarea.inicio ? new Date(tarea.inicio).toLocaleDateString() : "Planificado",
+                mes: tarea.inicio ? new Date(tarea.inicio).toLocaleDateString('es-ES') : "Planificado",
                 importe: coste
             });
         }

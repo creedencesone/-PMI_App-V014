@@ -701,7 +701,7 @@ function renderEventoListaItem(ev, esPasado) {
     const horaInicio = ev.hora_inicio || '';
     const horaFin = ev.hora_fin || '';
     const isMultiDay = ev.fecha_inicio && ev.fecha_fin && ev.fecha_inicio !== ev.fecha_fin;
-    const fechaDisplay = isMultiDay ? `${formatDate(ev.fecha_inicio)} - ${formatDate(ev.fecha_fin)}` : (ev.fecha_inicio ? formatDate(ev.fecha_inicio) : (ev.fecha || ''));
+    const fechaDisplay = isMultiDay ? `${formatDate(ev.fecha_inicio)} - ${formatDate(ev.fecha_fin)}` : (ev.fecha_inicio ? formatDate(ev.fecha_inicio) : (ev.fecha ? formatearFechaEspa(ev.fecha.split('T')[0]) : ''));
     const horaDisplay = (ev.hora_inicio || ev.hora_fin) ? ` ${ev.hora_inicio || '00:00'} - ${ev.hora_fin || '00:00'}` : '';
     const evJson = safeJsonForAttr(ev);
     
@@ -748,7 +748,7 @@ function abrirModalEvento(evento = null) {
     ).join('');
 
     const hitosHtml = agendaHitosCache.map(h =>
-        `<option value="${h.id}" ${evento && evento.hito_id == h.id ? 'selected' : ''}>${h.codigo ? h.codigo + ' ' : ''}${escapeHtml(h.nombre)}${h.fecha ? ' (' + h.fecha + ')' : ''}</option>`
+        `<option value="${h.id}" ${evento && evento.hito_id == h.id ? 'selected' : ''}>${h.codigo ? h.codigo + ' ' : ''}${escapeHtml(h.nombre)}${h.fecha ? ' (' + formatearFechaEspa(h.fecha.split('T'.split('T')[0])[0]) + ')' : ''}</option>`
     ).join('');
 
     const modalHtml = `

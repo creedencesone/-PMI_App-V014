@@ -564,7 +564,7 @@ async function exportarSaludPDF() {
     header.className = 'header';
     header.innerHTML = `
         <h1> INFORME DE SALUD DEL PROYECTO</h1>
-        <p><strong>${escapeHtml(proyecto.nombre || 'Proyecto')}</strong> | Generado: ${new Date().toLocaleString()}</p>
+        <p><strong>${escapeHtml(proyecto.nombre || 'Proyecto')}</strong> | Generado: ${new Date().toLocaleString('es-ES')}</p>
     `;
     clone.insertBefore(header, clone.firstChild);
     

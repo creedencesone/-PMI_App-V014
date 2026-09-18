@@ -452,7 +452,7 @@ function renderizarCronograma(ctx) {
     const spanFechas = document.getElementById(ctx.fechasId);
     if (spanFechas) {
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        spanFechas.textContent = ` ${fmt(fechaInicioProy)} → ${fmt(fechaFinProy)} (${Math.round((fechaFinProy - fechaInicioProy) / 86400000)} días naturales)`;
+        spanFechas.textContent = ` ${formatearFechaEspa(fmt(fechaInicioProy))} → ${formatearFechaEspa(fmt(fechaFinProy))} (${Math.round((fechaFinProy - fechaInicioProy) / 86400000)} días naturales)`;
     }
     // Rendimiento: "año" itera años en vez de días para no congelar.
     const MAX_DIAS = 5000, MAX_ANCHO = 150000;
@@ -612,11 +612,11 @@ function renderizarArbolWBS(orden, elementos, headerH, ctx) {
         const inicioTxt = elem.inicio || '—';
         const finTxt = fin || '—';
         if (durTxt || elem.inicio) {
-            html += `<span class="wbs-dates" title="Inicio: ${escapeHtml(inicioTxt)} · Fin: ${escapeHtml(finTxt)}">`;
+            html += `<span class="wbs-dates" title="Inicio: ${escapeHtml(formatearFechaEspa(inicioTxt))} · Fin: ${escapeHtml(formatearFechaEspa(finTxt))}">`;
             if (durTxt) html += `<span class="wbs-dur">${escapeHtml(durTxt)}</span>`;
-            html += `<span class="wbs-start">${escapeHtml(inicioTxt)}</span>`;
+            html += `<span class="wbs-start">${escapeHtml(formatearFechaEspa(inicioTxt))}</span>`;
             html += `<span class="wbs-arrow">→</span>`;
-            html += `<span class="wbs-end">${escapeHtml(finTxt)}</span>`;
+            html += `<span class="wbs-end">${escapeHtml(formatearFechaEspa(finTxt))}</span>`;
             html += `</span>`;
         }
         if (esCritico) html += `<span class="wbs-badge-crit">CP</span>`;
@@ -1051,14 +1051,14 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         }
 
         // Fecha inicio (antes de la barra)
-        barsHtml += `<text x="${x - 5}" y="${y + 4}" font-size="10" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" style="fill:${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" font-family="system-ui" text-anchor="end">${escapeHtml(elem.inicio)}</text>`;
+        barsHtml += `<text x="${x - 5}" y="${y + 4}" font-size="10" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" style="fill:${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" font-family="system-ui" text-anchor="end">${escapeHtml(formatearFechaEspa(elem.inicio))}</text>`;
 
         // Nombre (dentro de la barra)
         const label = elem.nombre.length > 25 ? elem.nombre.substring(0, 22) + '…' : elem.nombre;
         barsHtml += `<text x="${x + 5}" y="${y + 4}" font-size="12" fill="${isDark ? '#fff' : 'rgba(0,0,0,0.85)'}" style="fill:${isDark ? '#fff' : 'rgba(0,0,0,0.85)'}" font-family="system-ui" font-weight="600" text-anchor="start">${escapeHtml(label)}</text>`;
 
         // Fecha fin (después de la barra)
-        barsHtml += `<text x="${x + Math.max(w, 8) + 5}" y="${y + 4}" font-size="10" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" style="fill:${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" font-family="system-ui" text-anchor="start">${escapeHtml(fechaFin)}</text>`;
+        barsHtml += `<text x="${x + Math.max(w, 8) + 5}" y="${y + 4}" font-size="10" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" style="fill:${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" font-family="system-ui" text-anchor="start">${escapeHtml(formatearFechaEspa(fechaFin))}</text>`;
 
         // Handle de arrastre para dependencias (círculo al final de la barra)
         if (elem.tipo !== 'hito') {
@@ -1631,7 +1631,7 @@ function renderizarVistaTarjetas(elementos, ctx) {
                     <span class="tv-card-id">${elem.codigo || ''}</span>
                 </div>
                 <div class="tv-card-name">${escapeHtml(elem.nombre)}</div>
-                <div class="tv-card-dates">${elem.inicio || '—'}${elem.duracion > 0 ? ' · ' + (elem.tipoDuracion === 'horas' && elem.duracionHoras ? elem.duracionHoras + 'h' : elem.duracion + 'd') : ''}</div>
+                <div class="tv-card-dates">${elem.inicio ? formatearFechaEspa(elem.inicio) : '—'}${elem.duracion > 0 ? ' · ' + (elem.tipoDuracion === 'horas' && elem.duracionHoras ? elem.duracionHoras + 'h' : elem.duracion + 'd') : ''}</div>
                 <div class="tv-card-bar"><div class="tv-card-bar-fill" style="width:${pct}%"></div></div>
                 <div class="tv-card-footer">
                     <span class="tv-card-resp">${escapeHtml(elem.responsable || '—')}</span>
@@ -2387,7 +2387,7 @@ function procesarXML(file) {
                 return pe ? pe.nombre.substring(0, 15) : '?';
             }).join(', ') || '—';
             const durStr = e.tipoDuracion === 'horas' ? e.duracionHoras + 'h' : (e.duracion > 0 ? e.duracion.toFixed(2) + 'd' : '—');
-            prevHtml += `<tr><td>${i+1}</td><td>${e.tipo}</td><td>${escapeHtml(e.nombre.substring(0, 30))}</td><td>${durStr}</td><td>${e.inicio || '—'}</td><td style="font-size:10px">${escapeHtml(predStr)}</td></tr>`;
+            prevHtml += `<tr><td>${i+1}</td><td>${e.tipo}</td><td>${escapeHtml(e.nombre.substring(0, 30))}</td><td>${durStr}</td><td>${e.inicio ? formatearFechaEspa(e.inicio) : '—'}</td><td style="font-size:10px">${escapeHtml(predStr)}</td></tr>`;
         });
         if (nuevos.length > 20) prevHtml += `<tr><td colspan="6" style="text-align:center;color:#888">... y ${nuevos.length - 20} más</td></tr>`;
         prevHtml += `</tbody></table>`;
@@ -2593,7 +2593,7 @@ function procesarCSV(file) {
                 return pe ? pe.nombre.substring(0, 15) : '?';
             }).join(', ') || '—';
             const durStr = e.tipoDuracion === 'horas' ? e.duracionHoras + 'h' : (e.duracion > 0 ? e.duracion.toFixed(2) + 'd' : '—');
-            prevHtml += `<tr><td>${i+1}</td><td>${e.tipo}</td><td>${escapeHtml(e.nombre.substring(0, 30))}</td><td>${durStr}</td><td>${e.inicio || '—'}</td><td style="font-size:10px">${escapeHtml(predStr)}</td></tr>`;
+            prevHtml += `<tr><td>${i+1}</td><td>${e.tipo}</td><td>${escapeHtml(e.nombre.substring(0, 30))}</td><td>${durStr}</td><td>${e.inicio ? formatearFechaEspa(e.inicio) : '—'}</td><td style="font-size:10px">${escapeHtml(predStr)}</td></tr>`;
         });
         if (nuevos.length > 20) prevHtml += `<tr><td colspan="6" style="text-align:center;color:#888">... y ${nuevos.length - 20} más</td></tr>`;
         prevHtml += `</tbody></table>`;
@@ -2760,8 +2760,8 @@ function mostrarListadoOrdenado() {
             <td class="td-tipo">${icono} ${e.tipo}</td>
             <td class="td-nom">${escapeHtml(e.nombre)}</td>
             <td class="td-dur">${e.duracion > 0 ? dur : '—'}</td>
-            <td class="td-fecha">${e.inicio || '—'}</td>
-            <td class="td-fecha">${e.duracion > 0 ? fin : '—'}</td>
+            <td class="td-fecha">${e.inicio ? formatearFechaEspa(e.inicio) : '—'}</td>
+            <td class="td-fecha">${e.duracion > 0 ? formatearFechaEspa(fin) : '—'}</td>
             <td class="td-pred">${preds}</td>
         </tr>`;
     });
@@ -2886,8 +2886,8 @@ function mostrarDetalleElemento(elem) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
             ${codigo ? `<div><strong>Código:</strong> ${codigo}</div>` : ''}
             <div><strong>Tipo:</strong> ${tipoLabel}</div>
-            <div><strong>Inicio:</strong> ${elem.inicio || '—'}</div>
-            <div><strong>Fin:</strong> ${finHabiles}</div>
+            <div><strong>Inicio:</strong> ${elem.inicio ? formatearFechaEspa(elem.inicio) : '—'}</div>
+            <div><strong>Fin:</strong> ${formatearFechaEspa(finHabiles)}</div>
             <div><strong>Duración:</strong> ${durLabel}</div>
             <div><strong>Duración real:</strong> ${elem.duracion > 0 ? duracionReal + ' días naturales' : '—'}</div>
             <div><strong>Progreso:</strong> ${progreso}%</div>
@@ -2895,8 +2895,8 @@ function mostrarDetalleElemento(elem) {
             <div><strong>Recurso:</strong> ${recurso}</div>
             ${elem.costeEstimado ? `<div><strong>Coste est.:</strong> ${elem.costeEstimado} ${elem.recursoAsignado?.moneda || ''}</div>` : ''}
             ${elem.costeReal ? `<div><strong>Coste real:</strong> ${elem.costeReal} ${elem.recursoAsignado?.moneda || ''}</div>` : ''}
-            ${elem.inicioReal ? `<div><strong>Inicio real:</strong> ${elem.inicioReal}</div>` : ''}
-            ${elem.finReal ? `<div><strong>Fin real:</strong> ${elem.finReal}</div>` : ''}
+            ${elem.inicioReal ? `<div><strong>Inicio real:</strong> ${formatearFechaEspa(elem.inicioReal)}</div>` : ''}
+            ${elem.finReal ? `<div><strong>Fin real:</strong> ${formatearFechaEspa(elem.finReal)}</div>` : ''}
             <div style="grid-column:1/-1"><strong>EDT padre:</strong> ${elem.dependeDe ? getNombreElemento(elem.dependeDe) : '—'}</div>
             <div style="grid-column:1/-1"><strong>Dependencias:</strong> ${predsTipo}</div>
             ${esCritico ? '<div style="grid-column:1/-1"><span class="wbs-badge-crit" style="font-size:11px"> Ruta crítica</span></div>' : ''}
@@ -2933,7 +2933,7 @@ function abrirModalLineaBase() {
             return `<div style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(128,128,128,0.15)">
                 <div style="flex:1;min-width:0">
                     <div style="font-weight:600;font-size:13px">${escapeHtml(lb.nombre)} ${visible ? '<span style="font-size:10px;background:#FFB80022;color:#B8860B;padding:1px 6px;border-radius:8px;border:1px solid #B8860B55">EN CRONOGRAMA</span>' : ''}</div>
-                    <div style="font-size:11px;color:var(--text-muted)">${lb.fecha} · ${nTareas} tareas</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${formatearFechaEspa(lb.fecha)} · ${nTareas} tareas</div>
                 </div>
                 <button class="btn btn-small btn-secondary" onclick="toggleLineaBaseVisible(${lb.id})">${visible ? 'Ocultar' : 'Ver'}</button>
                 <button class="btn btn-small btn-primary" onclick="compararLineaBase(${lb.id})">Comparar</button>
@@ -3054,9 +3054,9 @@ function compararLineaBase(id) {
             filas.push({ nombre, tipo, icono, eliminada: true, html: `
                 <tr style="opacity:0.6">
                     <td>${icono} ${escapeHtml(nombre)}</td>
-                    <td>${be.inicio || '—'}</td>
+                    <td>${be.inicio ? formatearFechaEspa(be.inicio) : '—'}</td>
                     <td colspan="2" style="color:#E53935;font-weight:600">Eliminada del cronograma</td>
-                    <td>${finBase || '—'}</td>
+                    <td>${finBase ? formatearFechaEspa(finBase) : '—'}</td>
                     <td colspan="2"><span style="color:#E53935;font-weight:600">—</span></td>
                 </tr>` });
             return;
@@ -3067,11 +3067,11 @@ function compararLineaBase(id) {
         filas.push({ nombre, tipo, html: `
             <tr>
                 <td>${icono} ${escapeHtml(nombre)}</td>
-                <td>${be.inicio || '—'}</td>
-                <td>${ae.inicio || '—'}</td>
+                <td>${be.inicio ? formatearFechaEspa(be.inicio) : '—'}</td>
+                <td>${ae.inicio ? formatearFechaEspa(ae.inicio) : '—'}</td>
                 <td>${_fmtDesvio(dIni)}</td>
-                <td>${finBase || '—'}</td>
-                <td>${finAct || '—'}</td>
+                <td>${finBase ? formatearFechaEspa(finBase) : '—'}</td>
+                <td>${finAct ? formatearFechaEspa(finAct) : '—'}</td>
                 <td>${_fmtDesvio(dFin)}</td>
                 <td>${durBase}d → ${durAct}d ${dDur !== 0 ? _fmtDesvio(dDur) : ''}</td>
             </tr>` });
@@ -3084,7 +3084,7 @@ function compararLineaBase(id) {
                     <td colspan="2" style="color:#00A859;font-weight:600">Nueva tarea</td>
                     <td>${_fmtDesvio(null)}</td>
                     <td>—</td>
-                    <td>${ae.inicio || '—'}</td>
+                    <td>${ae.inicio ? formatearFechaEspa(ae.inicio) : '—'}</td>
                     <td>${_fmtDesvio(null)}</td>
                     <td>— → ${ae.duracion || 0}d</td>
                 </tr>` });
@@ -3097,7 +3097,7 @@ function compararLineaBase(id) {
         <span><strong>${filas.length}</strong> tareas comparadas</span>
         <span style="color:#E53935"><strong>${retrasadas}</strong> con retraso</span>
         <span style="color:#00A859"><strong>${adelantadas}</strong> adelantadas</span>
-        <span>Línea base: <strong>${escapeHtml(lb.nombre)}</strong> (${lb.fecha})</span>
+        <span>Línea base: <strong>${escapeHtml(lb.nombre)}</strong> (${formatearFechaEspa(lb.fecha)})</span>
     </div>`;
 
     const html = `<div class="modal-content modal-700">

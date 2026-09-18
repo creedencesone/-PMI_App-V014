@@ -110,7 +110,7 @@ function generarVistaPublica() {
         <div class="card">
             <div class="label"> Duración</div>
             <div class="value">${fechas.min && fechas.max ? Math.round((fechas.max - fechas.min) / (86400000 * 30)) + ' meses' : '-'}</div>
-            <div class="sub">${fechas.min ? fechas.min.toLocaleDateString() : '-'} → ${fechas.max ? fechas.max.toLocaleDateString() : '-'}</div>
+            <div class="sub">${fechas.min ? fechas.min.toLocaleDateString('es-ES') : '-'} → ${fechas.max ? fechas.max.toLocaleDateString('es-ES') : '-'}</div>
         </div>
         <div class="card">
             <div class="label"> Riesgos</div>
@@ -134,13 +134,13 @@ function generarVistaPublica() {
         <table>
             <thead><tr><th>Nombre</th><th>Tipo</th><th>Duración</th><th>Inicio</th><th>Progreso</th><th>Coste est.</th></tr></thead>
             <tbody>
-                ${elementos.filter(e => e.tipo !== 'edt').slice(0, 30).map(function(e) { return '<tr><td><strong>' + escapeHtml(e.nombre || '') + '</strong></td><td>' + (e.tipo || '-') + '</td><td>' + (e.duracion || 0) + ' ' + (e.tipoDuracion === 'horas' ? 'h' : 'd') + '</td><td>' + (e.inicio || '-') + '</td><td>' + (e.progreso || 0) + '%</td><td>' + formatearMoneda(e.costeEstimado || 0) + '</td></tr>'; }).join('')}
+                ${elementos.filter(e => e.tipo !== 'edt').slice(0, 30).map(function(e) { return '<tr><td><strong>' + escapeHtml(e.nombre || '') + '</strong></td><td>' + (e.tipo || '-') + '</td><td>' + (e.duracion || 0) + ' ' + (e.tipoDuracion === 'horas' ? 'h' : 'd') + '</td><td>' + formatearFechaEspa(e.inicio) + '</td><td>' + (e.progreso || 0) + '%</td><td>' + formatearMoneda(e.costeEstimado || 0) + '</td></tr>'; }).join('')}
             </tbody>
         </table>
     </div>
 
     <div class="footer">
-         Generado por PMI Mind — Datos del proyecto al ${new Date().toLocaleString()}
+         Generado por PMI Mind — Datos del proyecto al ${new Date().toLocaleString('es-ES')}
     </div>
     <div class="watermark">PMI Mind</div>
 

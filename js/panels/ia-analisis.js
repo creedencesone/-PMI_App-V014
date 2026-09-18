@@ -145,7 +145,7 @@
                 </head><body>
                 <h1> Análisis Predictivo IA</h1>
                 <h3>Proyecto: ${escapeHtml(proyecto?.nombre || 'Proyecto')}</h3>
-                <p>Fecha: ${new Date().toLocaleString()}</p>
+                <p>Fecha: ${new Date().toLocaleString('es-ES')}</p>
                 ${contenido}
                 <hr><p class="u-fs-11">Generado por PMI Mind</p>
                 </body></html>

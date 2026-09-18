@@ -274,7 +274,7 @@ let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProc
             let tipo = h.tipo === 'hito' ? ' Hito' : h.tipo === 'entregable' ? ' Entregable' : ' Elemento';
             let estado = h.progreso >= 100 ? ' ' + tApp('informe_completado') : h.finReal ? ' ' + tApp('informe_en_riesgo') : ' ' + tApp('informe_pendiente');
             let color = h.progreso >= 100 ? '#4CAF50' : h.finReal ? '#ff9800' : '#aaa';
-            return '<tr><td>' + tipo + '</td><td>' + (h.nombre || h.tarea || 'Sin nombre') + '</td><td>' + (h.finPlan || '—') + '</td><td>' + (h.finReal || '—') + '</td><td style="color:' + color + '">' + estado + '</td></tr>';
+            return '<tr><td>' + tipo + '</td><td>' + (h.nombre || h.tarea || 'Sin nombre') + '</td><td>' + (h.finPlan ? formatearFechaEspa(h.finPlan) : '—') + '</td><td>' + (h.finReal ? formatearFechaEspa(h.finReal) : '—') + '</td><td style="color:' + color + '">' + estado + '</td></tr>';
         }).join('');
     }
 
@@ -494,7 +494,7 @@ function exportarInformePDF() {
         header.style.cssText = 'text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #1a237e';
         header.innerHTML = '<h1 style="margin:0;font-size:24px;color:#1a237e"> ' + tApp('informe_titulo') + '</h1>'
             + '<h2 style="margin:8px 0 0;font-size:18px;color:#333">' + escapeHtml(nombreProy) + '</h2>'
-            + '<p style="margin:5px 0 0;font-size:13px;color:#666">' + tApp('informe_generado') + ': ' + new Date().toLocaleDateString() + '</p>';
+            + '<p style="margin:5px 0 0;font-size:13px;color:#666">' + tApp('informe_generado') + ': ' + new Date().toLocaleDateString('es-ES') + '</p>';
         clone.insertBefore(header, clone.firstChild);
 
         var footer = document.createElement('div');

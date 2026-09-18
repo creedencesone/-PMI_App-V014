@@ -829,7 +829,7 @@ exportarPDF() {
         </head>
         <body>
             <h1> PACKING LIST COMPLETO</h1>
-            <p class="subtitle">Generado: ${new Date().toLocaleString()} | Proyecto: ${proyecto?.nombre || 'Sin proyecto'}</p>
+            <p class="subtitle">Generado: ${new Date().toLocaleString('es-ES')} | Proyecto: ${proyecto?.nombre || 'Sin proyecto'}</p>
             
             <div class="summary">
                 <div class="summary-item">
@@ -2471,7 +2471,7 @@ mostrarResumenVacio() {
                 </head>
                 <body>
                     <h1> PACKING LIST</h1>
-                    <p>Fecha: ${new Date().toLocaleString()}</p>
+                    <p>Fecha: ${new Date().toLocaleString('es-ES')}</p>
                     <table>
                         <thead><tr><th>Unidad</th><th>ID</th><th>Material</th><th>Cantidad</th><th>Peso (kg)</th></tr></thead>
                         <tbody>

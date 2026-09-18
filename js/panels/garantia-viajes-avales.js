@@ -558,7 +558,7 @@
                         <div class="name">${escapeHtml(a.entidad || 'Entidad no especificada')}</div>
                         <div class="details u-mt-8">
                             <div> Importe: ${formatearMoneda(convertirMoneda(a.importe, a.moneda))}</div>
-                            <div> Emisión: ${a.fechaEmision || '-'} |  Vence: ${a.fechaVencimiento || '-'}</div>
+                            <div> Emisión: ${formatearFechaEspa(a.fechaEmision)} |  Vence: ${formatearFechaEspa(a.fechaVencimiento)}</div>
                             <div> Estado: <span class="${a.estado === 'Vigente' ? 'badge-completado' : (a.estado === 'Próximo a vencer' ? 'badge-progreso' : 'badge-pendiente')}">${a.estado || 'Pendiente'}</span></div>
                             <div> Nº Referencia: ${escapeHtml(a.referencia || '-')}</div>
                         </div>
@@ -617,8 +617,8 @@ function renderizarGarantia() {
                 <h4> ${escapeHtml(g.equipo)}</h4>
                 <div class="details u-mt-8">
                     <div> Duración: ${g.duracionAnios} años</div>
-                    <div> Inicio: ${g.fechaInicio || '-'}</div>
-                    <div> Fin: ${fechaFin || '-'}</div>
+                    <div> Inicio: ${formatearFechaEspa(g.fechaInicio)}</div>
+                    <div> Fin: ${formatearFechaEspa(fechaFin)}</div>
                     <div> Cobertura: ${escapeHtml(g.cobertura || '-')}</div>
                     <div> Exclusiones: ${escapeHtml(g.exclusiones || '-')}</div>
                     <div> Afecta hito final: ${g.afectaHitoFinal ? 'Sí' : 'No'}</div>
@@ -631,8 +631,8 @@ function renderizarGarantia() {
     // Actualizar tarjetas superiores
     if (estadoSpan) estadoSpan.innerHTML = g.afectaHitoFinal ? ' Configurada (con hito)' : ' Configurada';
     if (duracionSpan) duracionSpan.innerHTML = `${g.duracionAnios} años`;
-    if (inicioSpan) inicioSpan.innerHTML = g.fechaInicio || '-';
-    if (finSpan) finSpan.innerHTML = fechaFin || '-';
+    if (inicioSpan) inicioSpan.innerHTML = formatearFechaEspa(g.fechaInicio);
+    if (finSpan) finSpan.innerHTML = formatearFechaEspa(fechaFin);
     
     // Información del hito afectado
     const hitoInfoDiv = document.getElementById('garantiaHitoInfo');

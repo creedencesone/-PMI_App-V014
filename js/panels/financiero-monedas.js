@@ -427,7 +427,7 @@ function actualizarStatsMonedas() {
     if (fuenteEl) fuenteEl.textContent = getFuenteNombre().split(' ')[0];
     if (fechaEl && ultimaActualizacionCambio) {
         const fecha = new Date(ultimaActualizacionCambio);
-        fechaEl.textContent = fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        fechaEl.textContent = fecha.toLocaleDateString('es-ES') + ' ' + fecha.toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'});
     }
     if (baseEl && proyecto) baseEl.textContent = proyecto.monedaBase || 'EUR';
 }
@@ -561,7 +561,7 @@ function mostrarFechaUltimaActualizacion() {
     if (span) {
         if (ultimaActualizacionCambio) {
             const fecha = new Date(ultimaActualizacionCambio);
-            span.innerText = fecha.toLocaleString();
+            span.innerText = fecha.toLocaleString('es-ES');
         } else {
             span.innerText = 'No actualizada';
         }

@@ -567,7 +567,7 @@ function guardarStakeholder() {
             let html = `
                 <div class="raci-report-title">
                     <span></span> INFORME INTELIGENTE DE MATRIZ RACI
-                    <span style="font-size: 12px; color: rgba(255,255,255,0.5);">${new Date().toLocaleString()}</span>
+                    <span style="font-size: 12px; color: rgba(255,255,255,0.5);">${new Date().toLocaleString('es-ES')}</span>
                 </div>
                 
                 <!-- ¿PARA QUÉ SIRVE LA MATRIZ RACI? -->
