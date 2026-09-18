@@ -123,7 +123,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-purple">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">02</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_partes')}</div>
@@ -163,7 +163,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-green">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">03</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_objetivos')}</div>
@@ -176,7 +176,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-orange">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">04</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_alcance')}</div>
@@ -188,7 +188,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-teal">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">05</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_presupuesto')}</div>
@@ -205,7 +205,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-yellow">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">06</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_condiciones')}</div>
@@ -219,7 +219,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-red">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">07</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_avales')}</div>
@@ -232,7 +232,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-indigo">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">08</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_aprobaciones')}</div>
@@ -247,7 +247,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-green">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">09</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_metodologia')}</div>
@@ -266,7 +266,7 @@ function renderizarActa() {
         </div>
         
         <div class="acta-section">
-            <div class="acta-heading acta-heading-red">
+            <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">10</span>
                 <div class="acta-heading-text">
                     <div class="acta-heading-title">${tApp('acta_riesgos')}</div>
