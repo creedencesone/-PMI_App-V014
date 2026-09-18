@@ -19,7 +19,7 @@ const manualTemasES = [
         contenido: [
             { tipo: 'texto', valor: 'El panel de cartera muestra todos los proyectos con sus indicadores clave: estado, presupuesto, fechas y progreso.' },
             { tipo: 'subtitulo', valor: 'Crear proyecto' },
-            { tipo: 'texto', valor: 'Haz clic en " Nuevo Proyecto" e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.' },
+            { tipo: 'texto', valor: 'Pulsa el botón + (icono "Nuevo Proyecto") en la cabecera de la cartera e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.' },
             { tipo: 'subtitulo', valor: 'Editar / Eliminar' },
             { tipo: 'texto', valor: 'Usa los botones  y  en cada tarjeta de proyecto. Solo los administradores pueden eliminar proyectos.' },
             { tipo: 'subtitulo', valor: 'Filtros y búsqueda' },
@@ -63,7 +63,7 @@ const manualTemasES = [
             { tipo: 'subtitulo', valor: 'Gráficos profesionales' },
             { tipo: 'texto', valor: 'Los gráficos de cashflow e informes usan Chart.js con estilo profesional: gradientes, cutout 55%, hoverOffset 16, borderRadius 6 y puntos con borde blanco. Los colores de texto se adaptan automáticamente al tema (claro/oscuro).' },
             { tipo: 'subtitulo', valor: 'Monedas' },
-            { tipo: 'texto', valor: 'Define la moneda base del proyecto y gestiona tipos de cambio para operaciones internacionales.' }
+            { tipo: 'texto', valor: 'La vista de Monedas es una pantalla única: cabecera con botones de icono para actualizar tasas (↻) y guardar (✓), fila de chips con el total de monedas, fuente, última actualización y moneda base, más una tabla de tasas con búsqueda y filtro por región. La sección "Avanzado" (plegable) incluye evolución histórica, precio de venta y condiciones de pago, proveedor de tasas, actualización automática y botones para probar conexión, exportar e importar CSV.' }
         ]
     },
     {
@@ -75,7 +75,7 @@ const manualTemasES = [
             { tipo: 'subtitulo', valor: 'Gestión de elementos Gantt' },
             { tipo: 'lista', items: [
                 'Cada elemento tiene: nombre, fecha inicio, duración, responsable, tipo (tarea/hito/entregable/EDT), dependencias y estado.',
-                'Agrega elementos con " Añadir". Edita y elimina con los botones correspondientes.',
+                'Agrega elementos con el botón + (icono "Nuevo elemento"). Edita y elimina con los botones correspondientes.',
                 'Las dependencias se arrastran entre elementos para establecer relaciones secuenciales.'
             ]},
             { tipo: 'subtitulo', valor: 'Duración en horas' },
@@ -169,7 +169,7 @@ const manualTemasES = [
             { tipo: 'subtitulo', valor: 'Cálculos EVM' },
             { tipo: 'texto', valor: 'El AC (Actual Cost) se calcula como costeTotal × % tiempo transcurrido (prorrateo temporal). EAC se calcula siempre como BAC / CPI. Los EDTs se filtran del peso para EV. La desviación del cronograma usa sumarDiasHabiles() en lugar de setDate + duración.' },
             { tipo: 'subtitulo', valor: 'Exportación a PDF' },
-            { tipo: 'texto', valor: 'Usa el botón " Exportar PDF" para descargar cualquier informe. Los gráficos Chart.js se capturan automáticamente como imágenes.' }
+            { tipo: 'texto', valor: 'Usa el botón con el icono de impresora para exportar el informe a PDF. Los gráficos Chart.js se capturan automáticamente como imágenes.' }
         ]
     },
     {
@@ -288,7 +288,7 @@ const manualTemasES = [
             { tipo: 'texto', valor: 'Genera una vista pública del proyecto en un archivo HTML autónomo que puede compartirse con stakeholders sin necesidad de autenticación.' },
             { tipo: 'subtitulo', valor: '¿Cómo funciona?' },
             { tipo: 'lista', items: [
-                'Haz clic en  Compartir en el panel de Salud del Proyecto.',
+                'Pulsa el botón con el icono de compartir en el panel de Salud del Proyecto.',
                 'Se descarga un archivo HTML con todos los KPIs, tareas y gráficos.',
                 'El archivo es autónomo: incluye Chart.js vía CDN y toda la información necesaria.',
                 'Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.'
@@ -319,11 +319,103 @@ const manualTemasES = [
         titulo: 'Personalización',
         contenido: [
             { tipo: 'subtitulo', valor: 'Tema (Claro / Oscuro)' },
-            { tipo: 'texto', valor: 'Usa el botón de tema en la cabecera para alternar entre modo claro  y oscuro . La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.' },
+            { tipo: 'texto', valor: 'Usa el botón de tema en la barra lateral para alternar entre modo claro y oscuro. La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.' },
             { tipo: 'subtitulo', valor: 'Idioma' },
-            { tipo: 'texto', valor: 'Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón  Cambiar idioma.' },
+            { tipo: 'texto', valor: 'Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón de idioma en la barra lateral.' },
             { tipo: 'subtitulo', valor: 'Asistente IA' },
-            { tipo: 'texto', valor: 'El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.' }
+            { tipo: 'texto', valor: 'El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.' },
+            { tipo: 'subtitulo', valor: 'Menú de usuario' },
+            { tipo: 'texto', valor: 'En la barra lateral, tu avatar con la inicial y tu nombre y rol abren el modal de perfil al hacer clic. La campana muestra las notificaciones y el icono de salida cierra la sesión.' }
+        ]
+    },
+    {
+        id: 'equipo',
+        icon: '',
+        titulo: 'Equipo',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Equipo gestiona los miembros del proyecto con su coste por hora, moneda y horas mensuales.' },
+            { tipo: 'subtitulo', valor: 'Añadir miembros' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un miembro del equipo. El icono de libro abre el catálogo de equipo para importar perfiles predefinidos.' }
+        ]
+    },
+    {
+        id: 'materiales',
+        icon: '',
+        titulo: 'Materiales',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Materiales registra los materiales del proyecto con proveedor, cantidad, coste, país de origen, INCOTERM, arancel y condiciones de pago.' },
+            { tipo: 'subtitulo', valor: 'Añadir y gestionar' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un material. El icono de libro importa desde el catálogo de materiales y el icono de actualizar recalcula los aranceles.' }
+        ]
+    },
+    {
+        id: 'servicios',
+        icon: '',
+        titulo: 'Servicios',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Servicios registra servicios contratados con proveedor, cantidad, coste, impuesto y mes de imputación.' },
+            { tipo: 'subtitulo', valor: 'Añadir servicios' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un servicio. El coste se integra automáticamente en el cashflow del proyecto.' }
+        ]
+    },
+    {
+        id: 'viajes',
+        icon: '',
+        titulo: 'Viajes',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Viajes gestiona los desplazamientos del proyecto con tarjetas de totales por categoría: vuelos, hoteles, comidas y traslados.' },
+            { tipo: 'subtitulo', valor: 'Registro de viajes' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para registrar un nuevo viaje con origen, destino, fechas y archivos adjuntos. El icono de exportar descarga el listado de viajes.' }
+        ]
+    },
+    {
+        id: 'logistica',
+        icon: '',
+        titulo: 'Logística',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Logística es un simulador 3D de cubicaje para planificar el transporte de mercancías por vía aérea, marítima o almacén.' },
+            { tipo: 'subtitulo', valor: 'Contenedores y exportación' },
+            { tipo: 'texto', valor: 'Usa "Añadir Otra Unidad" para crear contenedores y asigna materiales a cada bulto. Los iconos de la cabecera guardan y cargan el estado, y exportan a CSV o PDF.' }
+        ]
+    },
+    {
+        id: 'venta',
+        icon: '',
+        titulo: 'Venta y Hitos Financieros',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Venta define el precio de venta, la moneda y las condiciones de pago del proyecto.' },
+            { tipo: 'subtitulo', valor: 'Hitos financieros' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir hitos financieros de cobro. Los ingresos se distribuyen en el cashflow a partir de estos hitos.' }
+        ]
+    },
+    {
+        id: 'avales',
+        icon: '',
+        titulo: 'Avales y Garantías',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Avales y Garantías Bancarias registra los avales del proyecto.' },
+            { tipo: 'subtitulo', valor: 'Añadir avales' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un aval con su entidad, importe y fechas de vigencia.' }
+        ]
+    },
+    {
+        id: 'seguros',
+        icon: '',
+        titulo: 'Seguros y RC',
+        contenido: [
+            { tipo: 'texto', valor: 'El panel de Seguros y Responsabilidad Civil registra los seguros del proyecto: transporte, RC, obras, etc.' },
+            { tipo: 'subtitulo', valor: 'Añadir seguros' },
+            { tipo: 'texto', valor: 'Pulsa el botón + para añadir un seguro. El coste se refleja automáticamente en el cashflow del mes indicado.' }
+        ]
+    },
+    {
+        id: 'aranceles',
+        icon: '',
+        titulo: 'Aranceles y Costes Financieros',
+        contenido: [
+            { tipo: 'texto', valor: 'Dentro del análisis financiero se gestionan los aranceles por país, las tasas aduaneras y los costes financieros extra.' },
+            { tipo: 'subtitulo', valor: 'Configuración' },
+            { tipo: 'texto', valor: 'Usa el botón "Añadir" para crear aranceles por país, tasas aduaneras o costes financieros. El botón "Actualizar" recalcula los aranceles de todos los países.' }
         ]
     }
 ];
@@ -349,7 +441,16 @@ var _enTitles = {
     montecarlo: 'Monte Carlo Simulation',
     compartir: 'Share Dashboard',
     backend: 'PHP Backend',
-    personalizar: 'Customization'
+    personalizar: 'Customization',
+    equipo: 'Team',
+    materiales: 'Materials',
+    servicios: 'Services',
+    viajes: 'Travel',
+    logistica: 'Logistics',
+    venta: 'Sales and Financial Milestones',
+    avales: 'Guarantees',
+    seguros: 'Insurance and Liability',
+    aranceles: 'Tariffs and Financial Costs'
 };
 var _textMap = {
     "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "The PMI application is designed for comprehensive project management following the Project Management Institute standards (8th Edition). It allows you to manage the project portfolio, control costs, schedules, risks, stakeholders, and generate executive reports.",
@@ -413,7 +514,31 @@ var _textMap = {
     "La aplicación ahora es instalable como PWA. Al abrir en un navegador compatible, verás un aviso para \"Instalar\" la app. Esto permite acceso sin conexión y apariencia de aplicación nativa en móvil y escritorio.": "The application is now installable as a PWA. When opening in a compatible browser, you will see a prompt to \"Install\" the app. This allows offline access and a native app appearance on mobile and desktop.",
     "Usa el botón de tema en la cabecera para alternar entre modo claro  y oscuro . La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.": "Use the theme button in the header to toggle between light and dark mode. The preference is saved automatically. All charts and interface colors adapt to the selected theme.",
     "Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón  Cambiar idioma.": "Change the interface language between Spanish 🇪🇸, English 🇬🇧, French 🇫🇷, and German 🇩🇪 from the Change Language button.",
-    "El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.": "The AI button in the project sidebar opens an artificial intelligence assistant to help with project management."
+    "El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.": "The AI button in the project sidebar opens an artificial intelligence assistant to help with project management.",
+    "Pulsa el botón + (icono \"Nuevo Proyecto\") en la cabecera de la cartera e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.": "Press the + button (\"New Project\" icon) in the portfolio header and enter name, scope, dates, country, and base currency. The project is created with an automatic project charter.",
+    "Usa el botón con el icono de impresora para exportar el informe a PDF. Los gráficos Chart.js se capturan automáticamente como imágenes.": "Use the printer icon button to export the report to PDF. Chart.js charts are automatically captured as images.",
+    "La vista de Monedas es una pantalla única: cabecera con botones de icono para actualizar tasas (↻) y guardar (✓), fila de chips con el total de monedas, fuente, última actualización y moneda base, más una tabla de tasas con búsqueda y filtro por región. La sección \"Avanzado\" (plegable) incluye evolución histórica, precio de venta y condiciones de pago, proveedor de tasas, actualización automática y botones para probar conexión, exportar e importar CSV.": "The Currencies view is a single screen: header with icon buttons to refresh rates (↻) and save (✓), a chip row with total currencies, source, last update, and base currency, plus a rates table with search and region filter. The \"Advanced\" section (collapsible) includes historical evolution, sale price and payment terms, rates provider, automatic updates, and buttons to test connection, export, and import CSV.",
+    "Usa el botón de tema en la barra lateral para alternar entre modo claro y oscuro. La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.": "Use the theme button in the sidebar to toggle between light and dark mode. The preference is saved automatically. All charts and interface colors adapt to the selected theme.",
+    "Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón de idioma en la barra lateral.": "Change the interface language between Spanish 🇪🇸, English 🇬🇧, French 🇫🇷, and German 🇩🇪 from the language button in the sidebar.",
+    "En la barra lateral, tu avatar con la inicial y tu nombre y rol abren el modal de perfil al hacer clic. La campana muestra las notificaciones y el icono de salida cierra la sesión.": "In the sidebar, your avatar with the initial and your name and role open the profile modal when clicked. The bell shows notifications and the logout icon ends the session.",
+    "El panel de Equipo gestiona los miembros del proyecto con su coste por hora, moneda y horas mensuales.": "The Team panel manages project members with their hourly cost, currency, and monthly hours.",
+    "Pulsa el botón + para añadir un miembro del equipo. El icono de libro abre el catálogo de equipo para importar perfiles predefinidos.": "Press the + button to add a team member. The book icon opens the team catalog to import predefined profiles.",
+    "El panel de Materiales registra los materiales del proyecto con proveedor, cantidad, coste, país de origen, INCOTERM, arancel y condiciones de pago.": "The Materials panel records project materials with supplier, quantity, cost, country of origin, INCOTERM, tariff, and payment terms.",
+    "Pulsa el botón + para añadir un material. El icono de libro importa desde el catálogo de materiales y el icono de actualizar recalcula los aranceles.": "Press the + button to add a material. The book icon imports from the materials catalog and the refresh icon recalculates tariffs.",
+    "El panel de Servicios registra servicios contratados con proveedor, cantidad, coste, impuesto y mes de imputación.": "The Services panel records contracted services with supplier, quantity, cost, tax, and allocation month.",
+    "Pulsa el botón + para añadir un servicio. El coste se integra automáticamente en el cashflow del proyecto.": "Press the + button to add a service. The cost is automatically integrated into the project cashflow.",
+    "El panel de Viajes gestiona los desplazamientos del proyecto con tarjetas de totales por categoría: vuelos, hoteles, comidas y traslados.": "The Travel panel manages project trips with total cards by category: flights, hotels, meals, and transfers.",
+    "Pulsa el botón + para registrar un nuevo viaje con origen, destino, fechas y archivos adjuntos. El icono de exportar descarga el listado de viajes.": "Press the + button to register a new trip with origin, destination, dates, and attachments. The export icon downloads the travel list.",
+    "El panel de Logística es un simulador 3D de cubicaje para planificar el transporte de mercancías por vía aérea, marítima o almacén.": "The Logistics panel is a 3D stowage simulator to plan cargo transport by air, sea, or warehouse.",
+    "Usa \"Añadir Otra Unidad\" para crear contenedores y asigna materiales a cada bulto. Los iconos de la cabecera guardan y cargan el estado, y exportan a CSV o PDF.": "Use \"Add Another Unit\" to create containers and assign materials to each package. The header icons save and load the state, and export to CSV or PDF.",
+    "El panel de Venta define el precio de venta, la moneda y las condiciones de pago del proyecto.": "The Sales panel defines the project sale price, currency, and payment terms.",
+    "Pulsa el botón + para añadir hitos financieros de cobro. Los ingresos se distribuyen en el cashflow a partir de estos hitos.": "Press the + button to add financial collection milestones. Income is distributed in the cashflow based on these milestones.",
+    "El panel de Avales y Garantías Bancarias registra los avales del proyecto.": "The Bank Guarantees panel records project guarantees.",
+    "Pulsa el botón + para añadir un aval con su entidad, importe y fechas de vigencia.": "Press the + button to add a guarantee with its entity, amount, and validity dates.",
+    "El panel de Seguros y Responsabilidad Civil registra los seguros del proyecto: transporte, RC, obras, etc.": "The Insurance and Liability panel records project insurance: transport, liability, works, etc.",
+    "Pulsa el botón + para añadir un seguro. El coste se refleja automáticamente en el cashflow del mes indicado.": "Press the + button to add an insurance policy. The cost is automatically reflected in the cashflow of the indicated month.",
+    "Dentro del análisis financiero se gestionan los aranceles por país, las tasas aduaneras y los costes financieros extra.": "Within the financial analysis, country tariffs, customs duties, and extra financial costs are managed.",
+    "Usa el botón \"Añadir\" para crear aranceles por país, tasas aduaneras o costes financieros. El botón \"Actualizar\" recalcula los aranceles de todos los países.": "Use the \"Add\" button to create country tariffs, customs duties, or financial costs. The \"Update\" button recalculates tariffs for all countries."
 };
 
 var _listMap = {
@@ -470,7 +595,9 @@ var _listMap = {
     "Haz clic en  Compartir en el panel de Salud del Proyecto.": "Click Share in the Project Health panel.",
     "Se descarga un archivo HTML con todos los KPIs, tareas y gráficos.": "An HTML file is downloaded with all KPIs, tasks, and charts.",
     "El archivo es autónomo: incluye Chart.js vía CDN y toda la información necesaria.": "The file is standalone: it includes Chart.js via CDN and all necessary information.",
-    "Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.": "You can send it by email, host it on any static server, or open it locally."
+    "Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.": "You can send it by email, host it on any static server, or open it locally.",
+    "Agrega elementos con el botón + (icono \"Nuevo elemento\"). Edita y elimina con los botones correspondientes.": "Add elements with the + button (\"New element\" icon). Edit and delete with the corresponding buttons.",
+    "Pulsa el botón con el icono de compartir en el panel de Salud del Proyecto.": "Press the share icon button in the Project Health panel."
 };
 
 manualTemasEN.forEach(function(t) {
@@ -529,7 +656,16 @@ manualTemasEN.forEach(function(t) {
                 'PWA (Progressive Web App)': 'PWA (Progressive Web App)',
                 'Tema (Claro / Oscuro)': 'Theme (Light / Dark)',
                 'Idioma': 'Language',
-                'Asistente IA': 'AI Assistant'
+                'Asistente IA': 'AI Assistant',
+                'Menú de usuario': 'User menu',
+                'Añadir miembros': 'Add members',
+                'Añadir y gestionar': 'Add and manage',
+                'Añadir servicios': 'Add services',
+                'Registro de viajes': 'Travel log',
+                'Contenedores y exportación': 'Containers and export',
+                'Hitos financieros': 'Financial milestones',
+                'Añadir avales': 'Add guarantees',
+                'Añadir seguros': 'Add insurance'
             };
             if (map[c.valor]) c.valor = map[c.valor];
         }
@@ -563,7 +699,16 @@ var _frTitles = {
     montecarlo: 'Simulation Monte Carlo',
     compartir: 'Partager le Tableau de Bord',
     backend: 'Backend PHP',
-    personalizar: 'Personnalisation'
+    personalizar: 'Personnalisation',
+    equipo: 'Équipe',
+    materiales: 'Matériaux',
+    servicios: 'Services',
+    viajes: 'Voyages',
+    logistica: 'Logistique',
+    venta: 'Vente et Jalons Financiers',
+    avales: 'Cautions et Garanties',
+    seguros: 'Assurances et RC',
+    aranceles: 'Droits de Douane et Coûts Financiers'
 };
 var _frTextMap = {
     "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "L'application PMI est conçue pour la gestion intégrale de projets selon les normes du Project Management Institute (8e Édition). Elle permet de gérer le portefeuille de projets, contrôler les coûts, les calendriers, les risques, les parties prenantes et générer des rapports exécutifs.",
@@ -627,7 +772,31 @@ var _frTextMap = {
     "La aplicación ahora es instalable como PWA. Al abrir en un navegador compatible, verás un aviso para \"Instalar\" la app. Esto permite acceso sin conexión y apariencia de aplicación nativa en móvil y escritorio.": "L'application est désormais installable comme PWA. En ouvrant dans un navigateur compatible, vous verrez une invitation à \"Installer\" l'application. Cela permet un accès hors ligne et une apparence d'application native sur mobile et bureau.",
     "Usa el botón de tema en la cabecera para alternar entre modo claro  y oscuro . La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.": "Utilisez le bouton de thème dans l'en-tête pour basculer entre le mode clair et sombre. La préférence est sauvegardée automatiquement. Tous les graphiques et couleurs de l'interface s'adaptent au thème sélectionné.",
     "Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón  Cambiar idioma.": "Changez la langue de l'interface entre Espagnol 🇪🇸, Anglais 🇬🇧, Français 🇫🇷 et Allemand 🇩🇪 depuis le bouton Changer de langue.",
-    "El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.": "Le bouton IA dans la barre latérale du projet ouvre un assistant d'intelligence artificielle pour aider à la gestion du projet."
+    "El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.": "Le bouton IA dans la barre latérale du projet ouvre un assistant d'intelligence artificielle pour aider à la gestion du projet.",
+    "Pulsa el botón + (icono \"Nuevo Proyecto\") en la cabecera de la cartera e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.": "Appuyez sur le bouton + (icône \"Nouveau Projet\") dans l'en-tête du portefeuille et saisissez le nom, la portée, les dates, le pays et la devise de base. Le projet est créé avec une charte de projet automatique.",
+    "Usa el botón con el icono de impresora para exportar el informe a PDF. Los gráficos Chart.js se capturan automáticamente como imágenes.": "Utilisez le bouton avec l'icône d'imprimante pour exporter le rapport en PDF. Les graphiques Chart.js sont automatiquement capturés comme images.",
+    "La vista de Monedas es una pantalla única: cabecera con botones de icono para actualizar tasas (↻) y guardar (✓), fila de chips con el total de monedas, fuente, última actualización y moneda base, más una tabla de tasas con búsqueda y filtro por región. La sección \"Avanzado\" (plegable) incluye evolución histórica, precio de venta y condiciones de pago, proveedor de tasas, actualización automática y botones para probar conexión, exportar e importar CSV.": "La vue Devises est un écran unique : en-tête avec boutons d'icône pour actualiser les taux (↻) et enregistrer (✓), rangée de puces avec le total des devises, la source, la dernière mise à jour et la devise de base, plus un tableau des taux avec recherche et filtre par région. La section \"Avancé\" (repliable) inclut l'évolution historique, le prix de vente et les conditions de paiement, le fournisseur de taux, la mise à jour automatique et des boutons pour tester la connexion, exporter et importer CSV.",
+    "Usa el botón de tema en la barra lateral para alternar entre modo claro y oscuro. La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.": "Utilisez le bouton de thème dans la barre latérale pour basculer entre le mode clair et sombre. La préférence est sauvegardée automatiquement. Tous les graphiques et couleurs de l'interface s'adaptent au thème sélectionné.",
+    "Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón de idioma en la barra lateral.": "Changez la langue de l'interface entre Espagnol 🇪🇸, Anglais 🇬🇧, Français 🇫🇷 et Allemand 🇩🇪 depuis le bouton de langue dans la barre latérale.",
+    "En la barra lateral, tu avatar con la inicial y tu nombre y rol abren el modal de perfil al hacer clic. La campana muestra las notificaciones y el icono de salida cierra la sesión.": "Dans la barre latérale, votre avatar avec l'initiale et votre nom et rôle ouvrent le modal de profil au clic. La cloche affiche les notifications et l'icône de sortie ferme la session.",
+    "El panel de Equipo gestiona los miembros del proyecto con su coste por hora, moneda y horas mensuales.": "Le panneau Équipe gère les membres du projet avec leur coût horaire, leur devise et leurs heures mensuelles.",
+    "Pulsa el botón + para añadir un miembro del equipo. El icono de libro abre el catálogo de equipo para importar perfiles predefinidos.": "Appuyez sur le bouton + pour ajouter un membre de l'équipe. L'icône de livre ouvre le catalogue d'équipe pour importer des profils prédéfinis.",
+    "El panel de Materiales registra los materiales del proyecto con proveedor, cantidad, coste, país de origen, INCOTERM, arancel y condiciones de pago.": "Le panneau Matériaux enregistre les matériaux du projet avec fournisseur, quantité, coût, pays d'origine, INCOTERM, droit de douane et conditions de paiement.",
+    "Pulsa el botón + para añadir un material. El icono de libro importa desde el catálogo de materiales y el icono de actualizar recalcula los aranceles.": "Appuyez sur le bouton + pour ajouter un matériau. L'icône de livre importe depuis le catalogue de matériaux et l'icône d'actualisation recalcule les droits de douane.",
+    "El panel de Servicios registra servicios contratados con proveedor, cantidad, coste, impuesto y mes de imputación.": "Le panneau Services enregistre les services contractés avec fournisseur, quantité, coût, taxe et mois d'imputation.",
+    "Pulsa el botón + para añadir un servicio. El coste se integra automáticamente en el cashflow del proyecto.": "Appuyez sur le bouton + pour ajouter un service. Le coût est automatiquement intégré au cashflow du projet.",
+    "El panel de Viajes gestiona los desplazamientos del proyecto con tarjetas de totales por categoría: vuelos, hoteles, comidas y traslados.": "Le panneau Voyages gère les déplacements du projet avec des cartes de totaux par catégorie : vols, hôtels, repas et transferts.",
+    "Pulsa el botón + para registrar un nuevo viaje con origen, destino, fechas y archivos adjuntos. El icono de exportar descarga el listado de viajes.": "Appuyez sur le bouton + pour enregistrer un nouveau voyage avec origine, destination, dates et pièces jointes. L'icône d'exportation télécharge la liste des voyages.",
+    "El panel de Logística es un simulador 3D de cubicaje para planificar el transporte de mercancías por vía aérea, marítima o almacén.": "Le panneau Logistique est un simulateur 3D de cubage pour planifier le transport de marchandises par voie aérienne, maritime ou entrepôt.",
+    "Usa \"Añadir Otra Unidad\" para crear contenedores y asigna materiales a cada bulto. Los iconos de la cabecera guardan y cargan el estado, y exportan a CSV o PDF.": "Utilisez \"Ajouter une autre unité\" pour créer des conteneurs et assignez des matériaux à chaque colis. Les icônes de l'en-tête enregistrent et chargent l'état, et exportent en CSV ou PDF.",
+    "El panel de Venta define el precio de venta, la moneda y las condiciones de pago del proyecto.": "Le panneau Vente définit le prix de vente, la devise et les conditions de paiement du projet.",
+    "Pulsa el botón + para añadir hitos financieros de cobro. Los ingresos se distribuyen en el cashflow a partir de estos hitos.": "Appuyez sur le bouton + pour ajouter des jalons financiers de perception. Les revenus sont répartis dans le cashflow à partir de ces jalons.",
+    "El panel de Avales y Garantías Bancarias registra los avales del proyecto.": "Le panneau Cautions et Garanties Bancaires enregistre les cautions du projet.",
+    "Pulsa el botón + para añadir un aval con su entidad, importe y fechas de vigencia.": "Appuyez sur le bouton + pour ajouter une caution avec son entité, son montant et ses dates de validité.",
+    "El panel de Seguros y Responsabilidad Civil registra los seguros del proyecto: transporte, RC, obras, etc.": "Le panneau Assurances et Responsabilité Civile enregistre les assurances du projet : transport, RC, travaux, etc.",
+    "Pulsa el botón + para añadir un seguro. El coste se refleja automáticamente en el cashflow del mes indicado.": "Appuyez sur le bouton + pour ajouter une assurance. Le coût est automatiquement reflété dans le cashflow du mois indiqué.",
+    "Dentro del análisis financiero se gestionan los aranceles por país, las tasas aduaneras y los costes financieros extra.": "Dans l'analyse financière, les droits de douane par pays, les taxes douanières et les coûts financiers supplémentaires sont gérés.",
+    "Usa el botón \"Añadir\" para crear aranceles por país, tasas aduaneras o costes financieros. El botón \"Actualizar\" recalcula los aranceles de todos los países.": "Utilisez le bouton \"Ajouter\" pour créer des droits de douane par pays, des taxes douanières ou des coûts financiers. Le bouton \"Actualiser\" recalcule les droits de douane de tous les pays."
 };
 var _frListMap = {
     "CPI (Cost Performance Index): eficiencia del coste. >1 = por debajo del presupuesto.": "CPI (Cost Performance Index) : efficacité des coûts. >1 = sous le budget.",
@@ -683,7 +852,9 @@ var _frListMap = {
     "Haz clic en  Compartir en el panel de Salud del Proyecto.": "Cliquez sur Partager dans le panneau Santé du Projet.",
     "Se descarga un archivo HTML con todos los KPIs, tareas y gráficos.": "Un fichier HTML est téléchargé avec tous les KPI, tâches et graphiques.",
     "El archivo es autónomo: incluye Chart.js vía CDN y toda la información necesaria.": "Le fichier est autonome : il inclut Chart.js via CDN et toutes les informations nécessaires.",
-    "Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.": "Vous pouvez l'envoyer par email, l'héberger sur tout serveur statique ou l'ouvrir localement."
+    "Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.": "Vous pouvez l'envoyer par email, l'héberger sur tout serveur statique ou l'ouvrir localement.",
+    "Agrega elementos con el botón + (icono \"Nuevo elemento\"). Edita y elimina con los botones correspondientes.": "Ajoutez des éléments avec le bouton + (icône \"Nouvel élément\"). Modifiez et supprimez avec les boutons correspondants.",
+    "Pulsa el botón con el icono de compartir en el panel de Salud del Proyecto.": "Appuyez sur le bouton avec l'icône de partage dans le panneau Santé du Projet."
 };
 manualTemasFR.forEach(function(t) {
     if (_frTitles[t.id]) t.titulo = _frTitles[t.id];
@@ -737,7 +908,16 @@ manualTemasFR.forEach(function(t) {
                 'PWA (Progressive Web App)': 'PWA (Application Web Progressive)',
                 'Tema (Claro / Oscuro)': 'Thème (Clair / Sombre)',
                 'Idioma': 'Langue',
-                'Asistente IA': 'Assistant IA'
+                'Asistente IA': 'Assistant IA',
+                'Menú de usuario': 'Menu utilisateur',
+                'Añadir miembros': 'Ajouter des membres',
+                'Añadir y gestionar': 'Ajouter et gérer',
+                'Añadir servicios': 'Ajouter des services',
+                'Registro de viajes': 'Registre des voyages',
+                'Contenedores y exportación': 'Conteneurs et exportation',
+                'Hitos financieros': 'Jalons financiers',
+                'Añadir avales': 'Ajouter des cautions',
+                'Añadir seguros': 'Ajouter des assurances'
             };
             if (map[c.valor]) c.valor = map[c.valor];
         }
@@ -772,7 +952,16 @@ var _deTitles = {
     montecarlo: 'Monte-Carlo-Simulation',
     compartir: 'Dashboard teilen',
     backend: 'PHP-Backend',
-    personalizar: 'Anpassung'
+    personalizar: 'Anpassung',
+    equipo: 'Team',
+    materiales: 'Materialien',
+    servicios: 'Dienstleistungen',
+    viajes: 'Reisen',
+    logistica: 'Logistik',
+    venta: 'Verkauf und Finanzielle Meilensteine',
+    avales: 'Bürgschaften',
+    seguros: 'Versicherungen und Haftpflicht',
+    aranceles: 'Zollsätze und Finanzkosten'
 };
 var _deTextMap = {
     "La aplicación PMI está diseñada para la gestión integral de proyectos siguiendo los estándares del Project Management Institute (8ª Edición). Permite administrar la cartera de proyectos, controlar costes, cronogramas, riesgos, stakeholders y generar informes ejecutivos.": "Die PMI-Anwendung ist für das umfassende Projektmanagement nach den Standards des Project Management Institute (8. Auflage) konzipiert. Sie ermöglicht die Verwaltung des Projektportfolios, die Kontrolle von Kosten, Zeitplänen, Risiken, Interessengruppen und die Erstellung von Führungsberichten.",
@@ -836,7 +1025,31 @@ var _deTextMap = {
     "La aplicación ahora es instalable como PWA. Al abrir en un navegador compatible, verás un aviso para \"Instalar\" la app. Esto permite acceso sin conexión y apariencia de aplicación nativa en móvil y escritorio.": "Die Anwendung ist jetzt als PWA installierbar. Beim Öffnen in einem kompatiblen Browser sehen Sie eine Aufforderung, die App zu \"Installieren\". Dies ermöglicht Offline-Zugriff und ein natives App-Erscheinungsbild auf Mobilgeräten und Desktops.",
     "Usa el botón de tema en la cabecera para alternar entre modo claro  y oscuro . La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.": "Verwenden Sie die Design-Schaltfläche in der Kopfzeile, um zwischen hellem und dunklem Modus zu wechseln. Die Einstellung wird automatisch gespeichert. Alle Diagramme und Schnittstellenfarben passen sich dem ausgewählten Design an.",
     "Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón  Cambiar idioma.": "Ändern Sie die Benutzeroberflächensprache zwischen Spanisch 🇪🇸, Englisch 🇬🇧, Französisch 🇫🇷 und Deutsch 🇩🇪 über die Schaltfläche Sprache ändern.",
-    "El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.": "Die KI-Schaltfläche in der Projektseitenleiste öffnet einen KI-Assistenten zur Unterstützung bei der Projektverwaltung."
+    "El botón  IA en la barra lateral del proyecto abre un asistente de inteligencia artificial para ayudar con la gestión del proyecto.": "Die KI-Schaltfläche in der Projektseitenleiste öffnet einen KI-Assistenten zur Unterstützung bei der Projektverwaltung.",
+    "Pulsa el botón + (icono \"Nuevo Proyecto\") en la cabecera de la cartera e introduce nombre, alcance, fechas, país y moneda base. El proyecto se crea con un acta de inicio automática.": "Drücken Sie die +-Schaltfläche (Symbol \"Neues Projekt\") in der Kopfzeile des Portfolios und geben Sie Name, Umfang, Daten, Land und Basiswährung ein. Das Projekt wird mit einer automatischen Projektcharta erstellt.",
+    "Usa el botón con el icono de impresora para exportar el informe a PDF. Los gráficos Chart.js se capturan automáticamente como imágenes.": "Verwenden Sie die Schaltfläche mit dem Druckersymbol, um den Bericht als PDF zu exportieren. Chart.js-Diagramme werden automatisch als Bilder erfasst.",
+    "La vista de Monedas es una pantalla única: cabecera con botones de icono para actualizar tasas (↻) y guardar (✓), fila de chips con el total de monedas, fuente, última actualización y moneda base, más una tabla de tasas con búsqueda y filtro por región. La sección \"Avanzado\" (plegable) incluye evolución histórica, precio de venta y condiciones de pago, proveedor de tasas, actualización automática y botones para probar conexión, exportar e importar CSV.": "Die Währungsansicht ist ein einziger Bildschirm: Kopfzeile mit Symbolschaltflächen zum Aktualisieren der Kurse (↻) und Speichern (✓), eine Chip-Zeile mit der Gesamtzahl der Währungen, Quelle, letzter Aktualisierung und Basiswährung, plus eine Kurstabelle mit Suche und Regionsfilter. Der Abschnitt \"Erweitert\" (einklappbar) enthält historische Entwicklung, Verkaufspreis und Zahlungsbedingungen, Kursanbieter, automatische Aktualisierung und Schaltflächen zum Testen der Verbindung, Exportieren und Importieren von CSV.",
+    "Usa el botón de tema en la barra lateral para alternar entre modo claro y oscuro. La preferencia se guarda automáticamente. Todos los gráficos y colores de la interfaz se adaptan al tema seleccionado.": "Verwenden Sie die Design-Schaltfläche in der Seitenleiste, um zwischen hellem und dunklem Modus zu wechseln. Die Einstellung wird automatisch gespeichert. Alle Diagramme und Schnittstellenfarben passen sich dem ausgewählten Design an.",
+    "Cambia el idioma de la interfaz entre Español 🇪🇸, Inglés 🇬🇧, Francés 🇫🇷 y Alemán 🇩🇪 desde el botón de idioma en la barra lateral.": "Ändern Sie die Benutzeroberflächensprache zwischen Spanisch 🇪🇸, Englisch 🇬🇧, Französisch 🇫🇷 und Deutsch 🇩🇪 über die Sprachschaltfläche in der Seitenleiste.",
+    "En la barra lateral, tu avatar con la inicial y tu nombre y rol abren el modal de perfil al hacer clic. La campana muestra las notificaciones y el icono de salida cierra la sesión.": "In der Seitenleiste öffnen Ihr Avatar mit der Initiale sowie Ihr Name und Ihre Rolle beim Klicken das Profil-Modal. Die Glocke zeigt Benachrichtigungen und das Abmelde-Symbol beendet die Sitzung.",
+    "El panel de Equipo gestiona los miembros del proyecto con su coste por hora, moneda y horas mensuales.": "Das Team-Panel verwaltet die Projektmitglieder mit ihren Stundensätzen, der Währung und den monatlichen Stunden.",
+    "Pulsa el botón + para añadir un miembro del equipo. El icono de libro abre el catálogo de equipo para importar perfiles predefinidos.": "Drücken Sie die +-Schaltfläche, um ein Teammitglied hinzuzufügen. Das Buchsymbol öffnet den Teamkatalog zum Importieren vordefinierter Profile.",
+    "El panel de Materiales registra los materiales del proyecto con proveedor, cantidad, coste, país de origen, INCOTERM, arancel y condiciones de pago.": "Das Materialien-Panel erfasst die Projektmaterialien mit Lieferant, Menge, Kosten, Ursprungsland, INCOTERM, Zollsatz und Zahlungsbedingungen.",
+    "Pulsa el botón + para añadir un material. El icono de libro importa desde el catálogo de materiales y el icono de actualizar recalcula los aranceles.": "Drücken Sie die +-Schaltfläche, um ein Material hinzuzufügen. Das Buchsymbol importiert aus dem Materialkatalog und das Aktualisieren-Symbol berechnet die Zollsätze neu.",
+    "El panel de Servicios registra servicios contratados con proveedor, cantidad, coste, impuesto y mes de imputación.": "Das Dienstleistungen-Panel erfasst beauftragte Dienstleistungen mit Lieferant, Menge, Kosten, Steuer und Zuordnungsmonat.",
+    "Pulsa el botón + para añadir un servicio. El coste se integra automáticamente en el cashflow del proyecto.": "Drücken Sie die +-Schaltfläche, um eine Dienstleistung hinzuzufügen. Die Kosten werden automatisch in den Projekt-Cashflow integriert.",
+    "El panel de Viajes gestiona los desplazamientos del proyecto con tarjetas de totales por categoría: vuelos, hoteles, comidas y traslados.": "Das Reisen-Panel verwaltet die Projektfahrten mit Gesamtsummen-Karten nach Kategorie: Flüge, Hotels, Mahlzeiten und Transfers.",
+    "Pulsa el botón + para registrar un nuevo viaje con origen, destino, fechas y archivos adjuntos. El icono de exportar descarga el listado de viajes.": "Drücken Sie die +-Schaltfläche, um eine neue Reise mit Herkunft, Ziel, Daten und Anhängen zu erfassen. Das Export-Symbol lädt die Reisliste herunter.",
+    "El panel de Logística es un simulador 3D de cubicaje para planificar el transporte de mercancías por vía aérea, marítima o almacén.": "Das Logistik-Panel ist ein 3D-Stauraum-Simulator zur Planung des Warentransports per Luft, See oder Lager.",
+    "Usa \"Añadir Otra Unidad\" para crear contenedores y asigna materiales a cada bulto. Los iconos de la cabecera guardan y cargan el estado, y exportan a CSV o PDF.": "Verwenden Sie \"Weitere Einheit hinzufügen\", um Container zu erstellen, und weisen Sie jedem Paket Materialien zu. Die Kopfzeilen-Symbole speichern und laden den Zustand und exportieren als CSV oder PDF.",
+    "El panel de Venta define el precio de venta, la moneda y las condiciones de pago del proyecto.": "Das Verkauf-Panel definiert den Verkaufspreis, die Währung und die Zahlungsbedingungen des Projekts.",
+    "Pulsa el botón + para añadir hitos financieros de cobro. Los ingresos se distribuyen en el cashflow a partir de estos hitos.": "Drücken Sie die +-Schaltfläche, um finanzielle Zahlungsmeilensteine hinzuzufügen. Die Einnahmen werden im Cashflow auf Basis dieser Meilensteine verteilt.",
+    "El panel de Avales y Garantías Bancarias registra los avales del proyecto.": "Das Bürgschaften-Panel erfasst die Projektbürgschaften.",
+    "Pulsa el botón + para añadir un aval con su entidad, importe y fechas de vigencia.": "Drücken Sie die +-Schaltfläche, um eine Bürgschaft mit Institut, Betrag und Gültigkeitsdaten hinzuzufügen.",
+    "El panel de Seguros y Responsabilidad Civil registra los seguros del proyecto: transporte, RC, obras, etc.": "Das Versicherungen-Panel erfasst die Projektversicherungen: Transport, Haftpflicht, Bauarbeiten usw.",
+    "Pulsa el botón + para añadir un seguro. El coste se refleja automáticamente en el cashflow del mes indicado.": "Drücken Sie die +-Schaltfläche, um eine Versicherung hinzuzufügen. Die Kosten werden automatisch im Cashflow des angegebenen Monats berücksichtigt.",
+    "Dentro del análisis financiero se gestionan los aranceles por país, las tasas aduaneras y los costes financieros extra.": "Innerhalb der Finanzanalyse werden Zollsätze pro Land, Zollgebühren und zusätzliche Finanzkosten verwaltet.",
+    "Usa el botón \"Añadir\" para crear aranceles por país, tasas aduaneras o costes financieros. El botón \"Actualizar\" recalcula los aranceles de todos los países.": "Verwenden Sie die Schaltfläche \"Hinzufügen\", um Zollsätze pro Land, Zollgebühren oder Finanzkosten zu erstellen. Die Schaltfläche \"Aktualisieren\" berechnet die Zollsätze aller Länder neu."
 };
 var _deListMap = {
     "CPI (Cost Performance Index): eficiencia del coste. >1 = por debajo del presupuesto.": "CPI (Cost Performance Index): Kosteneffizienz. >1 = unter Budget.",
@@ -892,7 +1105,9 @@ var _deListMap = {
     "Haz clic en  Compartir en el panel de Salud del Proyecto.": "Klicken Sie im Projektstatus-Panel auf Teilen.",
     "Se descarga un archivo HTML con todos los KPIs, tareas y gráficos.": "Eine HTML-Datei mit allen KPIs, Aufgaben und Diagrammen wird heruntergeladen.",
     "El archivo es autónomo: incluye Chart.js vía CDN y toda la información necesaria.": "Die Datei ist eigenständig: sie enthält Chart.js via CDN und alle notwendigen Informationen.",
-    "Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.": "Sie können sie per E-Mail senden, auf einem statischen Server hosten oder lokal öffnen."
+    "Puedes enviarlo por email, alojarlo en cualquier servidor estático o abrirlo localmente.": "Sie können sie per E-Mail senden, auf einem statischen Server hosten oder lokal öffnen.",
+    "Agrega elementos con el botón + (icono \"Nuevo elemento\"). Edita y elimina con los botones correspondientes.": "Fügen Sie Elemente mit der +-Schaltfläche (Symbol \"Neues Element\") hinzu. Bearbeiten und löschen Sie mit den entsprechenden Schaltflächen.",
+    "Pulsa el botón con el icono de compartir en el panel de Salud del Proyecto.": "Drücken Sie die Schaltfläche mit dem Teilen-Symbol im Projektstatus-Panel."
 };
 manualTemasDE.forEach(function(t) {
     if (_deTitles[t.id]) t.titulo = _deTitles[t.id];
@@ -946,7 +1161,16 @@ manualTemasDE.forEach(function(t) {
                 'PWA (Progressive Web App)': 'PWA (Progressive Web App)',
                 'Tema (Claro / Oscuro)': 'Design (Hell / Dunkel)',
                 'Idioma': 'Sprache',
-                'Asistente IA': 'KI-Assistent'
+                'Asistente IA': 'KI-Assistent',
+                'Menú de usuario': 'Benutzermenü',
+                'Añadir miembros': 'Mitglieder hinzufügen',
+                'Añadir y gestionar': 'Hinzufügen und verwalten',
+                'Añadir servicios': 'Dienstleistungen hinzufügen',
+                'Registro de viajes': 'Reiseregister',
+                'Contenedores y exportación': 'Container und Export',
+                'Hitos financieros': 'Finanzielle Meilensteine',
+                'Añadir avales': 'Bürgschaften hinzufügen',
+                'Añadir seguros': 'Versicherungen hinzufügen'
             };
             if (map[c.valor]) c.valor = map[c.valor];
         }
