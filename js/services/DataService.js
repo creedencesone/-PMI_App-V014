@@ -552,6 +552,13 @@ const DataService = {
         const supabase = await _getSupabase();
         const { error } = await supabase.from('projects').delete().eq('id', id);
         if (error) throw error;
+        // [FIX resurreccion] tombstone: evitar que migrateLocalToBackend re-suba este proyecto
+        this._addToDeletedProjects(String(id));
+        // [FIX resurreccion] limpiar la vista local pmi_proyectos
+        try {
+            const list = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+            this._safeSetItem(this.STORAGE_KEY, JSON.stringify(list.filter(p => String(p.id) !== String(id))));
+        } catch (e) { console.warn('[DataService] no se pudo limpiar lista local tras borrar', e); }
         return { message: 'Project deleted' };
     },
 
@@ -1086,7 +1093,10 @@ const DataService = {
         if (!token) {
             throw new Error('Debes iniciar sesión en el servidor primero');
         }
-        const allProyectos = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+        const allProyectosOrig = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+        // [FIX resurreccion] excluir proyectos TOMBSTONE (marcados como eliminados): NO re-subir jamás
+        const tombstones = new Set((JSON.parse(localStorage.getItem(this._deletedProjectsKey) || '[]') || []).map(String));
+        const allProyectos = allProyectosOrig.filter(p => !tombstones.has(String(p.id)));
         if (allProyectos.length === 0) {
             return { migrated: 0, message: 'No hay proyectos para migrar' };
         }
