@@ -440,22 +440,26 @@ function renderizarSprintBacklog() {
     const todoContainer = document.getElementById('todoList');
     if (todoContainer) {
         todoContainer.innerHTML = todoHistorias.map(h => `
-            <div class="item-card" 
+            <div class="item-card agenda-lista-item" style="border-left-color: #FF3B30; cursor: grab;"
                  draggable="true" 
                  ondragstart="dragStart(event, ${h.id})" 
                  ondragend="dragEnd(event)"
                  onclick="avanzarHistoria(${h.id})"
                  title="Click para mover a En Progreso"
                  data-id="${h.id}">
-                <div>
-                    <strong>[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
-                    <div style="font-size: 10px; color: ${h.prioridad === 'Alta' ? '#FF3B30' : (h.prioridad === 'Media' ? '#FF8C00' : '#00A859')}">
-                        ${h.prioridad} | ${formatearFechaEspa(h.fechaCreacion?.split('T')[0])}
-                    </div>
+                <div class="agenda-lista-acciones-left">
+                    <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); editarHistoria(${h.id})" title="Editar historia" aria-label="Editar historia"><i data-feather="edit-2"></i></button>
+                    <button class="btn btn-danger btn-xs" onclick="event.stopPropagation(); eliminarHistoria(${h.id})" title="Eliminar historia" aria-label="Eliminar historia"><i data-feather="trash-2"></i></button>
                 </div>
-                <div>
-                    <span class="edit-btn" onclick="event.stopPropagation(); editarHistoria(${h.id})"></span>
-                    <span class="delete-btn" onclick="event.stopPropagation(); eliminarHistoria(${h.id})"></span>
+                <div class="agenda-lista-content">
+                    <div class="agenda-lista-titulo-row">
+                        <span class="agenda-lista-cat" style="background: ${h.prioridad === 'Alta' ? '#FF3B30' : (h.prioridad === 'Media' ? '#FF8C00' : '#00A859')}">${h.prioridad}</span>
+                        <strong class="agenda-lista-titulo">[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="badge-pendiente">Pendiente</span>
+                        <span style="font-size: 11px; color: var(--text-muted);">${formatearFechaEspa(h.fechaCreacion?.split('T')[0])}</span>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -469,20 +473,25 @@ function renderizarSprintBacklog() {
     const progressContainer = document.getElementById('progressList');
     if (progressContainer) {
         progressContainer.innerHTML = progressHistorias.map(h => `
-            <div class="item-card" 
+            <div class="item-card agenda-lista-item" style="border-left-color: #FF8C00; cursor: grab;"
                  draggable="true" 
                  ondragstart="dragStart(event, ${h.id})" 
                  ondragend="dragEnd(event)"
                  onclick="avanzarHistoria(${h.id})"
                  title="Click para mover a Completado"
                  data-id="${h.id}">
-                <div>
-                    <strong>[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
-                    <div style="font-size: 10px; color: #FF8C00;">En progreso</div>
+                <div class="agenda-lista-acciones-left">
+                    <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); editarHistoria(${h.id})" title="Editar historia" aria-label="Editar historia"><i data-feather="edit-2"></i></button>
+                    <button class="btn btn-danger btn-xs" onclick="event.stopPropagation(); eliminarHistoria(${h.id})" title="Eliminar historia" aria-label="Eliminar historia"><i data-feather="trash-2"></i></button>
                 </div>
-                <div>
-                    <span class="edit-btn" onclick="event.stopPropagation(); editarHistoria(${h.id})"></span>
-                    <span class="delete-btn" onclick="event.stopPropagation(); eliminarHistoria(${h.id})"></span>
+                <div class="agenda-lista-content">
+                    <div class="agenda-lista-titulo-row">
+                        <span class="agenda-lista-cat" style="background: ${h.prioridad === 'Alta' ? '#FF3B30' : (h.prioridad === 'Media' ? '#FF8C00' : '#00A859')}">${h.prioridad}</span>
+                        <strong class="agenda-lista-titulo">[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="badge-progreso">En progreso</span>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -496,17 +505,22 @@ function renderizarSprintBacklog() {
     const doneContainer = document.getElementById('doneList');
     if (doneContainer) {
         doneContainer.innerHTML = doneHistorias.map(h => `
-            <div class="item-card" 
+            <div class="item-card agenda-lista-item" style="border-left-color: #00A859;"
                  onclick="retrocederHistoria(${h.id})"
                  title="Click para reabrir"
                  data-id="${h.id}">
-                <div>
-                    <strong>[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
-                    <div style="font-size: 10px; color: #00A859;">Completado</div>
+                <div class="agenda-lista-acciones-left">
+                    <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation(); editarHistoria(${h.id})" title="Editar historia" aria-label="Editar historia"><i data-feather="edit-2"></i></button>
+                    <button class="btn btn-danger btn-xs" onclick="event.stopPropagation(); eliminarHistoria(${h.id})" title="Eliminar historia" aria-label="Eliminar historia"><i data-feather="trash-2"></i></button>
                 </div>
-                <div>
-                    <span class="edit-btn" onclick="event.stopPropagation(); editarHistoria(${h.id})"></span>
-                    <span class="delete-btn" onclick="event.stopPropagation(); eliminarHistoria(${h.id})"></span>
+                <div class="agenda-lista-content">
+                    <div class="agenda-lista-titulo-row">
+                        <span class="agenda-lista-cat" style="background: ${h.prioridad === 'Alta' ? '#FF3B30' : (h.prioridad === 'Media' ? '#FF8C00' : '#00A859')}">${h.prioridad}</span>
+                        <strong class="agenda-lista-titulo">[${h.puntos} pts] ${escapeHtml(h.titulo)}</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="badge-completado">Completado</span>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -514,6 +528,9 @@ function renderizarSprintBacklog() {
         doneContainer.ondragover = null;
         doneContainer.ondrop = null;
     }
+    
+    // Reemplazar iconos feather (patrón de las vistas modernas)
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 // Variables globales para drag & drop
