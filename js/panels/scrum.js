@@ -740,8 +740,8 @@ function abrirModalHistoria() {
             </div>
             
             <div class="u-flex-gap-12 u-mt-20">
-                <button class="btn btn-secondary u-flex-1" onclick="cerrarModalGeneric()">Cancelar</button>
-                <button class="btn btn-primary u-flex-1" onclick="guardarHistoria()">Guardar Historia</button>
+                <button class="btn btn-secondary u-flex-1" onclick="cerrarModalGeneric()"><i data-feather="x"></i> Cancelar</button>
+                <button class="btn btn-primary u-flex-1" onclick="guardarHistoria()"><i data-feather="save"></i> Guardar Historia</button>
             </div>
         </div>
     `;
@@ -1012,7 +1012,7 @@ function editarHistoria(id) {
                 </small>
             </div>
             
-            <button class="btn btn-primary" onclick="actualizarHistoria()">Actualizar</button>
+                <button class="btn btn-primary" onclick="actualizarHistoria()"><i data-feather="save"></i> Actualizar</button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -1193,7 +1193,7 @@ function iniciarSprint() {
                 <p> Puntos totales seleccionados: <span id="puntosSeleccionados">0</span></p>
                 <p> Coste planificado estimado: <span id="costePlanificadoSeleccionado">0 €</span></p>
             </div>
-            <button class="btn btn-primary" onclick="confirmarInicioSprint()">Iniciar Sprint</button>
+            <button class="btn btn-primary" onclick="confirmarInicioSprint()"><i data-feather="play"></i> Iniciar Sprint</button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -1498,7 +1498,7 @@ function renderizarBurndown() {
                 <td style="background: rgba(0,168,89,0.15);">
                     <input type="number" id="puntosDia_${idx}" value="${r.puntosCompletadosHoy || 0}" min="0" style="width: 80px; background: rgba(255,255,255,0.1); border-radius: 6px; color: ${document.documentElement.getAttribute('data-theme') === 'light' ? '#1a1a2e' : 'white'};">
                  </td>
-                <td><button class="btn btn-secondary btn-small" onclick="guardarAvanceDia(${idx})">Guardar</button></td>
+                <td><button class="btn btn-secondary btn-small" onclick="guardarAvanceDia(${idx})"><i data-feather="save"></i> Guardar</button></td>
             </tr>
         `).join('');
     }
@@ -1790,7 +1790,7 @@ function renderizarRetrospectives() {
                 <div class="info-card">
                     <div class="u-flex-jc-sb">
                         <h4> ${escapeHtml(r.sprintNombre || 'Retrospectiva')}</h4>
-                        <span class="delete-btn" onclick="eliminarRetrospectiva(${r.id})"></span>
+                        <button class="btn btn-danger btn-xs" onclick="eliminarRetrospectiva(${r.id})" title="Eliminar retrospectiva" aria-label="Eliminar retrospectiva"><i data-feather="trash-2"></i></button>
                     </div>
                     <div class="details u-mt-8">
                         <div><strong> Fecha:</strong> ${formatearFechaEspa(r.fecha)}</div>
@@ -1813,6 +1813,7 @@ function renderizarRetrospectives() {
                     <div style="margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.4);"> Valoración del sprint: ${r.valoracion || '-'}/5</div>
                 </div>
             `).join('');
+            if (typeof feather !== 'undefined') feather.replace();
         }
     }
 }
@@ -1856,7 +1857,7 @@ function abrirModalRetrospectiva() {
                 <input type="range" id="retroValoracion" min="1" max="5" step="0.5" value="3.5" oninput="document.getElementById('valoracionPreview').innerText=this.value">
                 <div class="u-text-center"><span id="valoracionPreview">3.5</span> / 5.0</div>
             </div>
-            <button class="btn btn-primary" onclick="guardarRetrospectiva()">Guardar Retrospectiva</button>
+                <button class="btn btn-primary" onclick="guardarRetrospectiva()"><i data-feather="save"></i> Guardar Retrospectiva</button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -2526,12 +2527,13 @@ function renderizarListadoSprints() {
             <td>${s.velocidadMostrar}</td>
             <td class="${eficiencia >= 80 ? 'cashflow-positive' : (eficiencia >= 60 ? '' : 'cashflow-negative')}">${eficiencia}%</td>
             <td>
-                ${!s.esActivo ? `<button class="edit-btn" onclick="editarSprint(${s.id})"> Editar</button>` : ''}
-                ${!s.esActivo ? `<button class="delete-btn" onclick="eliminarSprint(${s.id})"> Eliminar</button>` : '<span style="color: rgba(255,255,255,0.3);">No editable</span>'}
-                <button class="btn btn-secondary btn-small" onclick="verDetalleSprint(${s.id})"> Ver</button>
+                ${!s.esActivo ? `<button class="btn btn-ghost btn-xs" onclick="editarSprint(${s.id})" title="Editar sprint" aria-label="Editar sprint"><i data-feather="edit-2"></i></button>` : ''}
+                ${!s.esActivo ? `<button class="btn btn-danger btn-xs" onclick="eliminarSprint(${s.id})" title="Eliminar sprint" aria-label="Eliminar sprint"><i data-feather="trash-2"></i></button>` : '<span style="color: rgba(255,255,255,0.3);">No editable</span>'}
+                <button class="btn btn-ghost btn-xs" onclick="verDetalleSprint(${s.id})" title="Ver detalle del sprint" aria-label="Ver detalle del sprint"><i data-feather="eye"></i></button>
             </td>
         </tr>`;
     }).join('');
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 function editarSprint(id) {
@@ -2575,7 +2577,7 @@ function editarSprint(id) {
             <div class="info-card-modal">
                 <p> Modificar los puntos afectará la velocidad histórica y las métricas ágiles.</p>
             </div>
-            <button class="btn btn-primary" onclick="guardarEdicionSprint()">Guardar Cambios</button>
+            <button class="btn btn-primary" onclick="guardarEdicionSprint()"><i data-feather="save"></i> Guardar Cambios</button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -2692,7 +2694,7 @@ function verDetalleSprint(id) {
             </div>
             ` : '<div class="info-card"><p class="u-color-muted">No hay retrospectiva registrada para este sprint.</p></div>'}
             
-            <button class="btn btn-primary u-mt-16" onclick="cerrarModalGeneric()">Cerrar</button>
+            <button class="btn btn-primary u-mt-16" onclick="cerrarModalGeneric()"><i data-feather="x"></i> Cerrar</button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
