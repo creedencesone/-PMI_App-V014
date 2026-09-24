@@ -746,6 +746,7 @@ function abrirModalHistoria() {
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+    if (typeof feather !== 'undefined') feather.replace();
     document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
 }
 
@@ -1016,6 +1017,7 @@ function editarHistoria(id) {
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 function actualizarHistoria() {
@@ -1197,6 +1199,7 @@ function iniciarSprint() {
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+    if (typeof feather !== 'undefined') feather.replace();
     
     setTimeout(() => {
         document.querySelectorAll('.historia-checkbox').forEach(cb => {
@@ -1861,6 +1864,7 @@ function abrirModalRetrospectiva() {
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 function guardarRetrospectiva() {
@@ -2581,6 +2585,7 @@ function editarSprint(id) {
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 function guardarEdicionSprint() {
@@ -2698,6 +2703,7 @@ function verDetalleSprint(id) {
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
+    if (typeof feather !== 'undefined') feather.replace();
 }
 
 function exportarSprints() {
