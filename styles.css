@@ -964,6 +964,10 @@ body[data-theme="light"] .logo img.logo-light {
         .btn-icon-only.btn-small { width: 30px; height: 30px; }
         .btn-icon-only svg { width: 18px; height: 18px; }
         .btn-icon-only.btn-small svg { width: 15px; height: 15px; }
+        .btn-ghost { background: transparent; border: none; color: rgba(255, 255, 255, 0.8); }
+        .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+        [data-theme="light"] .btn-ghost { color: rgba(31, 41, 55, 0.8); }
+        [data-theme="light"] .btn-ghost:hover { background: rgba(37, 99, 235, 0.06); }
 
         .btn-tab {
             background: none;
