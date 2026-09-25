@@ -1873,9 +1873,9 @@
 <div id="panelSprintBurndown" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="help-circle" class="nav-feather"></i> Sprint Burndown Chart</span>
-        <div>
-            <button class="btn btn-primary btn-small" onclick="actualizarBurndown()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
-            <button class="btn btn-secondary btn-small" onclick="exportarBurndown()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="actualizarBurndown()" title="Actualizar burndown" aria-label="Actualizar burndown"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <button class="panel-add-btn" onclick="exportarBurndown()" title="Exportar burndown" aria-label="Exportar burndown"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
 
@@ -1901,9 +1901,9 @@
 <div id="panelVelocityTracking" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="zap-off" class="nav-feather"></i> Velocity Tracking - Velocidad del Equipo</span>
-        <div>
-            <button class="btn btn-primary btn-small" onclick="calcularVelocidadPromedio()">⟳ Calcular Velocidad</button>
-            <button class="btn btn-secondary btn-small" onclick="exportarVelocity()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="calcularVelocidadPromedio()" title="Calcular velocidad" aria-label="Calcular velocidad"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></button>
+            <button class="panel-add-btn" onclick="exportarVelocity()" title="Exportar velocity" aria-label="Exportar velocity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
 
@@ -1952,7 +1952,9 @@
 <div id="panelRetrospectives" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="refresh-cw" class="nav-feather"></i> Sprint Retrospectives</span>
-        <button class="btn btn-primary btn-small" onclick="abrirModalRetrospectiva()"><i data-feather="help-circle" class="nav-feather"></i> Nueva Retrospectiva</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="abrirModalRetrospectiva()" title="Nueva Retrospectiva" aria-label="Nueva Retrospectiva"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        </div>
     </div>
 
     <!-- Resumen de retrospectivas -->
@@ -1971,9 +1973,9 @@
 <div id="panelAgileMetrics" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="trending-up" class="nav-feather"></i> Agile Metrics - Cuadro de Mando Ágil</span>
-        <div>
-            <button class="btn btn-success btn-small" onclick="actualizarAgileMetrics()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
-            <button class="btn btn-secondary btn-small" onclick="exportarAgileMetrics()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="actualizarAgileMetrics()" title="Actualizar métricas ágiles" aria-label="Actualizar métricas ágiles"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <button class="panel-add-btn" onclick="exportarAgileMetrics()" title="Exportar métricas ágiles" aria-label="Exportar métricas ágiles"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
 
@@ -2021,9 +2023,9 @@
 <div id="panelAgileCostControl" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="dollar-sign" class="nav-feather"></i> Control de Gastos - Gestión Ágil</span>
-        <div>
-            <button class="btn btn-success btn-small" onclick="actualizarCostesSprint()"><i data-feather="refresh-cw" class="nav-feather"></i> Actualizar</button>
-            <button class="btn btn-primary btn-small" onclick="exportarCostesAgile()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="actualizarCostesSprint()" title="Actualizar costes" aria-label="Actualizar costes"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <button class="panel-add-btn" onclick="exportarCostesAgile()" title="Exportar costes" aria-label="Exportar costes"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
     
@@ -2160,9 +2162,9 @@
 <div id="panelSprintList" class="panel hidden">
     <div class="panel-title">
         <span><i data-feather="entries" class="nav-feather"></i> Listado y Gestión de Sprints</span>
-        <div>
-            <button class="btn btn-success btn-small" onclick="renderizarListadoSprints()"><i data-feather="refresh-cw" class="nav-feather"></i> Refrescar</button>
-            <button class="btn btn-secondary btn-small" onclick="exportarSprints()"><i data-feather="download-cloud" class="nav-feather"></i> Exportar</button>
+        <div class="panel-title-actions">
+            <button class="panel-add-btn" onclick="renderizarListadoSprints()" title="Refrescar listado" aria-label="Refrescar listado"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <button class="panel-add-btn" onclick="exportarSprints()" title="Exportar sprints" aria-label="Exportar sprints"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
 
