@@ -1,4 +1,4 @@
-const CACHE = 'pmi-mind-v21';
+const CACHE = 'pmi-mind-v22';
 const PRECACHE_URLS = [
     '/',
     '/index.html',
@@ -6,6 +6,7 @@ const PRECACHE_URLS = [
     '/proyecto.html',
     '/styles.css',
     '/auth.js',
+    '/js/vendor/feather.min.js',
     '/js/services/DataService.js',
     '/js/config-global.js?v=20260917a',
     '/js/panels/resumen-procesos.js?v=20260917a',
@@ -15,7 +16,7 @@ const PRECACHE_URLS = [
     '/js/panels/agenda.js',
     '/js/panels/acta-roles.js?v=20260916h',
     '/js/panels/edt-panel.js?v=20260916h',
-    '/js/panels/scrum.js?v=20260924a',
+    '/js/panels/scrum.js?v=20260925a',
     '/js/panels/navegacion-auth.js?v=20260916h',
     '/js/panels/gantt.js?v=20260916i',
     '/manifest.json',
