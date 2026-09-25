@@ -960,6 +960,10 @@ body[data-theme="light"] .logo img.logo-light {
         .btn-help { background: rgba(66, 165, 245, 0.15); color: #42A5F5; border: 0.5px solid rgba(66, 165, 245, 0.3); }
         .btn-help:hover { background: rgba(66, 165, 245, 0.25); }
         .btn-small { padding: 6px 14px; font-size: 11px; }
+        .btn-icon-only { width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon-only.btn-small { width: 30px; height: 30px; }
+        .btn-icon-only svg { width: 18px; height: 18px; }
+        .btn-icon-only.btn-small svg { width: 15px; height: 15px; }
 
         .btn-tab {
             background: none;

@@ -739,9 +739,9 @@ function abrirModalHistoria() {
                 Coste estimado = Días estimados × Horas/día × Coste/hora del recurso</small>
             </div>
             
-            <div class="u-flex-gap-12 u-mt-20">
-                <button class="btn btn-secondary u-flex-1" onclick="cerrarModalGeneric()"><i data-feather="x"></i> Cancelar</button>
-                <button class="btn btn-primary u-flex-1" onclick="guardarHistoria()"><i data-feather="save"></i> Guardar Historia</button>
+            <div class="u-flex-gap-12 u-mt-20" style="justify-content: flex-end;">
+                <button class="btn btn-secondary btn-icon-only" onclick="cerrarModalGeneric()" title="Cancelar" aria-label="Cancelar"><i data-feather="x"></i></button>
+                <button class="btn btn-primary btn-icon-only" onclick="guardarHistoria()" title="Guardar Historia" aria-label="Guardar Historia"><i data-feather="save"></i></button>
             </div>
         </div>
     `;
@@ -1013,7 +1013,7 @@ function editarHistoria(id) {
                 </small>
             </div>
             
-                <button class="btn btn-primary" onclick="actualizarHistoria()"><i data-feather="save"></i> Actualizar</button>
+                <button class="btn btn-primary btn-icon-only" onclick="actualizarHistoria()" title="Actualizar Historia" aria-label="Actualizar Historia"><i data-feather="save"></i></button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -1195,7 +1195,7 @@ function iniciarSprint() {
                 <p> Puntos totales seleccionados: <span id="puntosSeleccionados">0</span></p>
                 <p> Coste planificado estimado: <span id="costePlanificadoSeleccionado">0 €</span></p>
             </div>
-            <button class="btn btn-primary" onclick="confirmarInicioSprint()"><i data-feather="play"></i> Iniciar Sprint</button>
+            <button class="btn btn-primary btn-icon-only" onclick="confirmarInicioSprint()" title="Iniciar Sprint" aria-label="Iniciar Sprint"><i data-feather="play"></i></button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -1501,7 +1501,7 @@ function renderizarBurndown() {
                 <td style="background: rgba(0,168,89,0.15);">
                     <input type="number" id="puntosDia_${idx}" value="${r.puntosCompletadosHoy || 0}" min="0" style="width: 80px; background: rgba(255,255,255,0.1); border-radius: 6px; color: ${document.documentElement.getAttribute('data-theme') === 'light' ? '#1a1a2e' : 'white'};">
                  </td>
-                <td><button class="btn btn-secondary btn-small" onclick="guardarAvanceDia(${idx})"><i data-feather="save"></i> Guardar</button></td>
+                <td><button class="btn btn-secondary btn-small btn-icon-only" onclick="guardarAvanceDia(${idx})" title="Guardar avance" aria-label="Guardar avance del día"><i data-feather="save"></i></button></td>
             </tr>
         `).join('');
     }
@@ -1860,7 +1860,7 @@ function abrirModalRetrospectiva() {
                 <input type="range" id="retroValoracion" min="1" max="5" step="0.5" value="3.5" oninput="document.getElementById('valoracionPreview').innerText=this.value">
                 <div class="u-text-center"><span id="valoracionPreview">3.5</span> / 5.0</div>
             </div>
-                <button class="btn btn-primary" onclick="guardarRetrospectiva()"><i data-feather="save"></i> Guardar Retrospectiva</button>
+                <button class="btn btn-primary btn-icon-only" onclick="guardarRetrospectiva()" title="Guardar Retrospectiva" aria-label="Guardar Retrospectiva"><i data-feather="save"></i></button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -2581,7 +2581,7 @@ function editarSprint(id) {
             <div class="info-card-modal">
                 <p> Modificar los puntos afectará la velocidad histórica y las métricas ágiles.</p>
             </div>
-            <button class="btn btn-primary" onclick="guardarEdicionSprint()"><i data-feather="save"></i> Guardar Cambios</button>
+            <button class="btn btn-primary btn-icon-only" onclick="guardarEdicionSprint()" title="Guardar Cambios" aria-label="Guardar Cambios"><i data-feather="save"></i></button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
@@ -2699,7 +2699,7 @@ function verDetalleSprint(id) {
             </div>
             ` : '<div class="info-card"><p class="u-color-muted">No hay retrospectiva registrada para este sprint.</p></div>'}
             
-            <button class="btn btn-primary u-mt-16" onclick="cerrarModalGeneric()"><i data-feather="x"></i> Cerrar</button>
+            <button class="btn btn-primary btn-icon-only u-mt-16" onclick="cerrarModalGeneric()" title="Cerrar" aria-label="Cerrar"><i data-feather="x"></i></button>
         </div>
     `;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
