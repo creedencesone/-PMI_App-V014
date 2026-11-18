@@ -26,10 +26,10 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
         this.meshResaltadoContorno = null;
         this.raycaster = null;
         this.mouse = null;
-        
+
         // --- Paleta de colores ---
         this.coloresPaleta = [0x2980b9, 0x27ae60, 0xe67e22, 0x8e44ad, 0xf1c40f, 0x16a085, 0xe74c3c, 0x3498db, 0x2c3e50, 0x1abc9c];
-        
+
         // --- Catálogos de unidades ---
         this.catalogosUnidades = {
             AEREO: [
@@ -59,7 +59,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
                 { texto: "Almacén Grande (20×10×6 m)", val: "20.00|10.00|6.00|999999|Almacén G" }
             ]
         };
-        
+
         // --- Tipos de carga ---
         this.tiposCarga = {
             caja: { nombre: 'Caja', largo: 1.20, ancho: 0.80, alto: 1.00 },
@@ -70,7 +70,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
             tubo: { nombre: 'Tubo', largo: 3.00, ancho: 0.30, alto: 0.30 },
             personalizado: { nombre: 'Personalizado', largo: 1.00, ancho: 0.80, alto: 0.60 }
         };
-        
+
         // --- Países completo (todos los UN reconocidos) ---
         this.paisesCatalogo = {
             'AF': { nombre: 'Afganistán', continente: 'Asia', moneda: 'AFN', arancelBase: 10 },
@@ -268,7 +268,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
             'ZW': { nombre: 'Zimbabue', continente: 'África', moneda: 'ZWL', arancelBase: 15 },
             'XK': { nombre: 'Kosovo', continente: 'Europa', moneda: 'EUR', arancelBase: 5 }
         };
-        
+
         // --- Bind de métodos ---
         this.init = this.init.bind(this);
         this.cambiarModalidad = this.cambiarModalidad.bind(this);
@@ -306,13 +306,13 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
     // ============================================================
     // INICIALIZACIÓN PRINCIPAL
     // ============================================================
-    
+
     init() {
         if (this.inicializado) return;
         this.inicializado = true;
-        
+
         console.log(" Inicializando simulador 3D...");
-        
+
         if (typeof THREE === 'undefined') {
             console.error(" Three.js no está disponible");
             const container = document.getElementById('canvas3d-container');
@@ -328,7 +328,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
             }
             return;
         }
-        
+
         try {
             this.cargarPaisesEnSelectores();
             this.cargarMaterialesEnSelector();
@@ -357,13 +357,13 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
             if (this.listaContenedores.length === 0) {
                 this.agregarContenedor();
             }
-            
+
             document.getElementById('logIncoterm')?.addEventListener('change', () => this.actualizarCostos());
             document.getElementById('logPaisOrigen')?.addEventListener('change', () => this.actualizarCostos());
             document.getElementById('logPaisDestino')?.addEventListener('change', () => this.actualizarCostos());
             document.getElementById('logValorMercancia')?.addEventListener('input', () => this.actualizarCostos());
             document.getElementById('logTipoCarga')?.addEventListener('change', () => this.cargarTipoPredefinido());
-            
+
             console.log(" Simulador 3D listo");
         } catch (e) {
             console.error(" Error al inicializar simulador 3D:", e);
@@ -375,32 +375,32 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
     // ============================================================
     // INICIALIZACIÓN 3D
     // ============================================================
-    
+
     init3D() {
     const contenedorVisor = document.getElementById('canvas3d-container');
     if (!contenedorVisor) {
         console.error(" No se encuentra el contenedor 3D");
         return;
     }
-    
+
     //  FORZAR TAMAÑO COMPLETO
     contenedorVisor.style.width = '100%';
     contenedorVisor.style.height = '100%';
     contenedorVisor.style.minHeight = '500px';
     contenedorVisor.style.position = 'relative';
     contenedorVisor.style.overflow = 'hidden';
-    
+
     // Limpiar contenedor
     while (contenedorVisor.firstChild) {
         contenedorVisor.removeChild(contenedorVisor.firstChild);
     }
-    
+
     // Obtener dimensiones REALES del contenedor
     const w = contenedorVisor.clientWidth || 500;
     const h = contenedorVisor.clientHeight || 450;
-    
+
     console.log(` Dimensiones del visor: ${w}x${h}`);
-    
+
     // Crear escena
     this.escena = new THREE.Scene();
     this.escena.background = new THREE.Color(0x1a1a2e);
@@ -411,7 +411,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
     this.camara.lookAt(0, 1, 0);
 
     // Crear renderizador
-    this.renderizador = new THREE.WebGLRenderer({ 
+    this.renderizador = new THREE.WebGLRenderer({
         antialias: true,
         alpha: false,
         powerPreference: "high-performance"
@@ -423,12 +423,12 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
     this.renderizador.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderizador.toneMappingExposure = 1.2;
     this.renderizador.outputEncoding = THREE.sRGBEncoding;
-    
+
     //  Asegurar que el canvas ocupa todo el contenedor
     this.renderizador.domElement.style.width = '100%';
     this.renderizador.domElement.style.height = '100%';
     this.renderizador.domElement.style.display = 'block';
-    
+
     contenedorVisor.appendChild(this.renderizador.domElement);
 
     // Controles Orbita
@@ -444,7 +444,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
     // Luces
     const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x1a1a2e, 0.6);
     this.escena.add(hemisphereLight);
-    
+
     const dirLight = new THREE.DirectionalLight(0xffeedd, 2.0);
     dirLight.position.set(8, 15, 10);
     dirLight.castShadow = true;
@@ -457,7 +457,7 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
     dirLight.shadow.camera.top = 15;
     dirLight.shadow.camera.bottom = -15;
     this.escena.add(dirLight);
-    
+
     const fillLight = new THREE.DirectionalLight(0x4488ff, 0.5);
     fillLight.position.set(-8, 5, -6);
     this.escena.add(fillLight);
@@ -514,14 +514,14 @@ var SimuladorLogisticoApp = class SimuladorLogisticoApp {
 
     // Iniciar animación
     this.animate();
-    
+
     console.log(" Entorno 3D inicializado con tamaño:", w, "x", h);
-    
+
 }
 // ============================================================
 // CALCULAR PESO TOTAL POR PALLET
 // ============================================================
-    
+
 calcularPesoPallet(bulto) {
     let pesoTotal = 0;
     if (bulto.materiales && bulto.materiales.length > 0) {
@@ -535,7 +535,7 @@ calcularPesoPallet(bulto) {
 // ============================================================
 // OBTENER HS CODE DE UN MATERIAL
 // ============================================================
-    
+
 obtenerHsCode(materialId) {
     if (!materialId) return 'N/A';
     const material = proyecto.materiales?.find(m => m.id === materialId);
@@ -549,14 +549,14 @@ obtenerHsCode(materialId) {
 // ============================================================
 // CALCULAR COSTE DEL EQUIPAMIENTO (CONTENEDOR/ULD)
 // ============================================================
-    
+
 calcularCosteEquipamiento(contenedor) {
     if (!contenedor) return 0;
-    
+
     // Coste base según tipo de contenedor
     let costeBase = 0;
     const modo = document.getElementById('logModalidad')?.value || 'AEREO';
-    
+
     if (modo === 'AEREO') {
         // ULD: coste por alquiler
         costeBase = 150 + (contenedor.L * contenedor.A * 0.5);
@@ -567,19 +567,19 @@ calcularCosteEquipamiento(contenedor) {
         // Suelo/Almacén: coste por m²
         costeBase = 50 + (contenedor.L * contenedor.A * 2);
     }
-    
+
     // Añadir coste por peso utilizado
     const pesoTotal = contenedor.bultos.reduce((acc, b) => acc + this.calcularPesoPallet(b), 0);
     const porcentajeUso = contenedor.maxPeso > 0 ? Math.min(100, (pesoTotal / contenedor.maxPeso) * 100) : 0;
     const costePorPeso = (porcentajeUso / 100) * 300; // Coste adicional por uso
-    
+
     return Math.round(costeBase + costePorPeso);
 }
 
 // ============================================================
 // ACTUALIZAR PACKING LIST MEJORADO
 // ============================================================
-    
+
 actualizarTablaPacking() {
     const tbody = document.getElementById('logPackingBody');
     if (!tbody) return;
@@ -599,7 +599,7 @@ actualizarTablaPacking() {
         // Calcular coste del equipamiento para este contenedor
         const costeEquipamiento = this.calcularCosteEquipamiento(c);
         totalGeneralCosto += costeEquipamiento;
-        
+
         // Si no tiene bultos, mostrar fila vacía
         if (c.bultos.length === 0) {
             const tr = document.createElement('tr');
@@ -611,24 +611,24 @@ actualizarTablaPacking() {
             tbody.appendChild(tr);
             return;
         }
-        
+
         c.bultos.forEach(b => {
             const alturaSuelo = (b.mesh.position.y - b.alto / 2).toFixed(2);
             const contenedorNombre = c.nombre.split(' (')[0];
             const colorHex = '#' + b.colorOriginal.toString(16).padStart(6, '0');
             const pesoPallet = this.calcularPesoPallet(b);
             totalGeneralPeso += pesoPallet;
-            
+
             // Calcular coste del pallet (proporcional al peso que ocupa)
             const pesoTotalContenedor = c.bultos.reduce((acc, p) => acc + this.calcularPesoPallet(p), 0);
             const porcentajePallet = pesoTotalContenedor > 0 ? (pesoPallet / pesoTotalContenedor) : 0;
             const costePallet = costeEquipamiento * porcentajePallet;
-            
+
             if (b.materiales.length > 0) {
                 b.materiales.forEach((m, matIndex) => {
                     const hsCode = this.obtenerHsCode(m.materialId);
                     totalGeneralMateriales += m.cantidad;
-                    
+
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
                     tr.innerHTML = `
@@ -698,7 +698,7 @@ actualizarTablaPacking() {
 // ============================================================
 // EXPORTAR CSV MEJORADO CON TODOS LOS DATOS
 // ============================================================
-    
+
 exportarCSV() {
     if (this.listaContenedores.length === 0) {
         mostrarToast('No hay datos para exportar', 'warning');
@@ -706,17 +706,17 @@ exportarCSV() {
     }
 
     let csv = "Unidad,ID Carga,Etiqueta,Tipo,Largo (m),Ancho (m),Alto (m),Altura Suelo (m),Material,HS Code,Cantidad,Peso Material (kg),Peso Pallet (kg),Coste Pallet ($),Coste Equipamiento ($)\n";
-    
+
     this.listaContenedores.forEach(c => {
         const costeEquipamiento = this.calcularCosteEquipamiento(c);
         const pesoTotalContenedor = c.bultos.reduce((acc, p) => acc + this.calcularPesoPallet(p), 0);
-        
+
         c.bultos.forEach(b => {
             const alturaSuelo = (b.mesh.position.y - b.alto / 2).toFixed(2);
             const pesoPallet = this.calcularPesoPallet(b);
             const porcentajePallet = pesoTotalContenedor > 0 ? (pesoPallet / pesoTotalContenedor) : 0;
             const costePallet = costeEquipamiento * porcentajePallet;
-            
+
             if (b.materiales.length > 0) {
                 b.materiales.forEach(m => {
                     const hsCode = this.obtenerHsCode(m.materialId);
@@ -740,7 +740,7 @@ exportarCSV() {
 // ============================================================
 // EXPORTAR PDF MEJORADO
 // ============================================================
-    
+
 exportarPDF() {
     if (this.listaContenedores.length === 0) {
         mostrarToast('No hay datos para exportar a PDF', 'warning');
@@ -760,14 +760,14 @@ exportarPDF() {
     this.listaContenedores.forEach(c => {
         const costeEquipamiento = this.calcularCosteEquipamiento(c);
         const pesoTotalContenedor = c.bultos.reduce((acc, p) => acc + this.calcularPesoPallet(p), 0);
-        
+
         c.bultos.forEach(b => {
             const pesoPallet = this.calcularPesoPallet(b);
             totalGeneralPeso += pesoPallet;
             const porcentajePallet = pesoTotalContenedor > 0 ? (pesoPallet / pesoTotalContenedor) : 0;
             const costePallet = costeEquipamiento * porcentajePallet;
             totalGeneralCosto += costePallet;
-            
+
             if (b.materiales.length > 0) {
                 b.materiales.forEach(m => {
                     const hsCode = this.obtenerHsCode(m.materialId);
@@ -830,7 +830,7 @@ exportarPDF() {
         <body>
             <h1> PACKING LIST COMPLETO</h1>
             <p class="subtitle">Generado: ${new Date().toLocaleString('es-ES')} | Proyecto: ${proyecto?.nombre || 'Sin proyecto'}</p>
-            
+
             <div class="summary">
                 <div class="summary-item">
                     <div class="label"> Total Contenedores</div>
@@ -849,7 +849,7 @@ exportarPDF() {
                     <div class="value" style="color: #FF8C00;">$${totalGeneralCosto.toFixed(2)}</div>
                 </div>
             </div>
-            
+
             <table>
                 <thead>
                     <tr>
@@ -877,12 +877,12 @@ exportarPDF() {
                     </tr>
                 </tfoot>
             </table>
-            
+
             <div class="footer">
                 <p>Documento generado por PMI Mind - Simulador Logístico 3D</p>
                 <p style="font-size:10px;">* Los costes son estimados según el tipo de contenedor y el peso utilizado</p>
             </div>
-            
+
             <script>
                 window.onload = function() {
                     setTimeout(function() {
@@ -901,22 +901,22 @@ exportarPDF() {
     // ============================================================
     // CONFIGURAR DRAG CONTROLS
     // ============================================================
-    
+
     configurarDragControls() {
         if (this.controlesArrastre) {
             this.controlesArrastre.dispose();
         }
-        
+
         this.controlesArrastre = new THREE.DragControls(
-            this.meshesArrastrables, 
-            this.camara, 
+            this.meshesArrastrables,
+            this.camara,
             this.renderizador.domElement
         );
-        
+
         this.controlesArrastre.addEventListener('dragstart', (event) => {
             this.controlesOrbita.enabled = false;
         });
-        
+
         this.controlesArrastre.addEventListener('drag', (event) => {
             this.limitarMovimiento(event.object);
             if (this.meshResaltadoContorno && this.datosPalletSeleccionado) {
@@ -924,7 +924,7 @@ exportarPDF() {
                 this.meshResaltadoContorno.rotation.copy(event.object.rotation);
             }
         });
-        
+
         this.controlesArrastre.addEventListener('dragend', (event) => {
             this.controlesOrbita.enabled = true;
             this.resolverSolapes(event.object);
@@ -937,24 +937,24 @@ exportarPDF() {
     // ============================================================
     // LIMITAR MOVIMIENTO
     // ============================================================
-    
+
     limitarMovimiento(mesh) {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         if (!contActual) return;
-        
+
         const datosBulto = contActual.bultos.find(b => b.mesh === mesh);
         if (!datosBulto) return;
-        
+
         const angulo = mesh.rotation.y;
         const esGiro90 = Math.abs(Math.sin(angulo)) > 0.1;
-        
+
         const anchoEfectivo = esGiro90 ? datosBulto.largo : datosBulto.ancho;
         const largoEfectivo = esGiro90 ? datosBulto.ancho : datosBulto.largo;
-        
+
         const semilargo = largoEfectivo / 2;
         const semiancho = anchoEfectivo / 2;
         const semiAlto = datosBulto.alto / 2;
-        
+
         mesh.position.x = Math.max(-contActual.L / 2 + semilargo, Math.min(contActual.L / 2 - semilargo, mesh.position.x));
         mesh.position.z = Math.max(-contActual.A / 2 + semiancho, Math.min(contActual.A / 2 - semiancho, mesh.position.z));
         mesh.position.y = Math.max(semiAlto, Math.min(contActual.H - semiAlto, mesh.position.y));
@@ -963,19 +963,19 @@ exportarPDF() {
     // ============================================================
     // CLICK PARA SELECCIÓN
     // ============================================================
-    
+
     onClick(event) {
         console.log(" Click en el visor 3D");
-        
+
         if (!this.renderizador || !this.raycaster) return;
-        
+
         const rect = this.renderizador.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        
+
         this.raycaster.setFromCamera(this.mouse, this.camara);
         const intersecciones = this.raycaster.intersectObjects(this.meshesArrastrables);
-        
+
         if (intersecciones.length > 0) {
             console.log(" Objeto seleccionado:", intersecciones[0].object);
             this.seleccionarPalletPorMesh(intersecciones[0].object);
@@ -1035,36 +1035,36 @@ exportarPDF() {
     // ============================================================
     // SELECCIÓN DE PALLET
     // ============================================================
-    
+
     seleccionarPalletPorMesh(mesh) {
     console.log(" Seleccionando pallet...");
-    
+
     const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
     if (!contActual) {
         console.warn(" No hay contenedor activo");
         return;
     }
-    
+
     const bultoFound = contActual.bultos.find(b => b.mesh === mesh);
     if (!bultoFound) {
         console.warn(" Bulto no encontrado en el contenedor activo");
         return;
     }
-    
+
     console.log(` Bulto seleccionado: PL-${bultoFound.id} (${bultoFound.tag})`);
     this.datosPalletSeleccionado = bultoFound;
-    
+
     // Eliminar resaltado anterior
     if (this.meshResaltadoContorno && this.escena) {
         this.escena.remove(this.meshResaltadoContorno);
         this.meshResaltadoContorno = null;
     }
-    
+
     // Crear nuevo resaltado
     try {
         const geomContorno = mesh.geometry.clone();
-        const matContorno = new THREE.MeshBasicMaterial({ 
-            color: 0xf1c40f, 
+        const matContorno = new THREE.MeshBasicMaterial({
+            color: 0xf1c40f,
             wireframe: true,
             transparent: true,
             opacity: 0.9
@@ -1086,19 +1086,19 @@ exportarPDF() {
         panel.style.background = 'rgba(0,122,255,0.05)';
         panel.style.border = '1px solid #007AFF';
     }
-    
+
     const titulo = document.getElementById('logTituloMateriales');
     if (titulo) {
         titulo.innerHTML = `4. Materiales en: PL-${bultoFound.id} (${bultoFound.tag})`;
     }
-    
+
     // Cargar materiales en el selector
     this.cargarMaterialesEnSelector();
     this.renderizarMaterialesDelPalletActivo();
-    
+
     //  ACTUALIZAR EL RESUMEN DE MERCANCÍA
     this.actualizarResumenMercanciaUI();
-    
+
     // Mostrar feedback visual
     mostrarToast(` Pallet PL-${bultoFound.id} seleccionado`, 'success');
 }
@@ -1109,7 +1109,7 @@ exportarPDF() {
             this.meshResaltadoContorno = null;
         }
         this.datosPalletSeleccionado = null;
-        
+
         const panel = document.getElementById('logSeccionMateriales');
         if (panel) {
             panel.style.opacity = "0.5";
@@ -1117,12 +1117,12 @@ exportarPDF() {
             panel.style.background = '';
             panel.style.border = '';
         }
-        
+
         const titulo = document.getElementById('logTituloMateriales');
         if (titulo) {
             titulo.innerHTML = '4. Materiales de: Ninguno Seleccionado';
         }
-        
+
         const lista = document.getElementById('logListaMateriales');
         if (lista) {
             lista.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">Selecciona una carga en el visor 3D</span>';
@@ -1132,11 +1132,11 @@ exportarPDF() {
     // ============================================================
     // FUNCIONES DE CONTENEDORES
     // ============================================================
-    
+
     cambiarModalidad() {
         const modo = document.getElementById('logModalidad').value;
         const selector = document.getElementById('logTipoUnidad');
-        
+
         selector.innerHTML = '';
         this.catalogosUnidades[modo].forEach(item => {
             const opt = document.createElement('option');
@@ -1155,13 +1155,13 @@ exportarPDF() {
     agregarContenedor() {
         const info = document.getElementById('logTipoUnidad').value.split('|');
         const modo = document.getElementById('logModalidad').value;
-        
+
         let prefijo = "Unidad";
         if (modo === 'AEREO') prefijo = "ULD";
         else if (modo === 'MARITIMO') prefijo = "Contenedor";
         else prefijo = "Suelo Terrestre";
 
-        const nuevoId = this.listaContenedores.length > 0 ? 
+        const nuevoId = this.listaContenedores.length > 0 ?
             Math.max(...this.listaContenedores.map(c => c.id)) + 1 : 1;
 
         this.listaContenedores.push({
@@ -1174,7 +1174,7 @@ exportarPDF() {
             maxPeso: parseFloat(info[3]),
             bultos: []
         });
-        
+
         this.seleccionarContenedor(nuevoId);
         mostrarToast(`Nueva unidad creada: ${prefijo} #${nuevoId}`, 'success');
     }
@@ -1194,7 +1194,7 @@ exportarPDF() {
     this.idContenedorActivo = id;
     const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
     if (!contActual) return;
-    
+
     this.dibujarEstructuraContenedor(contActual.L, contActual.A, contActual.H);
 
     this.meshesArrastrables = [];
@@ -1207,7 +1207,7 @@ exportarPDF() {
     this.deseleccionarPallet();
     this.verificarInvasiones();
     this.actualizarInterfazGlobal();
-    
+
     //  ACTUALIZAR EL RESUMEN DE MERCANCÍA
     this.actualizarResumenMercanciaUI();
 }
@@ -1218,7 +1218,7 @@ exportarPDF() {
 
         const info = document.getElementById('logTipoUnidad').value.split('|');
         const modo = document.getElementById('logModalidad').value;
-        
+
         let prefijo = "Unidad";
         if (modo === 'AEREO') prefijo = "ULD";
         else if (modo === 'MARITIMO') prefijo = "Contenedor";
@@ -1238,7 +1238,7 @@ exportarPDF() {
 
     dibujarEstructuraContenedor(L, A, H) {
         if (!this.escena) return;
-        
+
         if (this.mallaContenedor) {
             this.escena.remove(this.mallaContenedor);
             this.mallaContenedor = null;
@@ -1250,7 +1250,7 @@ exportarPDF() {
 
         const modoGlobal = document.getElementById('logModalidad').value;
         const geometria = new THREE.BoxGeometry(L, H, A);
-        
+
         const opacidad = modoGlobal === 'SIN_CONTENEDOR' ? 0.0 : 0.08;
         let colorLinea = 0x4a6fa5;
         if (modoGlobal === 'MARITIMO') colorLinea = 0xe74c3c;
@@ -1278,7 +1278,7 @@ exportarPDF() {
     // ============================================================
     // CREAR CARGA
     // ============================================================
-    
+
     crearCarga() {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         if (!contActual) {
@@ -1290,7 +1290,7 @@ exportarPDF() {
         const tag = document.getElementById('logCargaTag').value.trim() || 'Carga';
         const cantidad = parseInt(document.getElementById('logCargaCantidad').value) || 1;
         const orientacion = parseInt(document.getElementById('logCargaOrientacion').value) || 0;
-        
+
         let largo = parseFloat(document.getElementById('logCargaLargo').value) || 0;
         let ancho = parseFloat(document.getElementById('logCargaAncho').value) || 0;
         let alto = parseFloat(document.getElementById('logCargaAlto').value) || 0;
@@ -1305,10 +1305,10 @@ exportarPDF() {
         for (let i = 0; i < cantidad; i++) {
             const totalBultos = this.listaContenedores.reduce((sum, c) => sum + c.bultos.length, 0);
             const cPick = this.coloresPaleta[totalBultos % this.coloresPaleta.length];
-            
+
             const geom = new THREE.BoxGeometry(largo, alto, ancho);
-            const mat = new THREE.MeshPhysicalMaterial({ 
-                color: cPick, 
+            const mat = new THREE.MeshPhysicalMaterial({
+                color: cPick,
                 roughness: 0.4,
                 metalness: 0.1,
                 transparent: true,
@@ -1317,14 +1317,14 @@ exportarPDF() {
             const meshCaja = new THREE.Mesh(geom, mat);
             meshCaja.castShadow = true;
             meshCaja.receiveShadow = true;
-            
+
             //  Añadir datos para identificación
             meshCaja.userData = {
                 esCarga: true,
                 id: this.nextPalletId,
                 index: i
             };
-            
+
             const edges = new THREE.EdgesGeometry(geom);
             const lineMat = new THREE.LineBasicMaterial({ color: 0x1c2833, transparent: true, opacity: 0.2 });
             const wireframe = new THREE.LineSegments(edges, lineMat);
@@ -1345,7 +1345,7 @@ exportarPDF() {
                     Math.min(zPos, contActual.A / 2 - ancho / 2)
                 );
             }
-            
+
             if (orientacion === 90) {
                 meshCaja.rotation.y = Math.PI / 2;
             }
@@ -1380,7 +1380,7 @@ exportarPDF() {
     // ============================================================
     // ELIMINAR CARGA
     // ============================================================
-    
+
     eliminarUltimaCarga() {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         if (!contActual || contActual.bultos.length === 0) {
@@ -1389,18 +1389,18 @@ exportarPDF() {
         }
 
         const ultimo = contActual.bultos[contActual.bultos.length - 1];
-        
+
         if (confirm(`¿Eliminar la carga PL-${ultimo.id} (${ultimo.tag})?`)) {
             contActual.bultos.pop();
             if (this.escena) this.escena.remove(ultimo.mesh);
-            
+
             if (this.datosPalletSeleccionado === ultimo) {
                 this.deseleccionarPallet();
             }
 
             const idx = this.meshesArrastrables.indexOf(ultimo.mesh);
             if (idx > -1) this.meshesArrastrables.splice(idx, 1);
-            
+
             this.configurarDragControls();
             this.verificarInvasiones();
             this.actualizarInterfazGlobal();
@@ -1644,7 +1644,7 @@ exportarPDF() {
     // ============================================================
     // VERIFICACIÓN DE INVASIONES
     // ============================================================
-    
+
     verificarInvasiones() {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         if (!contActual) return;
@@ -1657,25 +1657,25 @@ exportarPDF() {
             const bA = contActual.bultos[i];
             for (let j = i + 1; j < contActual.bultos.length; j++) {
                 const bB = contActual.bultos[j];
-                
+
                 const dx = Math.abs(bA.mesh.position.x - bB.mesh.position.x);
                 const dy = Math.abs(bA.mesh.position.y - bB.mesh.position.y);
                 const dz = Math.abs(bA.mesh.position.z - bB.mesh.position.z);
-                
+
                 const anguloA = bA.mesh.rotation.y;
                 const anguloB = bB.mesh.rotation.y;
                 const esGiroA = Math.abs(Math.sin(anguloA)) > 0.1;
                 const esGiroB = Math.abs(Math.sin(anguloB)) > 0.1;
-                
+
                 const lA = esGiroA ? bA.ancho : bA.largo;
                 const aA = esGiroA ? bA.largo : bA.ancho;
                 const lB = esGiroB ? bB.ancho : bB.largo;
                 const aB = esGiroB ? bB.largo : bB.ancho;
-                
+
                 const distX = (lA + lB) / 2;
                 const distY = (bA.alto + bB.alto) / 2;
                 const distZ = (aA + aB) / 2;
-                
+
                 if (dx < distX && dy < distY && dz < distZ) {
                     bA.mesh.material.color.setHex(0xe74c3c);
                     bB.mesh.material.color.setHex(0xe74c3c);
@@ -1683,7 +1683,7 @@ exportarPDF() {
             }
         }
 
-        const pesoTotal = contActual.bultos.reduce((acc, p) => 
+        const pesoTotal = contActual.bultos.reduce((acc, p) =>
             acc + p.materiales.reduce((sm, m) => sm + (m.peso || 0), 0), 0);
         const errorPeso = pesoTotal > contActual.maxPeso;
 
@@ -1694,7 +1694,7 @@ exportarPDF() {
                 if (b.mesh.material.color.getHex() === 0xe74c3c) hayError = true;
             });
             banner.style.display = (hayError || errorPeso) ? 'block' : 'none';
-            
+
             if (hayError && errorPeso) {
                 banner.innerHTML = ' ¡INVASIÓN FÍSICA Y SOBREPESO DETECTADOS!';
                 banner.style.background = 'rgba(255,59,48,0.3)';
@@ -1726,7 +1726,7 @@ exportarPDF() {
     // ============================================================
     // CARGAR MATERIALES EN SELECTOR
     // ============================================================
-    
+
     cargarMaterialesEnSelector() {
         const select = document.getElementById('logMatSelector');
         if (!select) return;
@@ -1764,11 +1764,11 @@ exportarPDF() {
     // ============================================================
     // RENDERIZAR MATERIALES DEL PALLET
     // ============================================================
-    
+
     renderizarMaterialesDelPalletActivo() {
         const contenedor = document.getElementById('logListaMateriales');
         if (!contenedor) return;
-        
+
         contenedor.innerHTML = '';
 
         if (!this.datosPalletSeleccionado || this.datosPalletSeleccionado.materiales.length === 0) {
@@ -1782,7 +1782,7 @@ exportarPDF() {
             div.style.cssText = 'display:flex; justify-content:space-between; padding:8px; background:rgba(0,0,0,0.2); border-radius:8px; margin-bottom:4px;';
             div.innerHTML = `
                 <div>
-                     <strong>${m.nombre}</strong> 
+                     <strong>${m.nombre}</strong>
                     <span style="background:rgba(0,122,255,0.2); padding:2px 6px; border-radius:4px; font-size:10px;">${m.hsCode || 'N/A'}</span>
                     (x${m.cantidad}) - ${m.peso} kg
                 </div>
@@ -1797,7 +1797,7 @@ exportarPDF() {
     // ============================================================
     // GUARDAR MATERIAL
     // ============================================================
-    
+
     guardarMaterial() {
         if (!this.datosPalletSeleccionado) {
             mostrarToast(' Primero selecciona una carga en el visor 3D', 'warning');
@@ -1820,13 +1820,13 @@ exportarPDF() {
         }
 
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
-        
+
         const pesoUnitario = material.pesoUnitario || 1;
         const pesoTotal = cantidad * pesoUnitario;
 
-        const pesoTotalULD = contActual.bultos.reduce((acc, p) => 
+        const pesoTotalULD = contActual.bultos.reduce((acc, p) =>
             acc + p.materiales.reduce((sm, m) => sm + (m.peso || 0), 0), 0);
-            
+
         if (pesoTotalULD + pesoTotal > contActual.maxPeso) {
             mostrarToast(' Excede la capacidad máxima del contenedor', 'error');
             return;
@@ -1857,10 +1857,10 @@ exportarPDF() {
     // ============================================================
     // ELIMINAR MATERIAL DEL PALLET
     // ============================================================
-    
+
     eliminarMaterialDePallet(index) {
     if (!this.datosPalletSeleccionado) return;
-    
+
     const nombre = this.datosPalletSeleccionado.materiales[index].nombre;
     if (confirm(`¿Eliminar "${nombre}" de la carga?`)) {
         this.datosPalletSeleccionado.materiales.splice(index, 1);
@@ -1870,7 +1870,7 @@ exportarPDF() {
         this.actualizarInterfazGlobal();
         this._persistirEstado();
         mostrarToast(`Material "${nombre}" eliminado`, 'warning');
-        
+
         //  ACTUALIZAR EL RESUMEN DE MERCANCÍA
         this.actualizarResumenMercanciaUI();
         this.actualizarCostos();
@@ -1880,11 +1880,11 @@ exportarPDF() {
     // ============================================================
     // SELECCIONAR PALLET POR ID
     // ============================================================
-    
+
     seleccionarPalletPorId(id) {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         if (!contActual) return;
-        
+
         const bulto = contActual.bultos.find(b => b.id === id);
         if (bulto && bulto.mesh) {
             this.seleccionarPalletPorMesh(bulto.mesh);
@@ -1894,19 +1894,19 @@ exportarPDF() {
     // ============================================================
     // ELIMINAR MATERIAL DESDE PACKING
     // ============================================================
-    
+
     eliminarMaterialDesdePacking(contenedorId, palletId, materialIndex) {
         const contenedor = this.listaContenedores.find(c => c.id === contenedorId);
         if (!contenedor) return;
-        
+
         const pallet = contenedor.bultos.find(b => b.id === palletId);
         if (!pallet || !pallet.materiales[materialIndex]) return;
-        
+
         const nombre = pallet.materiales[materialIndex].nombre;
-        
+
         if (confirm(`¿Eliminar "${nombre}" de la carga PL-${palletId}?`)) {
             pallet.materiales.splice(materialIndex, 1);
-            
+
             if (this.datosPalletSeleccionado && this.datosPalletSeleccionado.id === palletId) {
                 this.cargarMaterialesEnSelector();
                 this.renderizarMaterialesDelPalletActivo();
@@ -1920,17 +1920,17 @@ exportarPDF() {
 // ============================================================
 // CÁLCULO DE COSTOS (ACTUALIZADO CON VALOR REAL DE MATERIALES)
 // ============================================================
-    
+
 actualizarCostos() {
     const modo = document.getElementById('logModalidad').value;
     const incoterm = document.getElementById('logIncoterm').value;
     const origenCod = document.getElementById('logPaisOrigen').value;
     const destinoCod = document.getElementById('logPaisDestino').value;
-    
+
     //  CALCULAR VALOR REAL DE LA MERCANCÍA desde los materiales asignados
     let valorMercancia = 0;
     const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
-    
+
     if (contActual) {
         contActual.bultos.forEach(bulto => {
             bulto.materiales.forEach(mat => {
@@ -1948,7 +1948,7 @@ actualizarCostos() {
             });
         });
     }
-    
+
     // Si no hay materiales asignados, usar el valor manual como respaldo
     if (valorMercancia === 0) {
         valorMercancia = parseFloat(document.getElementById('logValorMercancia').value) || 0;
@@ -1970,15 +1970,15 @@ actualizarCostos() {
     const origenNombre = origenInfo ? origenInfo.nombre : 'Desconocido';
     const destinoNombre = destinoInfo ? destinoInfo.nombre : 'Desconocido';
 
-    const pesoTotalKilos = contActual.bultos.reduce((acc, p) => 
+    const pesoTotalKilos = contActual.bultos.reduce((acc, p) =>
         acc + p.materiales.reduce((sm, m) => sm + (m.peso || 0), 0), 0);
-    const volumenMetrosCubicos = contActual.bultos.reduce((acc, b) => 
+    const volumenMetrosCubicos = contActual.bultos.reduce((acc, b) =>
         acc + (b.largo * b.ancho * b.alto), 0);
 
     // Cálculo de flete
     let precioFleteFijo = 0;
     const pesoVolumetrico = Math.max(pesoTotalKilos, volumenMetrosCubicos * 167);
-    
+
     if (modo === "MARITIMO") {
         precioFleteFijo = 1500 + (volumenMetrosCubicos * 35) + (pesoTotalKilos * 0.05);
     } else if (modo === "AEREO") {
@@ -2039,35 +2039,35 @@ actualizarCostos() {
         costosElement.innerText = `$${costoParaElVendedor.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
         costosElement.style.color = costoParaElVendedor > 0 ? '#FF8C00' : '#007AFF';
     }
-    
+
     const desgloseElement = document.getElementById('logMDesglose');
     if (desgloseElement) {
         let desgloseHtml = `<div style="font-size: 10px; margin-bottom: 4px;"> ${origenNombre} → ${destinoNombre}</div>`;
         desgloseHtml += `<div style="font-size: 11px; color: #00A859; margin-bottom: 4px;"> Valor mercancía: $${valorMercancia.toFixed(2)}</div>`;
         desgloseHtml += desgloseTexto;
-        
+
         if (desgloseDetallado.length > 0) {
-            const detalles = desgloseDetallado.map(d => 
+            const detalles = desgloseDetallado.map(d =>
                 `<span style="display: inline-block; margin-right: 8px;">${d.label}: $${d.value.toFixed(2)}</span>`
             ).join('');
             desgloseHtml += `<div style="font-size: 9px; color: #888; margin-top: 4px;">${detalles}</div>`;
         }
-        
+
         desgloseElement.innerHTML = desgloseHtml;
     }
 }
 // ============================================================
 // MOSTRAR VALOR DE MERCANCÍA EN LA INTERFAZ
 // ============================================================
-    
+
 actualizarValorMercanciaUI() {
     const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
     if (!contActual) return;
-    
+
     let valorMercancia = 0;
     let totalMateriales = 0;
     let totalPeso = 0;
-    
+
     contActual.bultos.forEach(bulto => {
         bulto.materiales.forEach(mat => {
             totalMateriales += mat.cantidad;
@@ -2081,7 +2081,7 @@ actualizarValorMercanciaUI() {
             }
         });
     });
-    
+
     // Actualizar el campo de valor
     const valorInput = document.getElementById('logValorMercancia');
     if (valorInput) {
@@ -2096,14 +2096,14 @@ actualizarValorMercanciaUI() {
             valorInput.title = 'No hay materiales asignados';
         }
     }
-    
+
     // Mostrar resumen en la interfaz
     const infoDiv = document.getElementById('infoEvolucionMoneda') || document.createElement('div');
     if (infoDiv.id === 'infoEvolucionMoneda') {
         // Si es el div de información de monedas, añadir el resumen
         const resumenHtml = `
             <div style="margin-top: 8px; padding: 8px; background: rgba(0,168,89,0.1); border-radius: 8px; font-size: 11px;">
-                 <strong>Resumen de carga:</strong> ${totalMateriales} materiales | ${totalPeso.toFixed(1)} kg | 
+                 <strong>Resumen de carga:</strong> ${totalMateriales} materiales | ${totalPeso.toFixed(1)} kg |
                  Valor: $${valorMercancia.toFixed(2)}
             </div>
         `;
@@ -2114,29 +2114,29 @@ actualizarValorMercanciaUI() {
 // ============================================================
 // MOSTRAR VALOR DE MERCANCÍA EN LA INTERFAZ
 // ============================================================
-    
+
 actualizarResumenMercanciaUI() {
     console.log(" Actualizando resumen de mercancía...");
-    
+
     const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
     if (!contActual) {
         console.warn(" No hay contenedor activo");
         this.mostrarResumenVacio();
         return;
     }
-    
+
     let valorMercancia = 0;
     let totalMateriales = 0;
     let totalPeso = 0;
     let detalleMateriales = [];
-    
+
     // Recorrer todos los bultos del contenedor activo
     contActual.bultos.forEach(bulto => {
         if (bulto.materiales && bulto.materiales.length > 0) {
             bulto.materiales.forEach(mat => {
                 totalMateriales += mat.cantidad;
                 totalPeso += mat.peso || 0;
-                
+
                 // Buscar el material original en el proyecto para obtener su coste unitario
                 const materialOriginal = proyecto?.materiales?.find(m => m.id === mat.materialId);
                 if (materialOriginal) {
@@ -2168,15 +2168,15 @@ actualizarResumenMercanciaUI() {
             });
         }
     });
-    
+
     console.log(` Valor calculado: $${valorMercancia.toFixed(2)}`);
     console.log(` Materiales: ${totalMateriales}, Peso: ${totalPeso.toFixed(1)} kg`);
-    
-    
+
+
     // ============================================
     // ACTUALIZAR DOM
     // ============================================
-    
+
     // Actualizar resumen de valor
     const resumenValor = document.getElementById('valorMercanciaResumen');
     if (resumenValor) {
@@ -2184,7 +2184,7 @@ actualizarResumenMercanciaUI() {
         resumenValor.style.color = valorMercancia > 0 ? '#00A859' : '#888';
         resumenValor.style.fontWeight = 'bold';
     }
-    
+
     // Actualizar resumen de materiales
     const resumenMateriales = document.getElementById('resumenMaterialesCarga');
     if (resumenMateriales) {
@@ -2196,7 +2196,7 @@ actualizarResumenMercanciaUI() {
             resumenMateriales.style.color = '#666';
         }
     }
-    
+
     // Actualizar el campo de valor de mercancía
     const valorInput = document.getElementById('logValorMercancia');
     if (valorInput) {
@@ -2213,30 +2213,30 @@ actualizarResumenMercanciaUI() {
             valorInput.title = 'No hay materiales asignados';
         }
     }
-    
+
     // Actualizar costos (para recalcular aranceles, seguros, etc.)
     this.actualizarCostos();
-    
+
     return { valorMercancia, totalMateriales, totalPeso, detalleMateriales };
 }
 
 // ============================================================
 // MOSTRAR RESUMEN VACÍO
 // ============================================================
-    
+
 mostrarResumenVacio() {
     const resumenValor = document.getElementById('valorMercanciaResumen');
     if (resumenValor) {
         resumenValor.textContent = '$0.00';
         resumenValor.style.color = '#888';
     }
-    
+
     const resumenMateriales = document.getElementById('resumenMaterialesCarga');
     if (resumenMateriales) {
         resumenMateriales.textContent = '0 materiales | 0 kg';
         resumenMateriales.style.color = '#666';
     }
-    
+
     const valorInput = document.getElementById('logValorMercancia');
     if (valorInput) {
         valorInput.style.background = '';
@@ -2247,13 +2247,13 @@ mostrarResumenVacio() {
     // ============================================================
     // INTERFAZ DE USUARIO
     // ============================================================
-    
+
     actualizarInterfazGlobal() {
         const contenedorTabs = document.getElementById('logisticaTabs');
         if (!contenedorTabs) return;
-        
+
         contenedorTabs.innerHTML = '';
-        
+
         this.listaContenedores.forEach(c => {
             const pesoULD = c.bultos.reduce((acc, p) => acc + p.materiales.reduce((sm, m) => sm + m.peso, 0), 0);
             const btn = document.createElement('button');
@@ -2271,7 +2271,7 @@ mostrarResumenVacio() {
 
         document.getElementById('logMBultos').innerText = totalBultos;
         document.getElementById('logMVol').innerText = totalVol.toFixed(3) + " m³";
-        
+
         this.actualizarCostos();
         this.actualizarTablaPacking();
     }
@@ -2279,7 +2279,7 @@ mostrarResumenVacio() {
     // ============================================================
     // TABLA PACKING
     // ============================================================
-    
+
     actualizarTablaPacking() {
         const tbody = document.getElementById('logPackingBody');
         if (!tbody) return;
@@ -2291,7 +2291,7 @@ mostrarResumenVacio() {
                 const alturaSuelo = (b.mesh.position.y - b.alto / 2).toFixed(2);
                 const contenedorNombre = c.nombre.split(' (')[0];
                 const colorHex = '#' + b.colorOriginal.toString(16).padStart(6, '0');
-                
+
                 if (b.materiales.length > 0) {
                     b.materiales.forEach((m, matIndex) => {
                         const tr = document.createElement('tr');
@@ -2337,37 +2337,37 @@ mostrarResumenVacio() {
     // ============================================================
     // CARGAR PAÍSES EN SELECTORES
     // ============================================================
-    
+
     cargarPaisesEnSelectores() {
         const origenSelect = document.getElementById('logPaisOrigen');
         const destinoSelect = document.getElementById('logPaisDestino');
-        
+
         if (!origenSelect || !destinoSelect) return;
-        
+
         origenSelect.innerHTML = '';
         destinoSelect.innerHTML = '';
-        
+
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
         defaultOption.textContent = '-- Seleccionar país --';
         origenSelect.appendChild(defaultOption.cloneNode(true));
         destinoSelect.appendChild(defaultOption.cloneNode(true));
-        
+
         const continentes = {};
         for (const [codigo, info] of Object.entries(this.paisesCatalogo)) {
             const cont = info.continente || 'Otros';
             if (!continentes[cont]) continentes[cont] = [];
             continentes[cont].push({ codigo, nombre: info.nombre });
         }
-        
+
         const continentesOrdenados = ['Europa', 'África', 'América', 'Asia', 'Oceanía', 'Otros'];
-        
+
         for (const cont of continentesOrdenados) {
             if (continentes[cont] && continentes[cont].length > 0) {
                 const optgroup = document.createElement('optgroup');
                 optgroup.label = cont;
                 continentes[cont].sort((a, b) => a.nombre.localeCompare(b.nombre));
-                
+
                 for (const pais of continentes[cont]) {
                     const opt = document.createElement('option');
                     opt.value = pais.codigo;
@@ -2385,17 +2385,17 @@ mostrarResumenVacio() {
     // ============================================================
     // FUNCIONES DE CARGA PREDEFINIDA
     // ============================================================
-    
+
     cargarTipoPredefinido() {
         const tipo = document.getElementById('logTipoCarga').value;
         const predefinido = this.tiposCarga[tipo];
-        
+
         if (predefinido) {
             document.getElementById('logCargaLargo').value = predefinido.largo;
             document.getElementById('logCargaAncho').value = predefinido.ancho;
             document.getElementById('logCargaAlto').value = predefinido.alto;
         }
-        
+
         this.actualizarPreviewDimension();
     }
 
@@ -2406,10 +2406,10 @@ mostrarResumenVacio() {
         const alto = parseFloat(document.getElementById('logCargaAlto').value) || 0;
         const tipoNombre = this.tiposCarga[tipo]?.nombre || 'Personalizado';
         const volumen = largo * ancho * alto;
-        
+
         const preview = document.getElementById('logPreviewDimension');
         if (preview) {
-            preview.innerHTML = 
+            preview.innerHTML =
                 ` <strong>${tipoNombre}</strong>: ${largo.toFixed(2)}m × ${ancho.toFixed(2)}m × ${alto.toFixed(2)}m | Volumen: ${volumen.toFixed(3)} m³`;
         }
     }
@@ -2417,7 +2417,7 @@ mostrarResumenVacio() {
     // ============================================================
     // EXPORTAR
     // ============================================================
-    
+
     exportarCSV() {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         if (!contActual || contActual.bultos.length === 0) {
@@ -2426,7 +2426,7 @@ mostrarResumenVacio() {
         }
 
         let csv = "Unidad,ID Carga,Etiqueta,Tipo,Largo (m),Ancho (m),Alto (m),Altura Suelo (m),Material,HS Code,Cantidad,Peso (kg)\n";
-        
+
         this.listaContenedores.forEach(c => {
             c.bultos.forEach(b => {
                 const alturaSuelo = (b.mesh.position.y - b.alto / 2).toFixed(2);
@@ -2476,7 +2476,7 @@ mostrarResumenVacio() {
                         <thead><tr><th>Unidad</th><th>ID</th><th>Material</th><th>Cantidad</th><th>Peso (kg)</th></tr></thead>
                         <tbody>
             `);
-            
+
             this.listaContenedores.forEach(c => {
                 c.bultos.forEach(b => {
                     if (b.materiales.length > 0) {
@@ -2494,7 +2494,7 @@ mostrarResumenVacio() {
                     }
                 });
             });
-            
+
             ventana.document.write(`
                         </tbody>
                     </table>
@@ -2513,7 +2513,7 @@ mostrarResumenVacio() {
     // ============================================================
     // GUARDAR / CARGAR ESTADO
     // ============================================================
-    
+
     _serializarEstado() {
         return {
             contenedores: this.listaContenedores.map(c => ({
@@ -2598,7 +2598,7 @@ mostrarResumenVacio() {
                 mostrarToast('No hay estado guardado', 'warning');
                 return;
             }
-            
+
             document.getElementById('logModalidad').value = estado.config.modalidad || 'AEREO';
             document.getElementById('logPaisOrigen').value = estado.config.origen || 'ES';
             document.getElementById('logPaisDestino').value = estado.config.destino || 'MX';
@@ -2606,7 +2606,7 @@ mostrarResumenVacio() {
             document.getElementById('logValorMercancia').value = estado.config.valorMercancia || 15000;
 
             this.cambiarModalidad();
-            
+
             this.listaContenedores = [];
             this.idContenedorActivo = estado.idActivo || 0;
             this.nextPalletId = estado.nextPalletId || 1;
@@ -2625,7 +2625,7 @@ mostrarResumenVacio() {
 
                 cData.bultos.forEach(bData => {
                     const geom = new THREE.BoxGeometry(bData.largo, bData.alto, bData.ancho);
-                    const mat = new THREE.MeshPhysicalMaterial({ 
+                    const mat = new THREE.MeshPhysicalMaterial({
                         color: bData.colorOriginal || 0x2980b9,
                         roughness: 0.4,
                         metalness: 0.1,
@@ -2635,7 +2635,7 @@ mostrarResumenVacio() {
                     const mesh = new THREE.Mesh(geom, mat);
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
-                    
+
                     const edges = new THREE.EdgesGeometry(geom);
                     const lineMat = new THREE.LineBasicMaterial({ color: 0x1c2833, transparent: true, opacity: 0.2 });
                     const wireframe = new THREE.LineSegments(edges, lineMat);
@@ -2643,7 +2643,7 @@ mostrarResumenVacio() {
 
                     mesh.position.set(bData.posicion.x, bData.posicion.y, bData.posicion.z);
                     mesh.rotation.y = bData.rotacion || 0;
-                    
+
                     if (this.escena) this.escena.add(mesh);
                     this.meshesArrastrables.push(mesh);
 
@@ -2668,7 +2668,7 @@ mostrarResumenVacio() {
             this.seleccionarContenedor(this.idContenedorActivo);
             this.actualizarInterfazGlobal();
             mostrarToast(' Estado cargado', 'success');
-            
+
         } catch (e) {
             console.error(e);
             mostrarToast('Error al cargar', 'error');
@@ -2678,12 +2678,12 @@ mostrarResumenVacio() {
     // ============================================================
     // VISTAS DE CÁMARA
     // ============================================================
-    
+
     cambiarVista(modo) {
         const contActual = this.listaContenedores.find(c => c.id === this.idContenedorActivo);
         const hTarget = contActual ? contActual.H / 2 : 1.5;
         const lTarget = contActual ? Math.max(contActual.L, contActual.A) / 2 + 2 : 5;
-        
+
         let targetPos;
         const offset = 2;
         switch(modo) {
@@ -2701,22 +2701,22 @@ mostrarResumenVacio() {
                 targetPos = new THREE.Vector3(8, 6 + offset, 10);
                 break;
         }
-        
+
         const startPos = this.camara.position.clone();
         const startTarget = this.controlesOrbita.target.clone();
         const endTarget = new THREE.Vector3(0, hTarget, 0);
         const startTime = Date.now();
         const duration = 500;
-        
+
         const animateCamera = () => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
             const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
-            
+
             this.camara.position.lerpVectors(startPos, targetPos, ease);
             this.controlesOrbita.target.lerpVectors(startTarget, endTarget, ease);
             this.controlesOrbita.update();
-            
+
             if (progress < 1) {
                 requestAnimationFrame(animateCamera);
             }
@@ -2727,35 +2727,35 @@ mostrarResumenVacio() {
     // ============================================================
     // RESIZE Y ANIMACIÓN
     // ============================================================
-    
+
     onWindowResize() {
     const contenedorVisor = document.getElementById('canvas3d-container');
     if (!contenedorVisor || !this.renderizador || !this.camara) return;
-    
+
     // Esperar un poco para que el DOM se actualice
     setTimeout(() => {
         const w = contenedorVisor.clientWidth;
         const h = contenedorVisor.clientHeight;
-        
+
         console.log(` Resize visor: ${w}x${h}`);
-        
+
         if (w > 0 && h > 0) {
             // Actualizar cámara
             this.camara.aspect = w / h;
             this.camara.updateProjectionMatrix();
-            
+
             // Actualizar renderizador
             this.renderizador.setSize(w, h);
-            
+
             // Asegurar que el canvas ocupa todo
             this.renderizador.domElement.style.width = '100%';
             this.renderizador.domElement.style.height = '100%';
-            
+
             // Actualizar controles
             if (this.controlesOrbita) {
                 this.controlesOrbita.update();
             }
-            
+
             console.log(` Visor actualizado a: ${w}x${h}`);
         }
     }, 50);
@@ -2802,54 +2802,57 @@ try {
 }
 
 // Funciones globales para los botones HTML
-window.crearCarga = function() { 
-    if (window.appLogistica) window.appLogistica.crearCarga(); 
+window.crearCarga = function() {
+    if (window.appLogistica) window.appLogistica.crearCarga();
 };
 
-window.eliminarUltimaCarga = function() { 
-    if (window.appLogistica) window.appLogistica.eliminarUltimaCarga(); 
+window.eliminarUltimaCarga = function() {
+    if (window.appLogistica) window.appLogistica.eliminarUltimaCarga();
 };
 
-window.guardarEstado = function() { 
-    if (window.appLogistica) window.appLogistica.guardarEstado(); 
+window.guardarEstado = function() {
+    if (window.appLogistica) window.appLogistica.guardarEstado();
 };
 
-window.cargarEstado = function() { 
-    if (window.appLogistica) window.appLogistica.cargarEstado(); 
+window.cargarEstado = function() {
+    if (window.appLogistica) window.appLogistica.cargarEstado();
 };
 
-window.exportarCSV = function() { 
-    if (window.appLogistica) window.appLogistica.exportarCSV(); 
+window.exportarCSV = function() {
+    if (window.appLogistica) window.appLogistica.exportarCSV();
 };
 
-window.exportarPDF = function() { 
-    if (window.appLogistica) window.appLogistica.exportarPDF(); 
+window.exportarPDF = function() {
+    if (window.appLogistica) window.appLogistica.exportarPDF();
 };
 
-window.seleccionarPalletPorId = function(id) { 
-    if (window.appLogistica) window.appLogistica.seleccionarPalletPorId(id); 
+window.seleccionarPalletPorId = function(id) {
+    if (window.appLogistica) window.appLogistica.seleccionarPalletPorId(id);
 };
 
-window.abrirModalEditarMaterial = function(c, p, m) { 
-    if (window.appLogistica) window.appLogistica.abrirModalEditarMaterial(c, p, m); 
+window.abrirModalEditarMaterial = function(c, p, m) {
+    if (window.appLogistica) window.appLogistica.abrirModalEditarMaterial(c, p, m);
 };
 
-window.eliminarMaterialDesdePacking = function(c, p, m) { 
-    if (window.appLogistica) window.appLogistica.eliminarMaterialDesdePacking(c, p, m); 
+window.eliminarMaterialDesdePacking = function(c, p, m) {
+    if (window.appLogistica) window.appLogistica.eliminarMaterialDesdePacking(c, p, m);
 };
 
-window.cerrarModalEditar = function() { 
-    if (window.appLogistica) window.appLogistica.cerrarModalEditar(); 
+window.cerrarModalEditar = function() {
+    if (window.appLogistica) window.appLogistica.cerrarModalEditar();
 };
 
-window.guardarEdicionMaterial = function() { 
-    if (window.appLogistica) window.appLogistica.guardarEdicionMaterial(); 
+window.guardarEdicionMaterial = function() {
+    if (window.appLogistica) window.appLogistica.guardarEdicionMaterial();
 };
 
 // Función de inicialización
+var _intentosLogistica3D = 0;
+var _MAX_INTENTOS_LOGISTICA_3D = 5;
+
 function inicializarModuloLogistica() {
     console.log(" Inicializando módulo logístico 3D...");
-    
+
     // Asegurar que la instancia existe
     if (!window.appLogistica) {
         console.warn(" appLogistica no existe, creando instancia...");
@@ -2861,24 +2864,36 @@ function inicializarModuloLogistica() {
             return;
         }
     }
-    
+
     if (typeof THREE === 'undefined') {
-        console.warn(" Three.js no cargado. Intentando de nuevo...");
-        mostrarToast(" Cargando motor 3D...", 'info');
-        setTimeout(inicializarModuloLogistica, 1000);
+        _intentosLogistica3D++;
+        if (_intentosLogistica3D <= _MAX_INTENTOS_LOGISTICA_3D) {
+            console.warn(` Three.js no cargado. Reintento ${_intentosLogistica3D}/${_MAX_INTENTOS_LOGISTICA_3D}...`);
+            setTimeout(inicializarModuloLogistica, 1000);
+        } else {
+            console.error(" Three.js no disponible tras varios intentos. Módulo 3D desactivado.");
+            mostrarToast(" No se pudo cargar el motor 3D. El resto de la app sigue funcionando.", 'error');
+        }
         return;
     }
-    
+
     // Verificar que los controles también están cargados
     if (typeof THREE.OrbitControls === 'undefined' || typeof THREE.DragControls === 'undefined') {
-        console.warn(" Controles Three.js no cargados. Reintentando...");
-        setTimeout(inicializarModuloLogistica, 1000);
+        _intentosLogistica3D++;
+        if (_intentosLogistica3D <= _MAX_INTENTOS_LOGISTICA_3D) {
+            console.warn(` Controles Three.js no cargados. Reintento ${_intentosLogistica3D}/${_MAX_INTENTOS_LOGISTICA_3D}...`);
+            setTimeout(inicializarModuloLogistica, 1000);
+        } else {
+            console.error(" Controles Three.js no disponibles tras varios intentos. Módulo 3D desactivado.");
+            mostrarToast(" No se pudieron cargar los controles 3D.", 'error');
+        }
         return;
     }
-    
+
     if (!window.appLogistica.inicializado) {
         try {
             window.appLogistica.init();
+            _intentosLogistica3D = 0;
             console.log(" Módulo logístico inicializado correctamente");
         } catch (e) {
             console.error(" Error al inicializar módulo logístico:", e);
@@ -2910,7 +2925,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         observer.observe(panelLogistica, { attributes: true });
-        
+
         if (panelLogistica.classList.contains('active')) {
             setTimeout(inicializarModuloLogistica, 500);
         }

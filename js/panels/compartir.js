@@ -146,6 +146,7 @@ function generarVistaPublica() {
 
     ${'<scr' + 'ipt>'}
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Chart === 'undefined') return;
             const ctx = document.createElement('canvas');
             ctx.id = 'progChart';
             ctx.style.maxWidth = '300px';
@@ -154,7 +155,7 @@ function generarVistaPublica() {
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: [tApp('informe_completado'), tApp('informe_pendiente')],
+                    labels: ['Completado', 'Pendiente'],
                     datasets: [{ data: [${progresoPromedio}, ${(100 - progresoPromedio).toFixed(1)}], backgroundColor: ['#00A859', 'rgba(255,255,255,0.1)'], borderWidth: 0 }]
                 },
                 options: { cutout: '70%', responsive: true, plugins: { legend: { display: false } } }

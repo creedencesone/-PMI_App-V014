@@ -13,25 +13,45 @@
 let _supabasePromise = null;
 function _getSupabase() {
     if (!_supabasePromise) {
-        // En dev (localhost) Vite sirve el módulo fuente con las env ya
-        // sustituidas; en prod se carga el bundle sin hash emitido por Vite
-        // en dist/js/services/supabaseClient.bundle.js. Ambas variantes
-        // exponen el cliente en globalThis.__SUPABASE__ (asignación de lado
-        // efecto, preservada por Rollup incluso si el export se descarta).
+        // El cliente se carga con un dynamic import "oculto" a Vite
+        // (new Function) porque este fichero se sirve como <script> clásico:
+        // si Vite detecta el import(), inyecta un `import` estático al inicio
+        // y el navegador lanza "Cannot use import statement outside a module".
+        //
+        // Se prueban las dos variantes para que funcione en dev, preview y
+        // producción:
+        //   · dev/preview: js/services/supabaseClient.entry.js (Vite lo transforma)
+        //   · producción: js/services/supabaseClient.bundle.js (generado por el build)
+        // Ambas exponen el cliente en globalThis.__SUPABASE__.
+        const dynamicImport = new Function('p', 'return import(p)');
+        // Orden de preferencia según el entorno, con fallback al otro por si
+        // falta el fichero (p. ej. `vite preview` en localhost no copia el entry).
         const esDev = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/.test(location.hostname);
-        const target = esDev ? './supabaseClient.entry.js' : './supabaseClient.bundle.js';
-        _supabasePromise = import(target)
-            .then(() => globalThis.__SUPABASE__)
-            .catch(err => {
-                _supabasePromise = null;
-                throw err;
-            });
+        const candidates = esDev
+            ? ['./supabaseClient.entry.js', './supabaseClient.bundle.js']
+            : ['./supabaseClient.bundle.js', './supabaseClient.entry.js'];
+
+        _supabasePromise = (async () => {
+            let lastError = null;
+            for (const path of candidates) {
+                try {
+                    await dynamicImport(path);
+                    if (globalThis.__SUPABASE__) return globalThis.__SUPABASE__;
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+            throw lastError || new Error('No se pudo cargar el cliente de Supabase');
+        })().catch(err => {
+            _supabasePromise = null;
+            throw err;
+        });
     }
     return _supabasePromise;
 }
 
 // ------------------------------------------------------------
-// Tablas de dominio del blob projects.data (14)
+// Tablas de dominio del blob projects.data (21)
 // Cada dominio se normaliza en una tabla con `data jsonb`.
 // garantia es OBJETO (una fila por proyecto); el resto son arrays.
 // ------------------------------------------------------------
@@ -50,6 +70,13 @@ const DOMAIN_TABLES = [
     { key: 'avales', table: 'project_avales' },
     { key: 'seguros', table: 'project_seguros' },
     { key: 'garantia', table: 'project_garantia' },
+    { key: 'lineasBase', table: 'project_lineas_base' },
+    { key: 'cambios', table: 'project_cambios' },
+    { key: 'bitacora', table: 'project_bitacora' },
+    { key: 'proveedores', table: 'project_proveedores' },
+    { key: 'contratos', table: 'project_contratos' },
+    { key: 'ordenesCompra', table: 'project_ordenes_compra' },
+    { key: 'pagosRealizados', table: 'project_pagos_realizados' },
 ];
 
 // Columnas tipadas de projects → claves camelCase del blob
@@ -287,6 +314,14 @@ const DataService = {
             .eq('id', userId)
             .maybeSingle();
         if (error) throw error;
+        if (data) {
+            try {
+                sessionStorage.setItem('pmi_perfil_verificado_v1', JSON.stringify({
+                    id: data.id, role: data.role, organization_id: data.organization_id,
+                    email: String(data.email || '').toLowerCase()
+                }));
+            } catch { /* almacenamiento de sesión no disponible */ }
+        }
         return data;
     },
 
@@ -295,25 +330,17 @@ const DataService = {
         const existing = await this._getProfile(authUser.id);
         if (existing) return existing;
         const supabase = await _getSupabase();
-        const { data: org, error: orgErr } = await supabase
-            .from('organizations')
-            .insert({ name: (name || authUser.email || 'Mi organización') + ' — Org' })
-            .select()
-            .single();
-        if (orgErr) throw orgErr;
-        const { data: profile, error: profErr } = await supabase
-            .from('profiles')
-            .insert({
-                id: authUser.id,
-                organization_id: org.id,
-                email: authUser.email,
-                name: name || '',
-                role: 'editor',
-            })
-            .select()
-            .single();
-        if (profErr) throw profErr;
-        return profile;
+        // 0007: organización + membresía + perfil en una sola transacción
+        // SECURITY DEFINER, sin carreras entre comprobación e inserción.
+        const { data: orgId, error: bootstrapErr } = await supabase.rpc(
+            'bootstrap_organizacion_usuario',
+            { p_nombre: name || authUser.email || 'Mi organización', p_email: authUser.email || '' }
+        );
+        if (bootstrapErr) throw bootstrapErr;
+        return await this._getProfile(authUser.id) || {
+            id: authUser.id, organization_id: orgId,
+            email: authUser.email, name: name || '', role: 'editor'
+        };
     },
 
     async _getOrganizationId() {
@@ -369,18 +396,36 @@ const DataService = {
         return { ...project, data };
     },
 
-    // Desglosa los 14 dominios del blob en sus tablas (delete + insert).
+    // Desglosa los dominios del blob en sus tablas (delete + insert).
     // Best-effort: si una tabla falla, el blob ya conserva los datos.
     async _writeDomains(projectId, orgId, data) {
         const supabase = await _getSupabase();
         for (const d of DOMAIN_TABLES) {
             try {
+                const value = data ? data[d.key] : undefined;
+                // La bitácora es append-only (RLS sin DELETE): se insertan
+                // únicamente las entradas nuevas, sin borrar las existentes.
+                if (d.key === 'bitacora') {
+                    if (Array.isArray(value) && value.length > 0) {
+                        const { data: existentes, error: selErr } = await supabase
+                            .from(d.table).select('data').eq('project_id', projectId).order('created_at', { ascending: true });
+                        if (selErr) { console.warn(`[DataService] SELECT bitácora falló:`, selErr.message); continue; }
+                        const ids = new Set((existentes || []).map(f => f.data && f.data.id));
+                        const nuevos = value.filter(item => !ids.has(item.id));
+                        if (nuevos.length) {
+                            const { error: insErr } = await supabase.from(d.table).insert(nuevos.map(item => ({
+                                organization_id: orgId, project_id: projectId, data: item
+                            })));
+                            if (insErr) console.warn(`[DataService] Insert bitácora falló:`, insErr.message);
+                        }
+                    }
+                    continue;
+                }
                 const { error: delErr } = await supabase.from(d.table).delete().eq('project_id', projectId);
                 if (delErr) {
                     console.warn(`[DataService] Delete falló en ${d.key}, se omite insert:`, delErr.message);
                     continue;
                 }
-                const value = data ? data[d.key] : undefined;
                 if (d.key === 'garantia') {
                     if (value && typeof value === 'object') {
                         const { error: insErr } = await supabase.from(d.table).insert({
@@ -434,6 +479,16 @@ const DataService = {
         const token = session ? session.access_token : null;
         this.setToken(token);
         return { success: true, user, token };
+    },
+
+    async signOut() {
+        try {
+            const supabase = await _getSupabase();
+            if (supabase && supabase.auth) await supabase.auth.signOut();
+        } finally {
+            this.setToken(null);
+            this.stopAutoSync();
+        }
     },
 
     async register(email, password, name) {
@@ -550,10 +605,32 @@ const DataService = {
 
     async deleteProject(id) {
         const supabase = await _getSupabase();
-        const { error } = await supabase.from('projects').delete().eq('id', id);
+        // .select() es imprescindible: con RLS, un DELETE denegado NO devuelve
+        // error, simplemente borra 0 filas. Sin esto el frontend "cree" que ha
+        // borrado y el proyecto reaparece al recargar.
+        const { data: deleted, error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', id)
+            .select('id');
         if (error) throw error;
+        if (!deleted || deleted.length === 0) {
+            // ¿Existe todavía? Si existe y no se ha borrado → RLS lo bloquea.
+            const { data: still, error: checkErr } = await supabase
+                .from('projects')
+                .select('id')
+                .eq('id', id)
+                .maybeSingle();
+            if (checkErr && this._isMissingProjectError(checkErr)) {
+                /* id inválido: se trata como inexistente */
+            } else if (still) {
+                throw new Error('No tienes permisos para eliminar este proyecto (403)');
+            }
+            // Si no existe (o no es visible) el borrado es idempotente: continuar.
+        }
         // [FIX resurreccion] tombstone: evitar que migrateLocalToBackend re-suba este proyecto
-        this._addToDeletedProjects(String(id));
+        // (markProjectDeleted es el helper real; _addToDeletedProjects nunca existió)
+        this.markProjectDeleted(String(id));
         // [FIX resurreccion] limpiar la vista local pmi_proyectos
         try {
             const list = JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');

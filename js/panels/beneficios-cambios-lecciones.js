@@ -16,14 +16,14 @@ function inicializarBeneficios() {
 
 function renderizarBeneficios() {
     const b = proyecto.beneficios || { proyectado: 0, real: 0, indicadores: [], hitos: [] };
-    
+
     document.getElementById('beneficioProyectadoValor').innerHTML = formatearMoneda(b.proyectado || 0);
     document.getElementById('beneficioRealValor').innerHTML = formatearMoneda(b.real || 0);
-    
+
     let desviacion = 0;
     let estado = '';
     let estadoColor = '';
-    
+
     if (b.proyectado > 0) {
         desviacion = ((b.real || 0) - b.proyectado) / b.proyectado * 100;
         if (desviacion >= 0) {
@@ -37,11 +37,11 @@ function renderizarBeneficios() {
             estadoColor = '#FF3B30';
         }
     }
-    
+
     document.getElementById('beneficioDesviacion').innerHTML = (desviacion >= 0 ? '+' : '') + desviacion.toFixed(1) + '%';
     document.getElementById('beneficioEstado').innerHTML = estado;
     document.getElementById('beneficioEstado').style.color = estadoColor;
-    
+
     // Renderizar hitos de beneficio
     const hitosContainer = document.getElementById('hitosBeneficioList');
     if (hitosContainer) {
@@ -62,53 +62,47 @@ function renderizarBeneficios() {
             `).join('');
         }
     }
-    
+
     // Renderizar indicadores
     const indicadoresBody = document.getElementById('indicadoresBeneficioBody');
     if (indicadoresBody) {
         const indicadores = [
-            { nombre: "ROI", meta: "> 15%", real: calcularROI() + "%", cumplimiento: calcularROI() >= 15 ? "" : "" },
-            { nombre: "VAN", meta: "> 0", real: formatearMoneda(calcularVAN()), cumplimiento: calcularVAN() > 0 ? "" : "" },
-            { nombre: "Payback", meta: "< 2 años", real: calcularPayback() + " meses", cumplimiento: calcularPayback() <= 24 ? "" : "" }
+            { nombre: "ROI", meta: "> 15%", real: calcularROIBeneficios() + "%", cumplimiento: calcularROIBeneficios() >= 15 ? "" : "" },
+            { nombre: "VAN", meta: "> 0", real: formatearMoneda(calcularVANBeneficios()), cumplimiento: calcularVANBeneficios() > 0 ? "" : "" },
+            { nombre: "Payback", meta: "< 2 años", real: calcularPaybackBeneficios() + " meses", cumplimiento: calcularPaybackBeneficios() <= 24 ? "" : "" }
         ];
-        
+
         indicadoresBody.innerHTML = indicadores.map(i => `
             <tr><td>${i.nombre}</td><td>${i.meta}</td><td>${i.real}</td><td>${i.cumplimiento}</td></tr>
         `).join('');
     }
-    
+
     // Dibujar gráfico
     dibujarGraficoBeneficios();
 }
 
-function calcularROI() {
-    let costeTotal = (proyecto.elementosGantt || []).reduce((sum, e) => sum + (e.costeEstimado || 0), 0);
-    (proyecto.materiales || []).forEach(m => costeTotal += m.cantidad * m.costeUnitario);
-    let beneficio = (proyecto.precioVenta || 0) - costeTotal;
-    return costeTotal > 0 ? (beneficio / costeTotal * 100).toFixed(1) : 0;
+function calcularROIBeneficios() {
+    const costeTotal = (typeof calcularCosteRecursosProyecto === 'function') ? calcularCosteRecursosProyecto(proyecto, false) : 0;
+    const precioBase = (typeof precioVentaEnBase === 'function') ? precioVentaEnBase(proyecto) : (proyecto.precioVenta || 0);
+    return costeTotal > 0 ? (((precioBase - costeTotal) / costeTotal) * 100).toFixed(1) : 0;
 }
 
-function calcularVAN() {
-    let flujos = [];
-    let tasaDescuento = 0.1;
-    (proyecto.hitosFinancieros || []).forEach(h => {
-        flujos.push({ mes: h.mes || 1, valor: h.importeFijo || ((proyecto.precioVenta || 0) * (h.porcentaje || 0) / 100) });
-    });
-    
-    let van = 0;
-    flujos.forEach(f => {
-        van += f.valor / Math.pow(1 + tasaDescuento, f.mes / 12);
-    });
-    return van;
+function calcularVANBeneficios() {
+    const precioBase = (typeof precioVentaEnBase === 'function') ? precioVentaEnBase(proyecto) : (proyecto.precioVenta || 0);
+    const flujos = (proyecto.hitosFinancieros || []).map(h => ({
+        mes: h.mes || 1,
+        valor: h.importeFijo
+            ? ((typeof aBase === 'function') ? aBase(h.importeFijo, h.moneda || proyecto.monedaVenta || proyecto.monedaBase, proyecto.monedaBase) : h.importeFijo)
+            : precioBase * (Number(h.porcentaje) || 0) / 100
+    }));
+    return flujos.reduce((van, f) => van + f.valor / Math.pow(1.1, f.mes / 12), 0);
 }
 
-function calcularPayback() {
-    let acumulado = 0;
-    let meses = 0;
-    let ingresosMensuales = (proyecto.precioVenta || 0) / 12;
-    let costeTotal = (proyecto.elementosGantt || []).reduce((sum, e) => sum + (e.costeEstimado || 0), 0);
-    (proyecto.materiales || []).forEach(m => costeTotal += m.cantidad * m.costeUnitario);
-    
+function calcularPaybackBeneficios() {
+    const precioBase = (typeof precioVentaEnBase === 'function') ? precioVentaEnBase(proyecto) : (proyecto.precioVenta || 0);
+    const costeTotal = (typeof calcularCosteRecursosProyecto === 'function') ? calcularCosteRecursosProyecto(proyecto, false) : 0;
+    const ingresosMensuales = precioBase / 12;
+    let acumulado = 0, meses = 0;
     while (acumulado < costeTotal && meses < 60) {
         meses++;
         acumulado += ingresosMensuales;
@@ -119,14 +113,14 @@ function calcularPayback() {
 function dibujarGraficoBeneficios() {
     const ctx = document.getElementById('beneficiosChart')?.getContext('2d');
     if (!ctx) return;
-    
+
     // Destruir gráfico existente si hay
     if (window.beneficiosChartInstance) window.beneficiosChartInstance.destroy();
-    
+
     const historial = proyecto.beneficios?.historial || [];
     const labels = historial.map(h => h.fecha);
     const datos = historial.map(h => h.valor);
-    
+
     window.beneficiosChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -169,13 +163,13 @@ function registrarBeneficioReal() {
     if (valor !== null && !isNaN(parseFloat(valor))) {
         if (!proyecto.beneficios) proyecto.beneficios = {};
         proyecto.beneficios.real = parseFloat(valor);
-        
+
         if (!proyecto.beneficios.historial) proyecto.beneficios.historial = [];
         proyecto.beneficios.historial.push({
             fecha: new Date().toISOString().split('T')[0],
             valor: parseFloat(valor)
         });
-        
+
         guardarProyecto();
         renderizarBeneficios();
         mostrarToast(` Beneficio real registrado: ${formatearMoneda(parseFloat(valor))}`, 'success');
@@ -214,7 +208,7 @@ function agregarHitoBeneficio() {
 function guardarHitoBeneficio() {
     let nombre = document.getElementById('hitoBeneficioNombre').value.trim();
     if (!nombre) { mostrarToast(tApp('toast_nombre_obligatorio'), 'error'); return; }
-    
+
     const nuevoHito = {
         id: Date.now(),
         nombre: nombre,
@@ -222,11 +216,11 @@ function guardarHitoBeneficio() {
         meta: parseFloat(document.getElementById('hitoBeneficioMeta').value) || 0,
         real: parseFloat(document.getElementById('hitoBeneficioReal').value) || 0
     };
-    
+
     if (!proyecto.beneficios) proyecto.beneficios = {};
     if (!proyecto.beneficios.hitos) proyecto.beneficios.hitos = [];
     proyecto.beneficios.hitos.push(nuevoHito);
-    
+
     guardarProyecto();
     renderizarBeneficios();
     cerrarModalGeneric();
@@ -236,7 +230,7 @@ function guardarHitoBeneficio() {
 function editarHitoBeneficio(id) {
     const hito = proyecto.beneficios?.hitos?.find(h => h.id === id);
     if (!hito) return;
-    
+
     const modalHtml = `
         <div class="modal-content modal-500">
             <div class="modal-header">
@@ -299,10 +293,10 @@ function exportarBeneficios() {
     csv += `Beneficio Proyectado,${b.proyectado || 0}\n`;
     csv += `Beneficio Real,${b.real || 0}\n`;
     csv += `Desviación,${b.proyectado > 0 ? (((b.real || 0) - b.proyectado) / b.proyectado * 100).toFixed(1) : 0}%\n`;
-    csv += `ROI,${calcularROI()}%\n`;
-    csv += `VAN,${calcularVAN()}\n`;
-    csv += `Payback,${calcularPayback()} meses\n`;
-    
+    csv += `ROI,${calcularROIBeneficios()}%\n`;
+    csv += `VAN,${calcularVANBeneficios()}\n`;
+    csv += `Payback,${calcularPaybackBeneficios()} meses\n`;
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -310,7 +304,7 @@ function exportarBeneficios() {
     link.click();
     URL.revokeObjectURL(link.href);
     mostrarToast(" Beneficios exportados", 'success');
-}  
+}
 
 // ============================================
 // GESTIÓN DE CAMBIOS
@@ -323,25 +317,25 @@ function inicializarCambios() {
 
 function renderizarCambios() {
     const cambios = proyecto.cambios || [];
-    
+
     document.getElementById('cambiosPendientes').innerHTML = cambios.filter(c => c.estado === 'Pendiente').length;
     document.getElementById('cambiosAprobados').innerHTML = cambios.filter(c => c.estado === 'Aprobado').length;
     document.getElementById('cambiosRechazados').innerHTML = cambios.filter(c => c.estado === 'Rechazado').length;
     document.getElementById('cambiosImplementados').innerHTML = cambios.filter(c => c.estado === 'Implementado').length;
-    
+
     const tbody = document.getElementById('cambiosBody');
     if (cambios.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="u-text-center">No hay solicitudes de cambio</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = cambios.map(c => `
         <tr>
             <td>#${c.id}</td>
             <td>${formatearFechaEspa(c.fecha)}</td>
             <td>${escapeHtml(c.solicitante || '-')}</td>
-            <td>${escapeHtml(c.descripcion || '-').substring(0, 50)}</td>
-            <td>${c.impacto || '-'}</td>
+            <td>${escapeHtml(String(c.descripcion || '-').substring(0, 50))}</td>
+            <td>${escapeHtml(c.impacto || '-')}</td>
             <td><span class="badge-${c.prioridad === 'Alta' ? 'progreso' : (c.prioridad === 'Media' ? 'pais' : 'completado')}">${c.prioridad || 'Media'}</span></td>
             <td><span class="badge-${c.estado === 'Aprobado' ? 'completado' : (c.estado === 'Pendiente' ? 'progreso' : 'pendiente')}">${c.estado || 'Pendiente'}</span></td>
             <td>${escapeHtml(c.aprobadoPor || '-')}</td>
@@ -423,23 +417,35 @@ function abrirModalNuevoCambio() {
 function guardarCambio() {
     let descripcion = document.getElementById('cambioDescripcion').value.trim();
     if (!descripcion) { mostrarToast(tApp('toast_descripcion_obligatoria'), 'error'); return; }
-    
+
+    const impactoCoste = document.getElementById('cambioImpactoCosto').value.trim();
+    const impactoPlazo = document.getElementById('cambioImpactoPlazo').value.trim();
+    const estado = document.getElementById('cambioEstado').value;
+    const lineaBase = (proyecto.lineasBase || []).slice().sort((a, b) => b.id - a.id)[0];
     const nuevoCambio = {
         id: Date.now(),
         fecha: document.getElementById('cambioFecha').value,
         solicitante: document.getElementById('cambioSolicitante').value,
         descripcion: descripcion,
-        impacto: ` ${document.getElementById('cambioImpactoCosto').value || '0'} |  ${document.getElementById('cambioImpactoPlazo').value || '0'}`,
+        impacto: ` ${impactoCoste || '0'} |  ${impactoPlazo || '0'}`,
+        impactoCosteNumerico: parseFloat(impactoCoste.replace(/[^\d.,-]/g, '').replace(',', '.')) || 0,
+        impactoPlazoDias: parseInt(impactoPlazo.replace(/[^\d-]/g, ''), 10) || 0,
+        impactoAlcance: 'Por determinar',
+        lineaBaseId: lineaBase ? lineaBase.id : null,
         prioridad: document.getElementById('cambioPrioridad').value,
-        estado: document.getElementById('cambioEstado').value,
+        estado,
         justificacion: document.getElementById('cambioJustificacion').value,
         aprobadoPor: document.getElementById('cambioAprobadoPor').value,
         fechaRegistro: new Date().toISOString()
     };
-    
+
     if (!proyecto.cambios) proyecto.cambios = [];
     proyecto.cambios.push(nuevoCambio);
-    
+    if (typeof registrarBitacora === 'function') registrarBitacora('cambio', nuevoCambio.id, 'crear', null, nuevoCambio);
+    if (estado === 'Aprobado' || estado === 'Implementado') {
+        propagarCambioALineaBase(lineaBase, nuevoCambio);
+    }
+
     guardarProyecto();
     renderizarCambios();
     cerrarModalGeneric();
@@ -449,7 +455,7 @@ function guardarCambio() {
 function editarCambio(id) {
     const cambio = proyecto.cambios?.find(c => c.id === id);
     if (!cambio) return;
-    
+
     const modalHtml = `
         <div class="modal-content modal-600">
             <div class="modal-header">
@@ -498,14 +504,21 @@ function actualizarCambio() {
     const id = parseInt(document.getElementById('editCambioId').value);
     const idx = proyecto.cambios.findIndex(c => c.id === id);
     if (idx >= 0) {
+        const antes = { ...proyecto.cambios[idx] };
+        const estado = document.getElementById('editCambioEstado').value;
         proyecto.cambios[idx] = {
-            ...proyecto.cambios[idx],
+            ...antes,
             descripcion: document.getElementById('editCambioDescripcion').value,
             solicitante: document.getElementById('editCambioSolicitante').value,
             prioridad: document.getElementById('editCambioPrioridad').value,
-            estado: document.getElementById('editCambioEstado').value,
+            estado,
             aprobadoPor: document.getElementById('editCambioAprobadoPor').value
         };
+        if (typeof registrarBitacora === 'function') registrarBitacora('cambio', id, estado === 'Aprobado' ? 'aprobar' : 'actualizar', antes, proyecto.cambios[idx]);
+        if ((estado === 'Aprobado' || estado === 'Implementado') && antes.estado !== estado) {
+            const lineaBase = (proyecto.lineasBase || []).find(lb => lb.id === antes.lineaBaseId) || (proyecto.lineasBase || []).slice().sort((a, b) => b.id - a.id)[0];
+            propagarCambioALineaBase(lineaBase, proyecto.cambios[idx]);
+        }
         guardarProyecto();
         renderizarCambios();
         cerrarModalGeneric();
@@ -515,7 +528,9 @@ function actualizarCambio() {
 
 function eliminarCambio(id) {
     if (confirm(tApp('confirmar_eliminar_cambio'))) {
-        proyecto.cambios = proyecto.cambios.filter(c => c.id !== id);
+        const antes = (proyecto.cambios || []).find(c => c.id === id) || null;
+        proyecto.cambios = (proyecto.cambios || []).filter(c => c.id !== id);
+        if (typeof registrarBitacora === 'function') registrarBitacora('cambio', id, 'eliminar', antes, null);
         guardarProyecto();
         renderizarCambios();
         mostrarToast(tApp('toast_solicitud_eliminada'), 'success');
@@ -532,29 +547,29 @@ function inicializarLecciones() {
 
 function renderizarLecciones() {
     const lecciones = proyecto.lecciones || [];
-    
+
     document.getElementById('totalExitos').innerHTML = lecciones.filter(l => l.categoria === 'exito').length;
     document.getElementById('totalMejoras').innerHTML = lecciones.filter(l => l.categoria === 'mejora').length;
     document.getElementById('totalRecomendaciones').innerHTML = lecciones.filter(l => l.categoria === 'recomendacion').length;
-    
+
     const container = document.getElementById('listaLecciones');
     if (lecciones.length === 0) {
         container.innerHTML = '<div class="info-card u-text-center">No hay lecciones registradas. ¡Comienza a documentar tu aprendizaje!</div>';
         return;
     }
-    
+
     const colores = {
         exito: 'border-left-color: #00A859;',
         mejora: 'border-left-color: #FF8C00;',
         recomendacion: 'border-left-color: #007AFF;'
     };
-    
+
     const iconos = {
         exito: '',
         mejora: '',
         recomendacion: ''
     };
-    
+
     container.innerHTML = lecciones.map(l => `
         <div class="info-card" style="${colores[l.categoria] || colores.recomendacion}">
             <div class="u-flex-jc-sb">
@@ -621,7 +636,7 @@ function abrirModalNuevaLeccion() {
 function guardarLeccion() {
     let titulo = document.getElementById('leccionTitulo').value.trim();
     if (!titulo) { mostrarToast(tApp('toast_titulo_obligatorio_gen'), 'error'); return; }
-    
+
     const nuevaLeccion = {
         id: Date.now(),
         categoria: document.getElementById('leccionCategoria').value,
@@ -632,10 +647,10 @@ function guardarLeccion() {
         fecha: document.getElementById('leccionFecha').value,
         fechaRegistro: new Date().toISOString()
     };
-    
+
     if (!proyecto.lecciones) proyecto.lecciones = [];
     proyecto.lecciones.push(nuevaLeccion);
-    
+
     guardarProyecto();
     renderizarLecciones();
     cerrarModalGeneric();
@@ -645,7 +660,7 @@ function guardarLeccion() {
 function editarLeccion(id) {
     const leccion = proyecto.lecciones?.find(l => l.id === id);
     if (!leccion) return;
-    
+
     const modalHtml = `
         <div class="modal-content modal-sm">
             <div class="modal-header">
@@ -731,7 +746,7 @@ function actualizarVersionEntregable(id, nuevaVersion) {
     if (elemento && elemento.tipo === 'entregable') {
         const versionAnterior = elemento.version || '1.0';
         elemento.version = nuevaVersion;
-        
+
         // Registrar en el historial de versiones
         if (!elemento.historialVersiones) elemento.historialVersiones = [];
         elemento.historialVersiones.push({
@@ -739,10 +754,10 @@ function actualizarVersionEntregable(id, nuevaVersion) {
             fecha: new Date().toISOString(),
                     usuario: 'PM'
         });
-        
+
         guardarProyecto();
         mostrarToast(` Entregable "${elemento.nombre}" actualizado a versión ${nuevaVersion}`, 'success');
-        
+
         // Si hay cambio mayor, sugerir registrar lección
         if (versionAnterior.split('.')[0] !== nuevaVersion.split('.')[0]) {
             mostrarToast(" Cambio mayor de versión. Considera registrar una lección aprendida.", 'info');
@@ -756,7 +771,7 @@ function verHistorialVersiones(id) {
         mostrarToast("No hay historial de versiones", 'info');
         return;
     }
-    
+
     const modalHtml = `
         <div class="modal-content modal-500">
             <div class="modal-header">

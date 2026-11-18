@@ -5,15 +5,15 @@
 
 function formatearFechaEspa(fechaStr) {
     if (!fechaStr) return '-';
-    
+
     try {
         let fecha;
-        
+
         // Si es string ISO (YYYY-MM-DD)
         if (typeof fechaStr === 'string' && fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) {
             const partes = fechaStr.split('-');
             fecha = new Date(partes[0], partes[1] - 1, partes[2]);
-        } 
+        }
         // Si es objeto Date
         else if (fechaStr instanceof Date) {
             fecha = fechaStr;
@@ -25,15 +25,15 @@ function formatearFechaEspa(fechaStr) {
         else {
             fecha = new Date(fechaStr);
         }
-        
+
         // Verificar si la fecha es válida
         if (isNaN(fecha.getTime())) return fechaStr;
-        
+
         // Formato español: dd/mm/yyyy
         const dia = fecha.getDate().toString().padStart(2, '0');
         const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
         const anio = fecha.getFullYear();
-        
+
         return `${dia}/${mes}/${anio}`;
     } catch(e) {
         return fechaStr;
@@ -43,16 +43,16 @@ function formatearFechaEspa(fechaStr) {
 // Función para convertir fecha de formato español a ISO (para inputs date)
 function fechaEspaToISO(fechaStr) {
     if (!fechaStr) return '';
-    
+
     // Si ya está en formato ISO, devolver igual
     if (fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) return fechaStr;
-    
+
     // Si está en formato dd/mm/yyyy
     const partes = fechaStr.split('/');
     if (partes.length === 3) {
         return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
     }
-    
+
     return fechaStr;
 }
 
@@ -82,27 +82,27 @@ function subscribeToLanguageChange(callback) {
 // Función para refrescar TODOS los paneles según el idioma
 function refreshAllPanels() {
     console.log(" Refrescando todos los paneles por cambio de idioma...");
-    
+
     // Acta de Inicio
     if (typeof renderizarActa === 'function') {
         renderizarActa();
     }
-    
+
     // Dashboard
     if (typeof calcularCashflow === 'function') {
         calcularCashflow();
     }
-    
+
     // Salud del Proyecto
     if (typeof actualizarPanelSalud === 'function') {
         actualizarPanelSalud();
     }
-    
+
     // Cronograma Gantt
     if (typeof renderizarCronograma === 'function') {
         renderizarCronograma();
     }
-    
+
     // Riesgos
     if (typeof renderizarRiesgos === 'function') {
         renderizarRiesgos();
@@ -113,66 +113,71 @@ function refreshAllPanels() {
     if (typeof inicializarRiesgos === 'function') {
         inicializarRiesgos();
     }
-    
+
     // Stakeholders
     if (typeof renderizarStakeholders === 'function') {
         renderizarStakeholders();
     }
-    
+
     if (typeof renderizarOrganigrama === 'function') {
         renderizarOrganigrama();
     }
-    
+
+    // Carga de trabajo por recurso/día
+    if (typeof renderizarCargaTrabajo === 'function') {
+        renderizarCargaTrabajo();
+    }
+
     // RACI
     if (typeof renderizarRACI === 'function') {
         renderizarRACI();
     }
-    
+
     // Procesos
     if (typeof renderizarProcesos === 'function') {
         renderizarProcesos();
     }
-    
+
     // Equipo
     if (typeof renderizarEquipo === 'function') {
         renderizarEquipo();
     }
-    
+
     // Materiales
     if (typeof renderizarMateriales === 'function') {
         renderizarMateriales();
     }
-    
+
     // Servicios
     if (typeof renderizarServicios === 'function') {
         renderizarServicios();
     }
-    
+
     // Viajes
     if (typeof renderizarViajes === 'function') {
         renderizarViajes();
     }
-    
+
     // Avales
     if (typeof renderizarAvales === 'function') {
         renderizarAvales();
     }
-    
+
     // Seguros
     if (typeof renderizarSeguros === 'function') {
         renderizarSeguros();
     }
-    
+
     // Garantía
     if (typeof renderizarGarantia === 'function') {
         renderizarGarantia();
     }
-    
+
     // Roles
     if (typeof renderizarRoles === 'function') {
         renderizarRoles();
     }
-    
+
     // Comunicaciones
     if (typeof renderizarComunicaciones === 'function') {
         renderizarComunicaciones();
@@ -180,22 +185,22 @@ function refreshAllPanels() {
     if (typeof renderizarReuniones === 'function') {
         renderizarReuniones();
     }
-    
+
     // Beneficios
     if (typeof renderizarBeneficios === 'function') {
         renderizarBeneficios();
     }
-    
+
     // Cambios
     if (typeof renderizarCambios === 'function') {
         renderizarCambios();
     }
-    
+
     // Lecciones
     if (typeof renderizarLecciones === 'function') {
         renderizarLecciones();
     }
-    
+
     // SCRUM / Ágil
     if (typeof renderizarSprintBacklog === 'function') {
         renderizarSprintBacklog();
@@ -218,12 +223,12 @@ function refreshAllPanels() {
     if (typeof calcularCostesPorSprint === 'function') {
         calcularCostesPorSprint();
     }
-    
+
     // Monedas
     if (typeof actualizarTiposCambioUI === 'function') {
         actualizarTiposCambioUI();
     }
-    
+
     // Resumen de Gastos (AHORA CON TRY-CATCH PARA EVITAR ERRORES)
     if (typeof actualizarResumenGastos === 'function') {
         try {
@@ -232,12 +237,12 @@ function refreshAllPanels() {
             console.warn("Error en actualizarResumenGastos:", e.message);
         }
     }
-    
+
     // Hitos Financieros
     if (typeof renderizarHitosFinancieros === 'function') {
         renderizarHitosFinancieros();
     }
-    
+
     console.log(" Todos los paneles refrescados");
 }
 
@@ -282,7 +287,7 @@ function updateStaticTexts() {
         'panelAgileCostControl': 'agileCostControl_titulo',
         'panelSprintList': 'sprintList_titulo'
     };
-    
+
     for (const [panelId, key] of Object.entries(panelTitles)) {
         const panel = document.getElementById(panelId);
         if (panel) {
@@ -464,7 +469,7 @@ function updateStaticTexts() {
     } catch(e) {
         console.warn("Error actualizando botones:", e.message);
     }
-    
+
     // Static text paragraphs / info cards
     const staticTexts = [
         { panel: 'panelGarantia', selector: 'p', textPattern: 'No hay garantía configurada', key: 'garantia_no_config_texto' },
@@ -584,7 +589,7 @@ function cerrarModalGeneric() {
                 aplicarIdiomaUI(idiomaApp);
             }
         }
-        
+
         function aplicarIdiomaUI(idioma) {
             idiomaApp = idioma;
             actualizarSidebarIdioma();
@@ -596,7 +601,7 @@ function cerrarModalGeneric() {
             refreshAllPanels();
             dispatchLanguageChangeEvent();
         }
-        
+
         function actualizarSidebarIdioma() {
             if (!window.iconosGuardados) {
                 window.iconosGuardados = {};
@@ -710,7 +715,7 @@ function cerrarModalGeneric() {
             const volverSpan = document.querySelector('.nav-back .nav-item span:last-child');
             if (volverSpan) volverSpan.textContent = tApp('sidebar_volver');
         }
-        
+
         function actualizarHeaderBotones() {
             const btnAct = document.querySelector('.btn-success.btn-small');
             if (btnAct && (btnAct.innerHTML.includes('Actualizar') || btnAct.innerHTML.includes('Update'))) {
@@ -726,7 +731,7 @@ function cerrarModalGeneric() {
                 btnExp.innerHTML = tApp('btn_exportar');
             }
         }
-        
+
         function actualizarTarjetasPrincipales() {
             const cards = document.querySelectorAll('.cards-grid .value-card .small');
             if (cards[0]) cards[0].textContent = tApp('card_coste');
@@ -734,7 +739,7 @@ function cerrarModalGeneric() {
             if (cards[2]) cards[2].textContent = tApp('card_beneficio');
             if (cards[3]) cards[3].textContent = tApp('card_financiacion');
         }
-        
+
         // ============================================
         // FUNCIONES AUXILIARES
         // ============================================
@@ -751,7 +756,7 @@ function cerrarModalGeneric() {
             if (!proyecto.acta.moneda && proyecto.monedaBase) proyecto.acta.moneda = proyecto.monedaBase;
             else if (proyecto.acta.moneda !== proyecto.monedaBase && proyecto.monedaBase) proyecto.acta.moneda = proyecto.monedaBase;
         }
-        
+
         function guardarProyecto() {
     // Limpiar propiedades temporales del motor CPM antes de guardar
     if (proyecto.elementosGantt) {
@@ -776,7 +781,7 @@ function cerrarModalGeneric() {
                 mostrarToast(' No se pudo guardar: almacenamiento lleno', 'error');
             }
         }
-        
+
         function mostrarToast(mensaje, tipo) {
     const toast = document.getElementById('toast');
     if (toast) {
@@ -796,7 +801,7 @@ function compararCodigosJerarquicos(codigoA, codigoB) {
     if (!codigoA && !codigoB) return 0;
     if (!codigoA) return 1;
     if (!codigoB) return -1;
-    
+
     // Función para convertir "1.2.3" o "H-1.2" en array de números
     function parseCodigo(codigo) {
         // Eliminar prefijos como H- o E-
@@ -805,10 +810,10 @@ function compararCodigosJerarquicos(codigoA, codigoB) {
         const partes = limpio.split('.');
         return partes.map(p => parseInt(p, 10));
     }
-    
+
     const partesA = parseCodigo(codigoA);
     const partesB = parseCodigo(codigoB);
-    
+
     // Comparar parte por parte
     const maxLen = Math.max(partesA.length, partesB.length);
     for (let i = 0; i < maxLen; i++) {
@@ -820,10 +825,10 @@ function compararCodigosJerarquicos(codigoA, codigoB) {
     }
     return 0;
 }
-        
- function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
 
-        
+ function escapeHtml(str) { if(!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+
         function leerArchivoComoBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -832,5 +837,5 @@ function compararCodigosJerarquicos(codigoA, codigoB) {
                 reader.readAsDataURL(file);
             });
         }
-        
+
         // ============================================

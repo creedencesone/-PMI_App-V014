@@ -11,49 +11,63 @@ var edtActualIdGlobal = null;
 // ============================================
 
 var vistaActual = 'gantt'; // 'gantt' o 'edt'
+
+/** Trabaja siempre sobre el cronograma activo (plan o ejecución). */
+function datasetEDTActivo() {
+    const clave = (typeof cronogramaActivo !== 'undefined' && cronogramaActivo && cronogramaActivo.dataKey) || 'elementosGantt';
+    if (typeof proyecto === 'undefined' || !proyecto) return [];
+    if (!Array.isArray(proyecto[clave])) proyecto[clave] = [];
+    return proyecto[clave];
+}
+function claveDatasetEDT() {
+    return (typeof cronogramaActivo !== 'undefined' && cronogramaActivo && cronogramaActivo.dataKey) || 'elementosGantt';
+}
 var edtSeleccionadaId = null;
 
 function abrirModalEDT(edtId) {
     console.log(" abrirModalEDT llamado con ID:", edtId);
-    
+
     // Buscar la EDT
     var edt = null;
-    if (proyecto && proyecto.elementosGantt) {
-        for (var i = 0; i < proyecto.elementosGantt.length; i++) {
-            if (proyecto.elementosGantt[i].id === edtId && proyecto.elementosGantt[i].tipo === 'edt') {
-                edt = proyecto.elementosGantt[i];
+    if (proyecto && datasetEDTActivo()) {
+        for (var i = 0; i < datasetEDTActivo().length; i++) {
+            if (String(datasetEDTActivo()[i].id) === String(edtId) && datasetEDTActivo()[i].tipo === 'edt') {
+                edt = datasetEDTActivo()[i];
                 break;
             }
         }
     }
-    
+
     if (!edt) {
         mostrarToast(" EDT no encontrada", 'error');
         return;
     }
-    
+
     edtSeleccionadaId = edtId;
     vistaActual = 'edt';
-    
-    // Obtener elementos hijos
+
+    // Obtener todos los descendientes (multinivel), con protección anti-ciclos.
     var elementosHijos = [];
-    for (var i = 0; i < (proyecto.elementosGantt || []).length; i++) {
-        if (proyecto.elementosGantt[i].dependeDe === edtId) {
-            elementosHijos.push(proyecto.elementosGantt[i]);
-        }
+    var subEdts = [];
+    var pendientes = [edtId];
+    var vistosEDT = new Set([edtId]);
+    while (pendientes.length) {
+        var actual = pendientes.shift();
+        datasetEDTActivo().forEach(function(e) {
+            if (e && e.dependeDe === actual && elementosHijos.indexOf(e) === -1) {
+                elementosHijos.push(e);
+                if (e.tipo === 'edt') {
+                    subEdts.push(e);
+                    if (!vistosEDT.has(e.id)) { vistosEDT.add(e.id); pendientes.push(e.id); }
+                }
+            }
+        });
     }
-    
-    // Separar por tipo
-    var actividades = [];
-    var entregables = [];
-    var hitos = [];
-    for (var i = 0; i < elementosHijos.length; i++) {
-        var e = elementosHijos[i];
-        if (e.tipo === 'actividad') actividades.push(e);
-        else if (e.tipo === 'entregable') entregables.push(e);
-        else if (e.tipo === 'hito') hitos.push(e);
-    }
-    
+    var hojas = elementosHijos.filter(function(e) { return e.tipo !== 'edt'; });
+    var actividades = hojas.filter(function(e) { return e.tipo === 'actividad'; });
+    var entregables = hojas.filter(function(e) { return e.tipo === 'entregable'; });
+    var hitos = hojas.filter(function(e) { return e.tipo === 'hito'; });
+
     // Calcular progreso
     var sumaProgreso = 0;
     var totalConProgreso = 0;
@@ -64,47 +78,50 @@ function abrirModalEDT(edtId) {
         }
     }
     var progresoTotal = totalConProgreso > 0 ? (sumaProgreso / totalConProgreso) : 0;
-    
+
     // Coste total
     var costeTotal = 0;
     for (var i = 0; i < elementosHijos.length; i++) {
         costeTotal += (elementosHijos[i].costeEstimado || 0);
     }
-    
+
     // Código EDT
     var codigoEDT = edt.codigo || '';
     if (typeof obtenerCodigoElemento === 'function') {
-        codigoEDT = obtenerCodigoElemento(edt, proyecto.elementosGantt) || codigoEDT;
+        codigoEDT = obtenerCodigoElemento(edt, datasetEDTActivo()) || codigoEDT;
     }
-    
+
     // Generar HTML
-    var html = renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal, costeTotal, codigoEDT);
-    
+    var html = renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal, costeTotal, codigoEDT, subEdts);
+
     // Reemplazar el contenido del contenedor de cronograma
     var cronoContainer = document.getElementById('cronogramaContainer');
     var wbsPanel = document.getElementById('wbsTree');
     var botonesContainer = document.querySelector('#panelCronograma .panel-title:first-child');
-    
+
     if (cronoContainer) {
-        // Guardar el HTML original para volver
-        window.ganttOriginalHTML = cronoContainer.innerHTML;
-        
+        // Sólo la primera entrada desde Gantt guarda el punto de restauración;
+        // navegar entre EDTs no debe sobrescribirlo con una vista ya anidada.
+        if (vistaActual !== 'edt' || !window.ganttOriginalHTML) {
+            window.ganttOriginalHTML = cronoContainer.innerHTML;
+        }
+
         // Mostrar vista EDT
         cronoContainer.innerHTML = html;
         cronoContainer.style.minHeight = '500px';
-        
+
         // Ocultar árbol WBS
         if (wbsPanel) wbsPanel.style.display = 'none';
-        
+
         // Cambiar el título del panel
         if (botonesContainer) {
             var tituloOriginal = botonesContainer.querySelector('span');
             if (tituloOriginal && !window.tituloOriginalGuardado) {
                 window.tituloOriginalGuardado = tituloOriginal.innerHTML;
-                tituloOriginal.innerHTML = ` EDT: ${edt.nombre} ${codigoEDT ? `[${codigoEDT}]` : ''}`;
+                tituloOriginal.innerHTML = ` EDT: ${escapeHtml(edt.nombre || '')} ${codigoEDT ? `[${escapeHtml(codigoEDT)}]` : ''}`;
             }
         }
-        
+
         // Mostrar botón de volver si no existe
         if (!document.getElementById('btnVolverGantt')) {
             var btnVolver = document.createElement('button');
@@ -120,21 +137,22 @@ function abrirModalEDT(edtId) {
     }
 }
 
-function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal, costeTotal, codigoEDT) {
-    
+function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal, costeTotal, codigoEDT, subEdts) {
+    subEdts = subEdts || [];
+
     function renderTarjeta(elemento) {
         var fechaFin = elemento.inicio ? sumarDias(elemento.inicio, elemento.duracion) : '-';
         var progreso = elemento.progreso || 0;
         var responsable = elemento.responsable || (elemento.recursoAsignado ? elemento.recursoAsignado.nombre : 'Sin asignar');
-        
+
         var iconos = { actividad: '', entregable: '', hito: '' };
         var icono = iconos[elemento.tipo] || '';
-        
+
         var barraColor = '#007AFF';
         if (progreso >= 80) barraColor = '#00A859';
         else if (progreso >= 50) barraColor = '#FF8C00';
         else if (progreso > 0) barraColor = '#FF3B30';
-        
+
         return `
             <div class="edt-elemento-card" style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-color);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
@@ -164,25 +182,25 @@ function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal,
             </div>
         `;
     }
-    
+
     var actividadesHtml = '';
     for (var i = 0; i < actividades.length; i++) {
         actividadesHtml += renderTarjeta(actividades[i]);
     }
     if (actividades.length === 0) actividadesHtml = '<div class="u-empty-state"> No hay actividades</div>';
-    
+
     var entregablesHtml = '';
     for (var i = 0; i < entregables.length; i++) {
         entregablesHtml += renderTarjeta(entregables[i]);
     }
     if (entregables.length === 0) entregablesHtml = '<div class="u-empty-state"> No hay entregables</div>';
-    
+
     var hitosHtml = '';
     for (var i = 0; i < hitos.length; i++) {
         hitosHtml += renderTarjeta(hitos[i]);
     }
     if (hitos.length === 0) hitosHtml = '<div class="u-empty-state"> No hay hitos</div>';
-    
+
     return `
         <div class="edt-view-container" style="padding: 16px;">
             <!-- Estadísticas -->
@@ -199,11 +217,11 @@ function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal,
                     <div class="u-fs-10 u-color-muted">Coste total</div>
                 </div>
                 <div style="flex: 1; background: var(--bg-card); border-radius: 12px; padding: 12px; text-align: center; border: 1px solid var(--border-color);">
-                    <div style="font-size: 18px; font-weight: 700;">${actividades.length + entregables.length + hitos.length}</div>
+                    <div style="font-size: 18px; font-weight: 700;">${actividades.length + entregables.length + hitos.length + subEdts.length}</div>
                     <div class="u-fs-10 u-color-muted">Elementos totales</div>
                 </div>
             </div>
-            
+
             <!-- Vista Kanban -->
             <div style="display: flex; gap: 20px; overflow-x: auto; min-height: 400px;">
                 <!-- Actividades -->
@@ -216,7 +234,7 @@ function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal,
                         ${actividadesHtml}
                     </div>
                 </div>
-                
+
                 <!-- Entregables -->
                 <div class="u-kanban-col">
                     <div style="padding: 14px 16px; border-bottom: 2px solid #00A859; display: flex; justify-content: space-between; align-items: center;">
@@ -227,7 +245,23 @@ function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal,
                         ${entregablesHtml}
                     </div>
                 </div>
-                
+
+                <!-- Sub-EDT (niveles inferiores) -->
+                <div class="u-kanban-col">
+                    <div style="padding: 14px 16px; border-bottom: 2px solid #007AFF; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-size: 14px; font-weight: 600; margin: 0;"><span> SUB-EDT</span> <span class="u-badge-light">${subEdts.length}</span></h3>
+                        <button onclick="abrirNuevoElementoConPadre(${edt.id}, 'edt')" style="background: rgba(0,122,255,0.2); border: none; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; color: #007AFF;">+ Añadir</button>
+                    </div>
+                    <div class="u-scroll-panel">
+                        ${subEdts.length ? subEdts.map(function(se) {
+                            return `<div class="edt-elemento-card" style="background: var(--bg-card); border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid rgba(0,122,255,0.4);">
+                                <div style="font-weight:600;font-size:13px;">${escapeHtml(se.nombre)} ${se.codigo ? `<span style="font-size:9px;opacity:.7;">[${escapeHtml(se.codigo)}]</span>` : ''}</div>
+                                <button class="btn btn-secondary btn-small" onclick="abrirModalEDT(${se.id})" style="margin-top:8px;">Abrir nivel</button>
+                            </div>`;
+                        }).join('') : '<div class="u-empty-state"> Sin sub-niveles</div>'}
+                    </div>
+                </div>
+
                 <!-- Hitos -->
                 <div class="u-kanban-col">
                     <div style="padding: 14px 16px; border-bottom: 2px solid #FF3B30; display: flex; justify-content: space-between; align-items: center;">
@@ -246,19 +280,19 @@ function renderizarVistaEDT(edt, actividades, entregables, hitos, progresoTotal,
 function volverAlGantt() {
     vistaActual = 'gantt';
     edtSeleccionadaId = null;
-    
+
     var cronoContainer = document.getElementById('cronogramaContainer');
     var wbsPanel = document.getElementById('wbsTree');
     var botonesContainer = document.querySelector('#panelCronograma .panel-title:first-child');
-    
+
     if (cronoContainer && window.ganttOriginalHTML) {
         cronoContainer.innerHTML = window.ganttOriginalHTML;
         cronoContainer.style.minHeight = '400px';
         window.ganttOriginalHTML = null;
     }
-    
+
     if (wbsPanel) wbsPanel.style.display = '';
-    
+
     if (botonesContainer) {
         var titulo = botonesContainer.querySelector('span');
         if (titulo && window.tituloOriginalGuardado) {
@@ -266,10 +300,10 @@ function volverAlGantt() {
             window.tituloOriginalGuardado = null;
         }
     }
-    
+
     var btnVolver = document.getElementById('btnVolverGantt');
     if (btnVolver) btnVolver.style.display = 'none';
-    
+
     // Recargar el cronograma
     if (typeof renderizarCronograma === 'function') renderizarCronograma();
 }
@@ -281,25 +315,25 @@ function cerrarModalEDT() {
 
 function copiarElementoDesdeEDT(elementoId) {
     var original = null;
-    for (var i = 0; i < proyecto.elementosGantt.length; i++) {
-        if (proyecto.elementosGantt[i].id === elementoId) {
-            original = proyecto.elementosGantt[i];
+    for (var i = 0; i < datasetEDTActivo().length; i++) {
+        if (String(datasetEDTActivo()[i].id) === String(elementoId)) {
+            original = datasetEDTActivo()[i];
             break;
         }
     }
     if (!original) return;
-    
+
     var copia = JSON.parse(JSON.stringify(original));
     copia.id = Date.now() + Math.random() * 1000;
     copia.nombre = original.nombre + " (Copia)";
     copia.progreso = 0;
     copia.finReal = null;
     copia.inicioReal = null;
-    
-    proyecto.elementosGantt.push(copia);
+
+    datasetEDTActivo().push(copia);
     guardarProyecto();
-    if (typeof reordenarNumeracionElementos === 'function') reordenarNumeracionElementos();
-    
+    if (typeof reordenarNumeracionElementos === 'function') reordenarNumeracionElementos(datasetEDTActivo(), (typeof cronogramaActivo !== 'undefined' ? cronogramaActivo : null));
+
     if (edtSeleccionadaId) {
         abrirModalEDT(edtSeleccionadaId);
     }
@@ -308,19 +342,25 @@ function copiarElementoDesdeEDT(elementoId) {
 
 function eliminarElementoDesdeEDT(elementoId) {
     if (!confirm(tApp('confirmar_eliminar_elemento'))) return;
-    
+
     var nombre = '';
-    for (var i = 0; i < proyecto.elementosGantt.length; i++) {
-        if (proyecto.elementosGantt[i].id === elementoId) {
-            nombre = proyecto.elementosGantt[i].nombre;
+    for (var i = 0; i < datasetEDTActivo().length; i++) {
+        if (String(datasetEDTActivo()[i].id) === String(elementoId)) {
+            nombre = datasetEDTActivo()[i].nombre;
             break;
         }
     }
-    
-    proyecto.elementosGantt = proyecto.elementosGantt.filter(function(e) { return e.id !== elementoId; });
+
+    const elementosEDT = datasetEDTActivo();
+    const eliminadoEDT = elementosEDT.find(function(e) { return String(e.id) === String(elementoId); });
+    proyecto[claveDatasetEDT()] = elementosEDT.filter(function(e) { return String(e.id) !== String(elementoId); });
+    proyecto[claveDatasetEDT()].forEach(function(e) {
+        if (String(e.dependeDe) === String(elementoId)) e.dependeDe = null;
+    });
+    if (typeof registrarBitacora === 'function') registrarBitacora('elemento', elementoId, 'eliminar', eliminadoEDT || null, null);
     guardarProyecto();
-    if (typeof reordenarNumeracionElementos === 'function') reordenarNumeracionElementos();
-    
+    if (typeof reordenarNumeracionElementos === 'function') reordenarNumeracionElementos(datasetEDTActivo(), (typeof cronogramaActivo !== 'undefined' ? cronogramaActivo : null));
+
     if (edtSeleccionadaId) {
         abrirModalEDT(edtSeleccionadaId);
     }
@@ -359,7 +399,7 @@ function fijarClicEnEDT() {
 // Sobrescribir renderizado del cronograma
 if (typeof renderizarCronograma === 'function') {
     var origCrono = renderizarCronograma;
-    renderizarCronograma = function(ctx) { origCrono(ctx); if (!ctx || ctx.panelKey !== 'ejecucion') fijarClicEnEDT(); };
+    renderizarCronograma = function(ctx) { origCrono(ctx); fijarClicEnEDT(); };
 }
 
 setTimeout(fijarClicEnEDT, 1500);
@@ -368,14 +408,14 @@ function actualizarTitulosPaneles() {
     // Acta
     const actaTitulo = document.getElementById('actaTitulo');
     if (actaTitulo) actaTitulo.innerHTML = tApp('acta_titulo');
-    
+
     const btnEditarActa = document.getElementById('btnEditarActa');
     if (btnEditarActa) btnEditarActa.innerHTML = tApp('btn_editar');
-    
+
     // Dashboard
     const dashboardTitulo = document.querySelector('#panelDashboard .panel-title span');
     if (dashboardTitulo) dashboardTitulo.innerHTML = tApp('dashboard_titulo');
-    
+
     // Salud
     const saludTitulo = document.querySelector('#panelSalud .panel-title span');
     if (saludTitulo) saludTitulo.innerHTML = tApp('sidebar_salud');

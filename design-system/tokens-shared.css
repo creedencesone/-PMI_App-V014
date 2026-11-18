@@ -1,0 +1,36 @@
+/* ============================================================
+   design-system/tokens-shared.css
+   Fuente única de los 16 tokens usados por dashboard.html y proyecto.html.
+   Los valores son los validados en producción (WCAG AA en claro y oscuro).
+   ============================================================ */
+:root {
+    --bg-card: #2D2D2D;
+    --bg-card-hover: #353535;
+    --bg-modal: #2D2D2D;
+    --bg-sidebar: #222222;
+    --color-danger-text: #FF6B6B;
+    --color-primary: #007AFF;
+    --color-primary-text: #4DA3FF;
+    --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.6);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+    --text-muted: #9CA3AF;
+    --text-primary: #E0E0E0;
+    --text-secondary: #B0B0B0;
+}
+
+[data-theme="light"] {
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F8F9FA;
+    --bg-modal: #FFFFFF;
+    --bg-sidebar: #FFFFFF;
+    --color-danger-text: #B42318;
+    --color-primary: #2563EB;
+    --color-primary-text: #175CD3;
+    --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.15);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --text-muted: #6B7280;
+    --text-primary: #1F2937;
+    --text-secondary: #4B5563;
+}

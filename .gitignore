@@ -11,6 +11,8 @@ dist/
 # Backups de base de datos (contienen datos reales)
 backups/
 backend/database.sqlite
+backend/database.sqlite-shm
+backend/database.sqlite-wal
 .vercel
 
 # Herramientas internas (OpenCode / CodeGraph)

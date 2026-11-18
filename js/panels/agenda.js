@@ -149,15 +149,15 @@ function renderizarAgenda() {
     container.innerHTML = `
         <div class="agenda-header">
             <div class="agenda-nav">
-                <button class="btn btn-ghost btn-sm" onclick="agendaPeriodoAnterior()"><i data-feather="chevron-left"></i></button>
+                <button class="btn btn-ghost btn-sm" aria-label="Periodo anterior" onclick="agendaPeriodoAnterior()"><i data-feather="chevron-left"></i></button>
                 <span id="agendaPeriodoActual" class="agenda-periodo-titulo"></span>
-                <button class="btn btn-ghost btn-sm" onclick="agendaPeriodoSiguiente()"><i data-feather="chevron-right"></i></button>
+                <button class="btn btn-ghost btn-sm" aria-label="Periodo siguiente" onclick="agendaPeriodoSiguiente()"><i data-feather="chevron-right"></i></button>
                 <button class="btn btn-ghost btn-sm" onclick="agendaHoy()" title="Hoy"><i data-feather="target"></i></button>
             </div>
             <div class="agenda-actions">
                 <div class="agenda-vista-selector" role="tablist">
                     ${Object.entries(AGENDA_VISTAS).map(([key, v]) => `
-                        <button role="tab" class="${agendaCurrentView === key ? 'active' : ''}" 
+                        <button role="tab" class="${agendaCurrentView === key ? 'active' : ''}"
                                 onclick="cambiarVistaAgenda('${key}')" title="${v.desc}">
                             <i data-feather="${v.icon}"></i> ${v.label}
                         </button>
@@ -181,7 +181,7 @@ function renderizarAgenda() {
 function actualizarTituloPeriodo() {
     const el = document.getElementById('agendaPeriodoActual');
     if (!el) return;
-    
+
     const d = new Date(agendaCurrentDate);
     switch (agendaCurrentView) {
         case 'dia':
@@ -250,7 +250,7 @@ function cambiarVistaAgenda(vista) {
     document.getElementById('agendaMes').classList.toggle('u-hidden', vista !== 'mes');
     document.getElementById('agendaAno').classList.toggle('u-hidden', vista !== 'ano');
     document.getElementById('agendaLista').classList.toggle('u-hidden', vista !== 'lista');
-    document.querySelectorAll('.agenda-vista-selector button').forEach(btn => 
+    document.querySelectorAll('.agenda-vista-selector button').forEach(btn =>
         btn.classList.toggle('active', btn.onclick.toString().includes(`'${vista}'`))
     );
     actualizarTituloPeriodo();
@@ -259,7 +259,7 @@ function cambiarVistaAgenda(vista) {
 
 function obtenerElementosFecha(fechaStr) {
     const elementos = [];
-    
+
     // Eventos de agenda - check if date falls within range (fecha_inicio to fecha_fin)
     agendaCache.filter(ev => {
         const inicio = ev.fecha_inicio || ev.fecha;
@@ -268,7 +268,7 @@ function obtenerElementosFecha(fechaStr) {
 }).forEach(ev => {
         elementos.push({ ...ev, tipo: 'evento', categoriaColor: (AGENDA_CATEGORIAS[ev.categoria] || AGENDA_CATEGORIAS.otro).color         });
     });
-    
+
     // Hitos del cronograma
     agendaHitosCache.filter(h => {
         const inicio = h.fecha_inicio || h.fecha;
@@ -277,22 +277,22 @@ function obtenerElementosFecha(fechaStr) {
     }).forEach(h => {
         elementos.push({ ...h, tipo: 'hito', titulo: h.nombre, categoriaColor: '#FF3B30', icono: 'flag' });
     });
-    
+
     // Entregables del cronograma
     agendaEntregablesCache.filter(e => {
         const inicio = e.fecha_inicio || e.fecha;
         const fin = e.fecha_fin || e.fecha;
         return inicio && fin && inicio <= fechaStr && fechaStr <= fin;
-    }).forEach(e => { 
-        elementos.push({ 
-            ...e, 
-            tipo: 'entregable', 
-            titulo: e.nombre, 
+    }).forEach(e => {
+        elementos.push({
+            ...e,
+            tipo: 'entregable',
+            titulo: e.nombre,
             categoriaColor: '#FF8C00',
             icono: 'package'
                 });
         });
-    
+
     // Fallback: si las cachés están vacías, leer directamente del proyecto.gantt
     if (elementos.length === 0 && typeof proyecto !== 'undefined' && proyecto.elementosGantt) {
         for (let i = 0; i < proyecto.elementosGantt.length; i++) {
@@ -310,7 +310,7 @@ function obtenerElementosFecha(fechaStr) {
             }
         }
     }
-    
+
     // Ordenar por hora si existe, luego por tipo (hito > entregable > evento)
     return elementos.sort((a, b) => {
         const horaA = a.hora || '00:00';
@@ -354,11 +354,11 @@ function renderizarVistaDia() {
     for (let h = 6; h <= 23; h++) {
         const horaStr = `${String(h).padStart(2,'0')}:00`;
         const elementosHora = elementos.filter(ev => ev.hora === horaStr);
-        
+
         html += `<div class="agenda-hora-fila" data-hora="${horaStr}">
             <div class="agenda-hora-label">${horaStr}</div>
             <div class="agenda-hora-eventos">`;
-        
+
         if (elementosHora.length > 0) {
             elementosHora.forEach(ev => {
                 const color = ev.categoriaColor || '#8E8E93';
@@ -374,7 +374,7 @@ const evJson = safeJsonForAttr(ev);
         } else {
             html += '<div class="agenda-slot-vacio" onclick="abrirModalEvento(null)"></div>';
         }
-        
+
         html += `</div></div>`;
     }
 
@@ -510,7 +510,7 @@ function renderizarVistaAno() {
 
     // Agrupar todos los elementos por mes (eventos + hitos + entregables)
     const elementosPorMes = {};
-    
+
     // Eventos de agenda
     agendaCache.forEach(ev => {
         const fecha = ev.fecha_inicio || ev.fecha;
@@ -528,7 +528,7 @@ function renderizarVistaAno() {
             elementosPorMes[mes].push({ ...h, tipo: 'hito', titulo: h.nombre, categoriaColor: '#FF3B30', icono: 'flag' });
         }
     });
-    
+
     // Entregables del cronograma
     agendaEntregablesCache.forEach(e => {
         const fecha = e.fecha_inicio || e.fecha;
@@ -538,7 +538,7 @@ function renderizarVistaAno() {
             elementosPorMes[mes].push({ ...e, tipo: 'entregable', titulo: e.nombre, categoriaColor: '#FF8C00', icono: 'package' });
         }
     });
-    
+
     // Fallback: leer directamente del proyecto.gantt si las cachés están vacías
     if (typeof proyecto !== 'undefined' && proyecto.elementosGantt) {
         proyecto.elementosGantt.forEach(e => {
@@ -606,22 +606,22 @@ function renderizarListaEventos() {
 
     // Obtener todos los elementos (eventos + hitos + entregables)
     const todosLosElementos = [];
-    
+
     // Eventos de agenda
     agendaCache.forEach(ev => {
         todosLosElementos.push({ ...ev, tipo: 'evento', categoriaColor: (AGENDA_CATEGORIAS[ev.categoria] || AGENDA_CATEGORIAS.otro).color, icono: 'calendar' });
     });
-    
+
     // Hitos del cronograma
     agendaHitosCache.forEach(h => {
         todosLosElementos.push({ ...h, tipo: 'hito', titulo: h.nombre, categoriaColor: '#FF3B30', icono: 'flag' });
     });
-    
+
     // Entregables del cronograma
     agendaEntregablesCache.forEach(e => {
         todosLosElementos.push({ ...e, tipo: 'entregable', titulo: e.nombre, categoriaColor: '#FF8C00', icono: 'package' });
     });
-    
+
     // Fallback: leer directamente del proyecto.gantt si las cachés están vacías
     if (todosLosElementos.length === 0 && typeof proyecto !== 'undefined' && proyecto.elementosGantt) {
         proyecto.elementosGantt.forEach(e => {
@@ -648,7 +648,7 @@ function renderizarListaEventos() {
             const fb = normalizeForComparison(getFechaPrincipal(b));
             return fa.localeCompare(fb);
         });
-    
+
     const pasados = todosLosElementos
         .filter(ev => {
             const fecha = getFechaPrincipal(ev);
@@ -685,17 +685,17 @@ function renderizarListaEventos() {
 
 function renderEventoListaItem(ev, esPasado) {
     const tipo = ev.tipo || 'evento';
-    const cat = tipo === 'hito' ? { label: 'Hito', color: '#FF3B30', icon: 'flag' } : 
+    const cat = tipo === 'hito' ? { label: 'Hito', color: '#FF3B30', icon: 'flag' } :
                 tipo === 'entregable' ? { label: 'Entregable', color: '#FF8C00', icon: 'package' } :
                 AGENDA_CATEGORIAS[ev.categoria] || AGENDA_CATEGORIAS.otro;
-    
+
     // Format dates with proper locale including year
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
         const d = new Date(dateStr + 'T00:00:00');
         return d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
     };
-    
+
     const fechaInicio = ev.fecha_inicio ? new Date(ev.fecha_inicio + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : '';
     const fechaFin = ev.fecha_fin ? new Date(ev.fecha_fin + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : '';
     const horaInicio = ev.hora_inicio || '';
@@ -704,7 +704,7 @@ function renderEventoListaItem(ev, esPasado) {
     const fechaDisplay = isMultiDay ? `${formatDate(ev.fecha_inicio)} - ${formatDate(ev.fecha_fin)}` : (ev.fecha_inicio ? formatDate(ev.fecha_inicio) : (ev.fecha ? formatearFechaEspa(ev.fecha.split('T')[0]) : ''));
     const horaDisplay = (ev.hora_inicio || ev.hora_fin) ? ` ${ev.hora_inicio || '00:00'} - ${ev.hora_fin || '00:00'}` : '';
     const evJson = safeJsonForAttr(ev);
-    
+
     return `
         <div class="agenda-lista-item ${esPasado ? 'pasado' : ''}" data-id="${ev.id}" data-tipo="${ev.tipo || ev.categoria || 'evento'}" style="position: relative; color: ${cat.color};">
             <div class="agenda-lista-acciones-left">
@@ -806,10 +806,10 @@ async function guardarEvento() {
     }
     const token = DataService.getToken();
     console.log('[Agenda] guardarEvento - token from DataService:', token ? token.substring(0,20)+'...' : 'NO TOKEN');
-    if (!token) { 
+    if (!token) {
         console.warn('[Agenda] No token in localStorage (pmi_api_token)');
-        mostrarToast(' No hay token de sesión. Inicia sesión en index.html primero.', 'warning'); 
-        return; 
+        mostrarToast(' No hay token de sesión. Inicia sesión en index.html primero.', 'warning');
+        return;
     }
 
     const payload = {
@@ -830,7 +830,7 @@ async function guardarEvento() {
 
     // Validate date logic
     if (payload.fecha_fin < payload.fecha_inicio) { mostrarToast(' La fecha fin debe ser igual o posterior a la fecha inicio', 'warning'); return; }
-    
+
     // Validate time logic for same-day events
     if (payload.fecha_inicio === payload.fecha_fin && payload.hora_fin <= payload.hora_inicio) { mostrarToast(' La hora fin debe ser posterior a la hora inicio', 'warning'); return; }
 

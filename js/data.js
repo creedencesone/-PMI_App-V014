@@ -10,7 +10,7 @@ function cargarProyecto() {
     let proyectoId = localStorage.getItem('proyectoSeleccionado');
     let todosProyectos = cargarProyectosStorage();
     let proyectoEncontrado = todosProyectos.find(p => p.id == proyectoId);
-    
+
     if (proyectoEncontrado) {
         proyecto = proyectoEncontrado;
     } else {
@@ -44,16 +44,16 @@ function cargarProyecto() {
         guardarProyectosStorage(todosProyectos);
         localStorage.setItem('proyectoSeleccionado', proyecto.id);
     }
-    
+
     // Actualizar interfaz
-    document.getElementById('projectName').innerHTML = proyecto.nombre;
+    document.getElementById('projectName').innerHTML = escapeHtml(proyecto.nombre || '');
     document.getElementById('projectDesc') && (document.getElementById('projectDesc').innerHTML = proyecto.descripcion || '');
     document.getElementById('monedaBase').value = proyecto.monedaBase;
     document.getElementById('precioVenta').value = proyecto.precioVenta;
     document.getElementById('monedaVenta').value = proyecto.monedaVenta;
     document.getElementById('condicionesPago').value = proyecto.condicionesPago || '';
     document.getElementById('monedaDisplay').innerHTML = proyecto.monedaBase;
-    
+
     actualizarTiposCambioUI();
     actualizarTodo();
 }
@@ -63,36 +63,36 @@ function cargarProyecto() {
 
 function aplicarRestriccionesPermisos(usuario) {
     console.log(' aplicarRestriccionesPermisos() ejecutándose...');
-    
+
     if (usuario.role === 'admin') {
         console.log(' Admin - Acceso total a todos los paneles');
         return;
     }
-    
+
     // Obtener el ID del proyecto actual
     var proyectoId = localStorage.getItem('proyectoSeleccionado');
     var permisosModulos = usuario.permisosModulos || {};
     var modulosPermitidos = permisosModulos[proyectoId] || {};
-    
+
     console.log(' Proyecto ID:', proyectoId);
     console.log(' Módulos permitidos:', modulosPermitidos);
-    
+
     // Lista de TODOS los paneles posibles
     var todosLosPaneles = [
-        'acta', 'salud', 'finanzas', 'monedas', 'venta', 'cashflow', 
+        'acta', 'salud', 'finanzas', 'monedas', 'venta', 'cashflow',
         'resumenGastos', 'avales', 'garantia', 'financiero', 'cronograma', 'riesgos',
-        'stakeholders', 'Raci', 'procesos', 'equipo', 'materiales', 'servicios', 
+        'stakeholders', 'Raci', 'procesos', 'equipo', 'materiales', 'servicios',
         'logistica', 'viajes', 'comunicaciones', 'beneficios', 'cambios', 'lecciones',
         'sprintBacklog', 'sprintBurndown', 'velocityTracking', 'retrospectives',
         'agileMetrics', 'sprintList', 'agileCostControl'
     ];
-    
+
     // Recorrer todos los elementos del menú
     var elementos = document.querySelectorAll('.nav-header[data-panel], .nav-header.has-submenu, .submenu-item[data-panel]');
     for (var i = 0; i < elementos.length; i++) {
         var el = elementos[i];
         var panelId = el.dataset.panel;
-        
+
         // Si es un submenu sin panel directo, buscar el panel de sus hijos
         if (!panelId && el.classList && el.classList.contains('has-submenu')) {
             var firstChild = el.querySelector('.submenu-item[data-panel]');
@@ -100,12 +100,12 @@ function aplicarRestriccionesPermisos(usuario) {
                 panelId = firstChild.dataset.panel;
             }
         }
-        
+
         if (panelId) {
             // Verificar si el panel está permitido
             // Si no está en el objeto de permisos, por defecto es true (permitido)
             var permitido = modulosPermitidos[panelId] !== false;
-            
+
             if (!permitido) {
                 el.style.display = 'none';
                 console.log(' Ocultando panel:', panelId);
@@ -115,7 +115,7 @@ function aplicarRestriccionesPermisos(usuario) {
             }
         }
     }
-    
+
     // Restringir acciones de edición/eliminación
     if (!usuario.permisos || !usuario.permisos.editar) {
         var editBtns = document.querySelectorAll('.edit-btn, .btn-primary:not(.btn-accion-especial)');
@@ -123,14 +123,14 @@ function aplicarRestriccionesPermisos(usuario) {
             editBtns[j].style.display = 'none';
         }
     }
-    
+
     if (!usuario.permisos || !usuario.permisos.eliminar) {
         var deleteBtns = document.querySelectorAll('.delete-btn, .btn-danger');
         for (var k = 0; k < deleteBtns.length; k++) {
             deleteBtns[k].style.display = 'none';
         }
     }
-    
+
     console.log(' Restricciones aplicadas correctamente');
 }
 
@@ -138,14 +138,14 @@ function aplicarRestriccionesPermisos(usuario) {
 // Guardar proyecto actual
 function guardarProyecto() {
     let todosProyectos = cargarProyectosStorage();
-    let index = todosProyectos.findIndex(p => p.id === proyecto.id);
-    
+    let index = todosProyectos.findIndex(p => String(p.id) === String(proyecto.id));
+
     if (index >= 0) {
         todosProyectos[index] = proyecto;
     } else {
         todosProyectos.push(proyecto);
     }
-    
+
     guardarProyectosStorage(todosProyectos);
     mostrarToast(" Proyecto guardado");
 }

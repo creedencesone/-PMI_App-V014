@@ -9,7 +9,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/evm.js", "core/finance.js", "core/ui.js", "core/collections.js", "panels/organigrama.js", "panels/gantt.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -95,7 +95,7 @@ QUnit.test('calcularEAC', assert => {
     assert.equal(calcularEAC(100000, 1.25), 80000, 'BAC=100k, CPI=1.25 → EAC=80k');
     assert.equal(calcularEAC(100000, 0.8), 125000, 'BAC=100k, CPI=0.8 → EAC=125k');
     assert.equal(calcularEAC(100000, 1), 100000, 'BAC=100k, CPI=1 → EAC=100k');
-    assert.equal(calcularEAC(100000, 0), 100000, 'CPI=0 → BAC');
+    assert.strictEqual(calcularEAC(100000, 0), null, 'CPI=0 → sin base de pronóstico');
 });
 
 QUnit.test('calcularVAC', assert => {
@@ -431,4 +431,633 @@ QUnit.test('seleccionarProyectosACachear result length cap with keepId absent', 
     const projects = Array.from({ length: 10 }, (_, i) => ({ id: String(i), updated_at: i }));
     const result = seleccionarProyectosACachear(projects, 'nonexistent', 3);
     assert.equal(result.length, 3, 'no keep match → just max items');
+});
+
+
+// ============================================================
+// Monte Carlo — red y makespan (Ciclo 2, ENG-03)
+// ============================================================
+QUnit.module('Monte Carlo');
+
+QUnit.test('_ordenTopologico ordena dependencias FS', assert => {
+    const tareas = [
+        { id: 'c', predecesores: [{ id: 'b', tipo: 'FS' }] },
+        { id: 'a', predecesores: [] },
+        { id: 'b', predecesores: [{ id: 'a', tipo: 'FS' }] }
+    ];
+    const res = _ordenTopologico(tareas);
+    assert.false(res.conCiclo, 'sin ciclo');
+    assert.deepEqual(res.orden, ['a', 'b', 'c'], 'orden topológico');
+});
+
+QUnit.test('_makespanRed respeta FS y SS', assert => {
+    const porId = {
+        a: { id: 'a', predecesores: [] },
+        b: { id: 'b', predecesores: [{ id: 'a', tipo: 'FS', retraso: 0 }] },
+        c: { id: 'c', predecesores: [{ id: 'b', tipo: 'FS', retraso: 0 }] }
+    };
+    const dur = { a: 5, b: 5, c: 5 };
+    const orden = ['a', 'b', 'c'];
+    assert.strictEqual(_makespanRed(orden, porId, dur), 15, 'FS: 5+5+5');
+
+    porId.b.predecesores = [{ id: 'a', tipo: 'SS', retraso: 0 }];
+    porId.c.predecesores = [{ id: 'b', tipo: 'SS', retraso: 0 }];
+    assert.strictEqual(_makespanRed(orden, porId, dur), 5, 'SS: paralelo');
+});
+
+QUnit.test('_makespanRed aplica retraso (lag)', assert => {
+    const porId = {
+        a: { id: 'a', predecesores: [] },
+        b: { id: 'b', predecesores: [{ id: 'a', tipo: 'FS', retraso: 3 }] }
+    };
+    assert.strictEqual(_makespanRed(['a', 'b'], porId, { a: 5, b: 2 }), 10, '5 + 3 + 2');
+});
+
+
+// ============================================================
+// Riesgos — EMV y normalización (Ciclo 2, ENG-04)
+// ============================================================
+QUnit.module('Riesgos');
+
+QUnit.test('nivelRiesgo usa umbrales 20/12/6', assert => {
+    assert.strictEqual(nivelRiesgo(20), 'Crítico');
+    assert.strictEqual(nivelRiesgo(12), 'Alto');
+    assert.strictEqual(nivelRiesgo(6), 'Medio');
+    assert.strictEqual(nivelRiesgo(5), 'Bajo');
+});
+
+QUnit.test('normalizarEstadoRiesgo unifica vocabulario', assert => {
+    assert.strictEqual(normalizarEstadoRiesgo('mitigado'), 'Cerrado');
+    assert.strictEqual(normalizarEstadoRiesgo('CERRADO'), 'Cerrado');
+    assert.strictEqual(normalizarEstadoRiesgo('activo'), 'Abierto');
+});
+
+QUnit.test('calcularEMV usa P/5 e impacto monetario', assert => {
+    const riesgos = [
+        { probabilidad: 3, impacto: 4, impactoMonetario: 0, estado: 'Abierto' },
+        { probabilidad: 5, impacto: 5, impactoMonetario: 10000, estado: 'Abierto' },
+        { probabilidad: 5, impacto: 5, impactoMonetario: 10000, estado: 'Cerrado' }
+    ];
+    // 0,6 * (450000*0,8) + 1 * 10000 = 216000 + 10000
+    assert.strictEqual(calcularEMV(riesgos, 450000), 226000, 'EMV correcto y excluye cerrados');
+});
+
+
+// ============================================================
+// EVM — coste real y pronóstico (Ciclo 2, ENG-02)
+// ============================================================
+QUnit.module('EVM coste real');
+
+QUnit.test('calcularACReal respeta fecha de corte', assert => {
+    const tareas = [
+        { id: 1, tipo: 'actividad', costeReal: 2500, fechaGasto: '2026-01-10' },
+        { id: 2, tipo: 'actividad', costeReal: 1000, fechaGasto: '2026-03-10' }
+    ];
+    assert.strictEqual(calcularACReal(tareas, '2026-02-01'), 2500, 'sólo gasto anterior al corte');
+    assert.strictEqual(calcularACReal(tareas, '2026-04-01'), 3500, 'incluye todo el gasto');
+});
+
+QUnit.test('EV=2000 y AC real=2500 dan CPI=0,80 y EAC>BAC', assert => {
+    const ac = calcularACReal([{ tipo: 'actividad', costeReal: 2500, fechaGasto: '2026-01-10' }], '2026-02-01');
+    const cpi = calcularCPI(2000, ac);
+    const eac = calcularEAC(2500, cpi);
+    assert.strictEqual(ac, 2500);
+    assert.strictEqual(cpi, 0.8);
+    assert.true(eac > 2500, 'EAC=3125 supera BAC');
+});
+
+QUnit.test('sin coste real el AC es estimación etiquetada', assert => {
+    const d = calcularDesgloseAC(1000, [{ id: 1, tipo: 'actividad', inicio: '2026-01-01', duracion: 10 }],
+        new Date('2026-01-06'), '2026-01-01', { fechaCorte: new Date('2026-01-06') });
+    assert.strictEqual(d.fuente, 'estimado');
+    assert.strictEqual(d.real, 0);
+    assert.true(d.estimado > 0);
+});
+
+QUnit.test('calcularCosteRecursosProyecto tolera viajes incompletos', assert => {
+    const total = calcularCosteRecursosProyecto({ elementosGantt: [], viajes: [{ costeVuelos: 100 }] }, false);
+    assert.strictEqual(total, 100, 'sin NaN');
+});
+
+QUnit.module('ENG-06 · WBS y línea base de alcance');
+
+QUnit.test('generarCodigosWBS produce códigos únicos y aísla ciclos', assert => {
+    const elementos = [
+        { id: 1, tipo: 'edt', nombre: 'Fase 1' },
+        { id: 2, tipo: 'edt', nombre: 'Fase 1.1', dependeDe: 1 },
+        { id: 3, tipo: 'actividad', nombre: 'A', dependeDe: 1 },
+        { id: 4, tipo: 'actividad', nombre: 'B', dependeDe: 1 },
+        { id: 5, tipo: 'entregable', nombre: 'E', dependeDe: 2 },
+        { id: 6, tipo: 'hito', nombre: 'H', dependeDe: 2 },
+        { id: 7, tipo: 'edt', nombre: 'Ciclo A', dependeDe: 8 },
+        { id: 8, tipo: 'edt', nombre: 'Ciclo B', dependeDe: 7 }
+    ];
+    const { codigos, ciclos } = generarCodigosWBS(elementos);
+    const valores = elementos.map(e => codigos.get(e));
+    assert.strictEqual(new Set(valores).size, valores.length, 'sin códigos duplicados');
+    assert.deepEqual(ciclos.sort((a, b) => a - b), [7, 8], 'ciclo detectado');
+    assert.strictEqual(codigos.get(1), '1');
+    assert.strictEqual(codigos.get(2), '1.1');
+    assert.strictEqual(codigos.get(5), '1.1.E1');
+});
+
+QUnit.test('creariaCicloWBS bloquea una dependencia circular', assert => {
+    const elementos = [
+        { id: 1, tipo: 'actividad', predecesores: [] },
+        { id: 2, tipo: 'actividad', predecesores: [{ id: 1 }] },
+        { id: 3, tipo: 'actividad', predecesores: [{ id: 2 }] }
+    ];
+    assert.true(creariaCicloWBS(elementos, 1, 3, 'predecesores'), '3 ya depende de 1');
+    assert.false(creariaCicloWBS(elementos, 3, 1, 'predecesores'), '1 → 3 es válido');
+});
+
+QUnit.test('compararScopeBaseline detecta altas, bajas y cambios', assert => {
+    aplicarCodigosWBS([{ id: 1, tipo: 'actividad', nombre: 'A' }, { id: 2, tipo: 'actividad', nombre: 'B' }]);
+    const snapshot = crearScopeBaseline([{ id: 1, tipo: 'actividad', nombre: 'A' }, { id: 2, tipo: 'actividad', nombre: 'B' }], []);
+    const diff = compararScopeBaseline([{ id: 1, codigo: 'A1', nombre: 'A modificado' }, { id: 3, codigo: 'A2', nombre: 'C' }], snapshot);
+    assert.strictEqual(diff.bajas.length, 1);
+    assert.strictEqual(diff.altas.length, 1);
+    assert.strictEqual(diff.cambios.length, 1);
+});
+
+QUnit.module('ENG-07 · Multimoneda y modelos únicos');
+
+QUnit.test('aBase aplica tipo de origen y tipo de base', assert => {
+    global.tiposCambio = { EUR: 1, USD: 2, GBP: 0.5 };
+    global.proyecto = { monedaBase: 'GBP' };
+    assert.strictEqual(aBase(100, 'USD', 'GBP'), 25, '100 USD = 50 EUR = 25 GBP');
+    assert.strictEqual(aBase(100, 'GBP', 'GBP'), 100);
+    assert.strictEqual(convertirEntreMonedas(100, 'EUR', 'USD'), 200);
+    delete global.proyecto;
+});
+
+QUnit.test('precioVentaEnBase usa monedaVenta y no la base por defecto', assert => {
+    global.tiposCambio = { EUR: 1, USD: 2 };
+    const p = { precioVenta: 200, monedaVenta: 'USD', monedaBase: 'EUR' };
+    assert.strictEqual(precioVentaEnBase(p), 100);
+});
+
+QUnit.test('calcularEAC sin CPI fiable devuelve null', assert => {
+    assert.strictEqual(calcularEAC(1000, 0), null);
+    assert.strictEqual(calcularEAC(1000, Infinity), null);
+    assert.strictEqual(calcularEAC(1000, 0.8), 1250);
+});
+
+QUnit.test('calcularSaludGeneral es el único modelo compartido', assert => {
+    const valores = { CPI: 1, SPI: 1, ROI: 20, indiceDefectos: 0, velocidadEquipo: 30, satisfaccion: 5, huellaCarbono: 0, progresoGeneral: 1 };
+    assert.strictEqual(calcularSaludGeneral(valores), 100);
+    assert.strictEqual(calcularSaludGeneral({ ...valores, CPI: 0, SPI: 0, progresoGeneral: 0 }), 55);
+});
+
+QUnit.test('calcularCosteTotal convierte coste de recurso en moneda distinta', assert => {
+    global.tiposCambio = { EUR: 1, USD: 2 };
+    global.proyecto = { monedaBase: 'EUR' };
+    const total = calcularCosteTotal([
+        { id: 1, costeEstimado: 200, recursoAsignado: { moneda: 'USD' } },
+        { id: 2, costeEstimado: 50, moneda: 'EUR' }
+    ], [], [], [], convertirMoneda, 'EUR');
+    assert.strictEqual(total, 150);
+    delete global.proyecto;
+});
+
+QUnit.module('ENG-08 · Carga de trabajo');
+
+QUnit.test('calcularCargaPorDia distribuye horas en días hábiles', assert => {
+    const p = {
+        equipo: [{ id: 1, nombre: 'Ana', horasDia: 8 }],
+        elementosGantt: [{ tipo: 'actividad', inicio: '2026-01-05', duracion: 2, horasDia: 8, recursoAsignado: { id: 1, nombre: 'Ana' } }]
+    };
+    const r = calcularCargaPorDia(p);
+    assert.strictEqual(r.dias.length, 2, 'lunes y martes');
+    assert.strictEqual(r.carga['1'][r.dias[0]], 8);
+    assert.strictEqual(r.sobreasignaciones.length, 0);
+});
+
+QUnit.test('calcularCargaPorDia detecta sobreasignación', assert => {
+    const p = {
+        equipo: [{ id: 1, nombre: 'Ana', horasDia: 8 }],
+        elementosGantt: [{ tipo: 'actividad', inicio: '2026-01-05', duracion: 1, duracionHoras: 12, recursoAsignado: { id: 1 } }]
+    };
+    const r = calcularCargaPorDia(p);
+    assert.strictEqual(r.sobreasignaciones.length, 1);
+    assert.strictEqual(r.sobreasignaciones[0].exceso, 4);
+});
+
+QUnit.test('los fines de semana no generan carga', assert => {
+    const p = {
+        equipo: [{ id: 1, nombre: 'Ana' }],
+        elementosGantt: [{ tipo: 'actividad', inicio: '2026-01-09', duracion: 3, horasDia: 8, recursoAsignado: { id: 1 } }]
+    };
+    const r = calcularCargaPorDia(p);
+    assert.deepEqual(r.dias, ['2026-01-09', '2026-01-12', '2026-01-13']);
+});
+
+QUnit.module('ENG-09 · Modelo ágil único');
+
+QUnit.test('normalizarDatosAgiles migra el modelo heredado sin duplicar', assert => {
+    global.proyecto = {
+        nombre: 'Demo',
+        metricasAgiles: { sprints: [{ numero: 1, puntosCompletados: 12 }], velocidadPromedio: 12 },
+        scrum: { sprints: [{ numero: 2, puntosCompletados: 8 }] }
+    };
+    normalizarDatosAgiles();
+    assert.strictEqual(global.proyecto.metricasAgiles, undefined, 'modelo heredado eliminado');
+    assert.strictEqual(global.proyecto.scrum.sprints.length, 2, 'sprints consolidados');
+    assert.strictEqual(global.proyecto.velocidadEquipo, 10, 'velocidad única redondeada');
+    assert.deepEqual(global.proyecto.scrum.daily, [], 'Daily disponible');
+    delete global.proyecto;
+});
+
+QUnit.test('calcularVelocidadEquipo admite velocity y puntosCompletados', assert => {
+    const p = { scrum: { sprints: [{ velocity: 14 }, { puntosCompletados: 10 }, { puntosCompletados: 0 }] } };
+    assert.strictEqual(calcularVelocidadEquipo(p), 12);
+    assert.strictEqual(calcularVelocidadEquipo({ scrum: { sprints: [] } }), 0);
+});
+
+QUnit.module('ENG-11 · Importaciones y aranceles');
+
+QUnit.test('resolverArancelMaterial prioriza personalizado, HS y país', assert => {
+    const config = [
+        { pais: 'China', categoria: 'Electrónica', codigo: '8542', porcentaje: 15 },
+        { pais: 'USA', categoria: 'General', codigo: 'G001', porcentaje: 5 }
+    ];
+    assert.strictEqual(resolverArancelMaterial({ paisOrigen: 'China', hsCode: '8542' }, config), 15, 'HS');
+    assert.strictEqual(resolverArancelMaterial({ paisOrigen: 'USA', hsCode: '8542', arancelPersonalizado: 7.5 }, config), 7.5, 'personalizado');
+    assert.strictEqual(resolverArancelMaterial({ paisOrigen: 'China', categoria: 'Textil' }, config), 0, 'categoría distinta no aplica');
+});
+
+// ============================================================
+// Ciclo 2 · cierre de hallazgos 🔴 y cobertura de escenarios
+// ============================================================
+QUnit.module('Ciclo 2 · gobernanza y trazabilidad');
+
+QUnit.test('escapeHtml cubre comillas simples y dobles', assert => {
+    assert.strictEqual(escapeHtml(`"'<>&`), '&quot;&#39;&lt;&gt;&amp;');
+});
+
+QUnit.test('sanitizarProyectoImportado elimina markup y manejadores', assert => {
+    const limpio = sanitizarProyectoImportado({
+        nombre: '<img src=x onerror=alert(1)>Proyecto',
+        onclick: 'alert(1)',
+        datos: [{ nota: '<script>alert(1)</script>Texto' }]
+    }, 0);
+    assert.strictEqual(limpio.onclick, undefined, 'clave on* descartada');
+    assert.false(String(limpio.nombre).includes('<'), 'sin apertura de etiqueta');
+    assert.false(String(limpio.datos[0].nota).includes('>'), 'sin cierre de etiqueta');
+});
+
+QUnit.test('normalizarRiesgos completa tipo, owner y monitoreo', assert => {
+    const guardar = global.guardarProyecto;
+    global.guardarProyecto = () => {};
+    global.proyecto = { riesgos: [{ id: 1, nombre: 'Retraso', probabilidad: 3, impacto: 4, estado: 'Abierto' }] };
+    normalizarRiesgos();
+    const r = proyecto.riesgos[0];
+    assert.strictEqual(r.tipo, 'Amenaza');
+    assert.strictEqual(r.frecuencia, 'Mensual');
+    assert.strictEqual(r.owner, '');
+    assert.strictEqual(r.score, 12);
+    global.guardarProyecto = guardar;
+    delete global.proyecto;
+});
+
+QUnit.test('calcularEMV descuenta oportunidades del colchón de contingencia', assert => {
+    const riesgos = [
+        { probabilidad: 5, impacto: 5, impactoMonetario: 1000, estado: 'Abierto', tipo: 'Amenaza' },
+        { probabilidad: 5, impacto: 5, impactoMonetario: 400, estado: 'Abierto', tipo: 'Oportunidad' }
+    ];
+    assert.strictEqual(calcularEMV(riesgos, 0), 600);
+});
+
+QUnit.test('aprobar un cambio crea nueva línea base y conserva la anterior', assert => {
+    const snapshot = { version: 1, codigos: [{ id: 1, codigo: '1', nombre: 'Raíz', tipo: 'edt' }] };
+    global.proyecto = {
+        id: 1, nombre: 'Demo', monedaBase: 'EUR', bitacora: [], cambios: [],
+        elementosGantt: [
+            { id: 1, tipo: 'edt', nombre: 'Raíz', costeEstimado: 0 },
+            { id: 2, tipo: 'actividad', nombre: 'Tarea', dependeDe: 1, costeEstimado: 100 }
+        ],
+        lineasBase: [{ id: 10, nombre: 'LB inicial', fecha: '2026-01-01', scopeBaseline: snapshot }]
+    };
+    const copia = JSON.parse(JSON.stringify(snapshot));
+    const nueva = propagarCambioALineaBase(proyecto.lineasBase[0], { id: 99 });
+    assert.deepEqual(proyecto.lineasBase[0].scopeBaseline, copia, 'baseline anterior intacta');
+    assert.strictEqual(proyecto.lineasBase.length, 2, 'se añade una nueva baseline');
+    assert.ok(Array.isArray(nueva.diffAlcance.cambios), 'diff antes → después registrado');
+    assert.ok(nueva.diffAlcance.total >= 1, 'el cambio de códigos WBS respecto a la baseline inicial se detecta');
+    assert.strictEqual(nueva.predecesoraId, 10);
+    assert.true(verificarBitacora(), 'bitácora íntegra');
+    delete global.proyecto;
+});
+
+QUnit.module('Ciclo 2 · adquisiciones y cronograma');
+
+QUnit.test('estadoRecepcionOrden detecta retrasos y cumplimiento SLA', assert => {
+    assert.strictEqual(estadoRecepcionOrden({ fechaCompromiso: '2026-01-01' }, '2026-02-01'), 'Retrasada');
+    assert.strictEqual(estadoRecepcionOrden({ fechaCompromiso: '2026-01-01', fechaRecepcion: '2025-12-28' }), 'En plazo');
+    assert.strictEqual(estadoRecepcionOrden({ fechaCompromiso: '2026-01-01', fechaRecepcion: '2026-01-05' }), 'Fuera de plazo');
+});
+
+QUnit.test('calcularEscenariosEAC ofrece cuatro escenarios y TCPI-EAC', assert => {
+    const r = calcularEscenariosEAC(1000, 200, 100, 100, 0.5, 0.5);
+    assert.strictEqual(r.escenarios.length, 4);
+    assert.strictEqual(r.escenarios[0].valor, 2000);
+    assert.strictEqual(r.escenarios[1].valor, 1100);
+    assert.strictEqual(r.escenarios[2].valor, 3800);
+    assert.strictEqual(r.tcpiEac, 0.5);
+    const sinCpi = calcularEscenariosEAC(1000, 200, 100, 100, 0, 1);
+    assert.strictEqual(sinCpi.escenarios[0].valor, null);
+    assert.ok(sinCpi.referencia > 0, 'referencia alternativa cuando CPI no es fiable');
+});
+
+QUnit.test('_makespanRed conserva leads negativos en FF/SF', assert => {
+    const mk = (tipo, retraso) => {
+        const tareas = [
+            { id: 1, duracion: 5, predecesores: [] },
+            { id: 2, duracion: 3, predecesores: [{ id: 1, tipo, retraso }] }
+        ];
+        return _makespanRed(tareas.map(t => t.id),
+            Object.fromEntries(tareas.map(t => [t.id, t])),
+            Object.fromEntries(tareas.map(t => [t.id, t.duracion])));
+    };
+    // El retraso se convierte de días hábiles a naturales en CPM y MC.
+    assert.strictEqual(retrasoEnDiasNaturales(-6), -10);
+    assert.strictEqual(mk('FF', -6), 13);
+    assert.strictEqual(mk('SF', -3), 13);
+});
+
+QUnit.module('Ciclo 2 · gobernanza RACI y hitos');
+
+QUnit.test('asignarRolRACI mantiene una sola A por actividad', assert => {
+    const actividades = [{ key: 'elem:1', nombre: 'Entrega' }];
+    global.proyecto = { raci: [] };
+    asignarRolRACI(proyecto, 'elem:1', 'Entrega', 10, 'A');
+    asignarRolRACI(proyecto, 'elem:1', 'Entrega', 20, 'A');
+    assert.strictEqual(validarRACI(proyecto, actividades).length, 0, 'regla de responsable único cumplida');
+    assert.strictEqual(proyecto.raci.find(r => r.stakeholderId === 10).rol, 'C', 'A anterior pasa a C');
+    assert.strictEqual(proyecto.raci.find(r => r.stakeholderId === 20).rol, 'A');
+    actividades.push({ key: 'elem:2', nombre: 'Sin responsable' });
+    assert.strictEqual(validarRACI(proyecto, actividades).length, 1, 'detecta fila sin A');
+    delete global.proyecto;
+});
+
+QUnit.module('Ciclo 2 · cierre de hallazgos 🔴');
+
+QUnit.test('resolverArancelMaterial distingue el país de destino', assert => {
+    const config = [
+        { id: 1, pais: 'China', paisDestino: 'ES', codigo: '8542', porcentaje: 15 },
+        { id: 2, pais: 'China', paisDestino: 'US', codigo: '8542', porcentaje: 3 }
+    ];
+    assert.strictEqual(resolverArancelMaterial({ paisOrigen: 'China', paisDestino: 'ES', hsCode: '8542' }, config), 15);
+    assert.strictEqual(resolverArancelMaterial({ paisOrigen: 'China', paisDestino: 'US', hsCode: '8542' }, config), 3);
+    assert.strictEqual(resolverArancelMaterial({ paisOrigen: 'China', paisDestino: 'MX', hsCode: '9999' }, config), 0, 'destino sin configuración no hereda otro arancel');
+});
+
+QUnit.test('calcularCosteTotal incluye el coste de envío del viaje', assert => {
+    const viaje = { costeVuelos: 100, costeHotel: 50, costeComidas: 20, costeTraslados: 10, costeEnvio: 25, moneda: 'EUR' };
+    assert.strictEqual(calcularCosteTotal([], [], [], [viaje], null, 'EUR'), 205);
+});
+
+QUnit.test('ejecutarCPM conserva leads FF/SF negativos sin recortarlos', assert => {
+    const elementos = [
+        { id: 1, nombre: 'A', tipo: 'tarea', inicio: '2024-01-01', duracion: 5, predecesores: [] },
+        { id: 2, nombre: 'B', tipo: 'tarea', inicio: '2024-01-01', duracion: 3, predecesores: [{ id: 1, tipo: 'FF', retraso: -6 }] }
+    ];
+    const ref = { criticalPath: [], totalFloat: 0 };
+    const resultado = ejecutarCPM(elementos, ref);
+    const b = resultado.find(e => e.id === 2);
+    assert.true(b._earlyStart < 0, 'el inicio adelantado no se recorta a 0');
+    assert.ok(Array.isArray(ref.criticalPath), 'la ruta crítica se calcula sobre la red completa');
+});
+
+QUnit.test('generarCodigosWBS no repite códigos con IDs duplicados', assert => {
+    const elementos = [
+        { id: 1, tipo: 'edt', nombre: 'Fase A' },
+        { id: 1, tipo: 'edt', nombre: 'Fase B' },
+        { id: 2, tipo: 'actividad', nombre: 'Tarea', dependeDe: 1 }
+    ];
+    const { codigos } = generarCodigosWBS(elementos);
+    const valores = elementos.map(e => codigos.get(e));
+    assert.strictEqual(new Set(valores).size, valores.length, 'todos los códigos son únicos');
+});
+
+QUnit.test('crearScopeBaseline no muta el array de entrada', assert => {
+    const elementos = [{ id: 1, tipo: 'actividad', nombre: 'A' }];
+    crearScopeBaseline(elementos, []);
+    assert.false(Object.prototype.hasOwnProperty.call(elementos[0], 'codigo'), 'el llamador conserva sus datos');
+});
+
+QUnit.test('calcularCargaPorDia usa horasMes como capacidad diaria', assert => {
+    const proyectoCarga = {
+        equipo: [{ id: 1, nombre: 'Consultor', horasMes: 120 }],
+        elementosGantt: [{ id: 10, tipo: 'actividad', inicio: '2026-11-23', duracion: 1, recursoAsignado: { id: 1 } }]
+    };
+    const resultado = calcularCargaPorDia(proyectoCarga);
+    assert.strictEqual(resultado.recursos[0].capacidad, 6, '120 h/mes → 6 h/día');
+});
+
+QUnit.test('sanitizarProyectoImportado neutraliza comillas, entidades e ids inyectables', assert => {
+    const limpio = sanitizarProyectoImportado({
+        nombre: 'a" onmouseover="alert(1)&#39;',
+        onclick: 'x',
+        id: '1);alert(1);//',
+        __proto__: { polluted: true }
+    });
+    assert.strictEqual(limpio.nombre, 'a onmouseover=alert(1)', 'sin comillas ni entidades decodificables');
+    assert.strictEqual(limpio.id, '1', 'id canónico para handlers inline');
+    assert.false(Object.prototype.hasOwnProperty.call(limpio, 'onclick'), 'manejadores eliminados');
+    assert.false(Object.prototype.hasOwnProperty.call(limpio, '__proto__'), 'prototipo no copiado');
+    assert.notOk({}.polluted, 'sin contaminación de prototipos');
+});
+
+
+QUnit.test('propagarCambioALineaBase crea baseline inicial cuando no existe', assert => {
+    global.proyecto = {
+        id: 2, nombre: 'Sin LB', monedaBase: 'EUR', bitacora: [], cambios: [], lineasBase: [],
+        elementosGantt: [{ id: 1, tipo: 'edt', nombre: 'Raíz', costeEstimado: 0 }]
+    };
+    const nueva = propagarCambioALineaBase(null, { id: 5, descripcion: 'Primer cambio' });
+    assert.strictEqual(proyecto.lineasBase.length, 2, 'inicial + nueva');
+    assert.strictEqual(nueva.predecesoraId, proyecto.lineasBase[0].id);
+    assert.true(proyecto.lineasBase[0].superada, 'la inicial queda marcada como superada');
+    assert.ok(Array.isArray(nueva.diffAlcance.cambios), 'diff calculado');
+    delete global.proyecto;
+});
+
+QUnit.module('Ciclo 3 · verificación de hallazgos 🔴');
+
+QUnit.test('normalizarEstadoRiesgo conserva «En seguimiento»', assert => {
+    assert.strictEqual(normalizarEstadoRiesgo('En seguimiento'), 'En seguimiento');
+    assert.strictEqual(normalizarEstadoRiesgo('seguimiento'), 'En seguimiento');
+    assert.strictEqual(normalizarEstadoRiesgo('activo'), 'Abierto');
+});
+
+QUnit.test('calcularCargaPorDia carga horasMes aunque el recurso asignado no lo repita', assert => {
+    global.proyecto = {
+        equipo: [{ id: 1, nombre: 'Consultor', horasMes: 120 }],
+        elementosGantt: [{ id: 10, tipo: 'actividad', inicio: '2026-11-23', duracion: 1, recursoAsignado: { id: 1, horasDia: 8 } }]
+    };
+    const r = calcularCargaPorDia(global.proyecto);
+    assert.strictEqual(r.recursos[0].capacidad, 6, 'capacidad canónica 120/20');
+    assert.strictEqual(Object.values(r.carga['1'] || {}).reduce((a, b) => a + b, 0), 6, 'la carga usa 6 h, no 8 h');
+    assert.strictEqual(r.sobreasignaciones.length, 0, 'sin sobreasignación fantasma');
+    delete global.proyecto;
+});
+
+QUnit.test('ejecutarCPM aplica leads negativos moderados y expone makespan', assert => {
+    const elementos = [
+        { id: 1, nombre: 'A', tipo: 'tarea', inicio: '2024-01-01', duracion: 10, predecesores: [] },
+        { id: 2, nombre: 'B', tipo: 'tarea', inicio: '2024-01-15', duracion: 3, predecesores: [{ id: 1, tipo: 'FF', retraso: -2 }] }
+    ];
+    const ref = { criticalPath: [], totalFloat: 0, makespan: 0, conCiclo: false };
+    const resultado = ejecutarCPM(elementos, ref);
+    assert.true(resultado.find(e => e.id === 2)._earlyStart < 14, 'el lead adelanta B respecto a su fecha manual');
+    assert.true(ref.makespan > 0, 'makespan calculado sobre la red');
+    assert.false(ref.conCiclo, 'red acíclica');
+});
+
+QUnit.test('ejecutarCPM suspende métricas ante dependencias circulares', assert => {
+    const elementos = [
+        { id: 1, tipo: 'tarea', duracion: 2, predecesores: [{ id: 2, tipo: 'FS', retraso: 0 }] },
+        { id: 2, tipo: 'tarea', duracion: 3, predecesores: [{ id: 1, tipo: 'FS', retraso: 0 }] }
+    ];
+    const ref = { criticalPath: [], totalFloat: 0, makespan: 0, conCiclo: false };
+    const getById = global.document.getElementById;
+    global.document.getElementById = () => null;
+    ejecutarCPM(elementos, ref);
+    global.document.getElementById = getById;
+    assert.true(ref.conCiclo, 'ciclo detectado');
+    assert.strictEqual(ref.criticalPath.length, 0, 'sin ruta crítica falsa');
+    assert.strictEqual(ref.makespan, 0, 'sin makespan falso');
+});
+
+QUnit.test('calcularCosteTotal respeta monedaBase explícita con convertirFn', assert => {
+    const viaje = { costeVuelos: 100, costeEnvio: 25, moneda: 'EUR' };
+    global.proyecto = { monedaBase: 'USD' };
+    const fn = (valor, origen, base) => base === 'EUR' ? valor : valor * 2;
+    assert.strictEqual(calcularCosteTotal([], [], [], [viaje], fn, 'EUR'), 125);
+    delete global.proyecto;
+});
+
+QUnit.test('calcularModeloEVM da entradas idénticas para salud e informe', assert => {
+    global.proyecto = {
+        monedaBase: 'EUR', metodologia: { tipo: 'agile' },
+        fechaInicio: '2024-01-01', elementosGantt: [{ id: 1, tipo: 'actividad', inicio: '2024-01-01', duracion: 10, costeEstimado: 10000, progreso: 50 }],
+        materiales: [{ cantidad: 1, costeUnitario: 5000, moneda: 'EUR', sprint: 1 }],
+        servicios: [{ cantidad: 1, costeUnitario: 1000, impuesto: 21, moneda: 'EUR', sprint: 1 }],
+        scrum: {
+            sprints: [{ id: 1, estado: 'completado', puntosPlanificados: 20, puntosCompletados: 18,
+                costes: { planificado: 30000, real: 25000 } }],
+            historias: []
+        }
+    };
+    const m = calcularModeloEVM(global.proyecto);
+    assert.strictEqual(m.BAC, 35000, 'BAC = Gantt + coste real del sprint, sin duplicar sprint');
+    assert.strictEqual(m.agileCPI, 1.2, 'CPI ágil = planificado / real');
+    assert.strictEqual(m.agileSPI, 0.9, 'SPI ágil = puntos completados / planificados');
+    assert.ok(Math.abs(m.agileEAC - (35000 / 1.2)) < 0.01, 'EAC ágil = BAC / CPI, no tautológico');
+    assert.strictEqual(m.CPI, m.agileCPI, 'salud e informe comparten CPI');
+    assert.strictEqual(m.SPI, m.agileSPI, 'salud e informe comparten SPI');
+    assert.strictEqual(m.EAC, m.agileEAC, 'salud e informe comparten EAC');
+    delete global.proyecto;
+});
+
+QUnit.module('Ciclo 3 · calendario, CSV y compresión');
+
+QUnit.test('parsearCSV respeta BOM, comillas, saltos internos y delimitadores', assert => {
+    const filas = parsearCSV('\uFEFF"nombre";"notas";"coste"\r\n"Tarea, A";"línea 1\nlínea 2";"1.200"');
+    assert.deepEqual(filas[0], ['nombre', 'notas', 'coste']);
+    assert.deepEqual(filas[1], ['Tarea, A', 'línea 1\nlínea 2', '1.200']);
+    assert.strictEqual(parsearCSV('a;b\n1;2')[1][1], '2');
+});
+
+QUnit.test('el calendario laboral descuenta festivos configurados', assert => {
+    global.proyecto = { calendario: { diasNoLaborables: [0, 6], festivos: ['2026-12-25'] } };
+    assert.true(esDiaNoLaboral(new Date(2026, 11, 25)), '25/12 es festivo');
+    assert.strictEqual(sumarDiasHabiles('2026-12-24', 1), '2026-12-28', 'salta festivo y fin de semana');
+    assert.strictEqual(contarDiasHabiles('2026-12-24', '2026-12-29'), 2, '24 y 28 laborables');
+    delete global.proyecto;
+});
+
+QUnit.test('simularEscenariosCompresion ofrece crashing y fast-tracking', assert => {
+    global.proyecto = { elementosGantt: [
+        { id: 1, nombre: 'A', tipo: 'actividad', duracion: 10, costeEstimado: 1000, predecesores: [] },
+        { id: 2, nombre: 'B', tipo: 'actividad', duracion: 5, costeEstimado: 500, predecesores: [{ id: 1, tipo: 'FS', retraso: 0 }] }
+    ] };
+    const esc = simularEscenariosCompresion(global.proyecto);
+    assert.strictEqual(esc.length, 3);
+    assert.strictEqual(esc[0].duracion, 15);
+    assert.true(esc[1].duracion < esc[0].duracion, 'crashing acorta la red');
+    assert.true(esc[1].costeExtra > 0, 'crashing tiene coste adicional');
+    assert.true(esc[2].duracion < esc[0].duracion, 'fast-tracking acorta la red');
+    delete global.proyecto;
+});
+
+QUnit.module('Ciclo 4 · cierre final');
+
+QUnit.test('EVM convierte costes de sprint importados y pronostica con el CPI mostrado', assert => {
+    global.tiposCambio = { EUR: 1, USD: 2 };
+    const proyectoAgil = {
+        monedaBase: 'EUR', metodologia: { tipo: 'agile' }, fechaInicio: '2024-01-01',
+        elementosGantt: [{ id: 1, tipo: 'actividad', inicio: '2024-01-01', duracion: 10, costeEstimado: 1000, progreso: 100 }],
+        materiales: [], servicios: [], viajes: [],
+        scrum: { sprints: [{ id: 1, estado: 'completado', fechaFin: '2024-01-31',
+            puntosPlanificados: 10, puntosCompletados: 10, moneda: 'USD',
+            costes: { planificado: 4000, real: 2000 } }] }
+    };
+    const m = calcularModeloEVM(proyectoAgil);
+    assert.strictEqual(m.BAC, 2000, 'BAC = 1000 EUR + 2000 USD convertidos');
+    assert.ok(Math.abs(m.EAC - 1000) < 0.01, 'EAC = BAC / CPI ya limitado');
+
+    const proyectoCPI = Object.assign({}, proyectoAgil, {
+        elementosGantt: [],
+        scrum: { sprints: [{ id: 1, estado: 'completado', fechaFin: '2024-01-31',
+            puntosPlanificados: 10, puntosCompletados: 10,
+            costes: { planificado: 300, real: 100 } }] }
+    });
+    const mc = calcularModeloEVM(proyectoCPI);
+    assert.strictEqual(mc.CPI, 2, 'el CPI mostrado está limitado a 2');
+    assert.ok(Math.abs(mc.EAC - 50) < 0.01, 'el pronóstico usa el mismo CPI limitado');
+});
+
+QUnit.test('bitácora importada se recalcula también en el formato directo', assert => {
+    global.proyecto = { id: 1, bitacora: [] };
+    registrarBitacora('proyecto', 1, 'crear', null, { nombre: 'Antes' });
+    const limpio = sanitizarProyectoImportado(global.proyecto, 0);
+    global.proyecto = limpio;
+    assert.false(verificarBitacora(), 'sanitizar canóniza ids y rompe el hash');
+    recalcularBitacoraImportada(limpio);
+    assert.true(verificarBitacora(), 'el recálculo restaura la cadena');
+    delete global.proyecto;
+});
+
+QUnit.test('el remapeo de organigrama tolera ids importados como texto', assert => {
+    const nodos = [{ id: 'n1', stakeholderId: '2' }, { id: 'n2', stakeholderId: 3 }];
+    const remapeados = organigramaRemapearStakeholder(nodos, 2, 1);
+    assert.strictEqual(remapeados[0].stakeholderId, 1, 'stakeholder "2" pasa al canónico 1');
+    assert.strictEqual(remapeados[1].stakeholderId, 3, 'los demás no se tocan');
+});
+
+
+QUnit.test('compararSnapshotsScope acepta snapshots completos sin TypeError', assert => {
+    const anterior = crearScopeBaseline([{ id: 1, nombre: 'Diseño', tipo: 'actividad' }], []);
+    const actual = crearScopeBaseline([
+        { id: 1, nombre: 'Diseño final', tipo: 'actividad' },
+        { id: 2, nombre: 'Implantación', tipo: 'actividad' }
+    ], []);
+    const diff = compararSnapshotsScope(actual, anterior);
+    assert.strictEqual(diff.total, 2, 'un cambio de nombre y una alta');
+    assert.strictEqual(diff.altas.length, 1, 'alta detectada');
+    assert.strictEqual(diff.cambios.length, 1, 'cambio detectado');
+});
+
+QUnit.test('la bitácora conserva la instantánea aunque se mute el objeto original', assert => {
+    global.proyecto = { bitacora: [] };
+    const elem = { id: 1, nombre: 'Diseño', progreso: 10 };
+    const antes = clonarParaBitacora(elem);
+    elem.progreso = 90;
+    registrarBitacora('elemento', 1, 'editar', antes, clonarParaBitacora(elem));
+    assert.true(verificarBitacora(), 'cadena válida al registrar');
+    elem.progreso = 100; // simula la mutación del render CPM
+    assert.true(verificarBitacora(), 'la entrada conserva su copia y el hash sigue siendo válido');
+    delete global.proyecto;
 });

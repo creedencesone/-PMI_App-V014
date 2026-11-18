@@ -38,6 +38,7 @@ function organigramaValidarReparent(nodos, nodeId, nuevoPadreId) {
     if (nuevoPadreId === null || nuevoPadreId === undefined) return { ok: true };
     if (nuevoPadreId === nodeId) return { ok: false, error: 'self' };
     if (!(nodos || []).some(n => n.id === nodeId)) return { ok: false, error: 'notfound' };
+    if (!(nodos || []).some(n => n.id === nuevoPadreId)) return { ok: false, error: 'parentNotFound' };
     if (organigramaEsDescendiente(nodos, nodeId, nuevoPadreId)) return { ok: false, error: 'descendant' };
     return { ok: true };
 }
@@ -65,7 +66,7 @@ function organigramaLimpiarStakeholder(nodos, stakeholderId) {
 
 function organigramaRemapearStakeholder(nodos, viejoId, nuevoId) {
     return (nodos || []).map(n => {
-        if (n.stakeholderId === viejoId) {
+        if (String(n.stakeholderId) === String(viejoId)) {
             return Object.assign({}, n, { stakeholderId: nuevoId });
         }
         return n;

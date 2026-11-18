@@ -4,7 +4,7 @@
             if (proyecto.comunicaciones.length === 0) { tbody.innerHTML = '<tr><td colspan="7">No hay comunicaciones</td></tr>'; return; }
             tbody.innerHTML = proyecto.comunicaciones.map(c => `<tr><td>${formatearFechaEspa(c.fecha)}</td><td><span class="badge-pais">${c.tipo || '-'}</span></td><td>${escapeHtml(c.con || '')}</td><td><strong>${escapeHtml(c.asunto || '')}</strong></td><td>${escapeHtml((c.contenido || '').substring(0, 100))}${(c.contenido || '').length > 100 ? '...' : ''}</td><td>${c.archivoNombre ? `<span class="edit-btn" onclick="descargarArchivoComunicacion(${c.id})"> ${escapeHtml(c.archivoNombre)}</span>` : '-'}</td><td><span class="edit-btn" onclick="editarComunicacion(${c.id})"></span><span class="delete-btn" onclick="eliminarComunicacion(${c.id})"></span></td></tr>`).join('');
         }
-        
+
         function abrirModalNuevaComunicacion() {
             const tipos = ['Email', 'Llamada', 'WhatsApp', 'Reunión', 'Carta', 'Otro'];
             const modalHtml = `<div class="modal-content modal-500"><div class="modal-header"><h3> Nueva Comunicación</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
@@ -19,7 +19,7 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         async function guardarComunicacion() {
             let id = document.getElementById('comId').value;
             let asunto = document.getElementById('comAsunto').value;
@@ -37,7 +37,7 @@
             else { proyecto.comunicaciones.push(comunicacion); }
             guardarProyecto(); renderizarComunicaciones(); cerrarModalGeneric(); mostrarToast(` Comunicación guardada`, 'success');
         }
-        
+
         function editarComunicacion(id) {
             let c = proyecto.comunicaciones.find(c => c.id === id);
             if (!c) return;
@@ -54,24 +54,24 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function eliminarComunicacion(id) {
             if (confirm(tApp('confirmar_eliminar'))) { proyecto.comunicaciones = proyecto.comunicaciones.filter(c => c.id !== id); guardarProyecto(); renderizarComunicaciones(); mostrarToast(tApp('toast_eliminado'), 'success'); }
         }
-        
+
         function descargarArchivoComunicacion(id) {
             let c = proyecto.comunicaciones.find(c => c.id === id);
             if (c && c.archivo && c.archivoNombre) { const link = document.createElement('a'); link.href = c.archivo; link.download = c.archivoNombre; link.click(); mostrarToast(` Descargando ${c.archivoNombre}`, 'success'); }
             else { mostrarToast(" No hay archivo", 'error'); }
         }
-        
+
         function renderizarReuniones() {
             const container = document.getElementById('listaReuniones');
             if (!proyecto.reuniones) proyecto.reuniones = [];
             if (proyecto.reuniones.length === 0) { container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><p>No hay reuniones registradas</p></div>'; return; }
             container.innerHTML = proyecto.reuniones.map(r => `<div class="reunion-card"><div class="reunion-titulo"><span> ${escapeHtml(r.titulo || 'Reunión')}</span><div><span class="edit-btn" onclick="editarReunion(${r.id})"></span><span class="delete-btn" onclick="eliminarReunion(${r.id})"></span></div></div><div class="reunion-fecha"> ${r.fecha ? formatearFechaEspa(r.fecha) : '-'}</div><div class="reunion-asistentes"> Asistentes: ${escapeHtml((r.asistentes || []).join(', ') || '-')}</div><div class="reunion-acuerdos"><strong>Acuerdos:</strong><br>${escapeHtml((r.acuerdos || '').substring(0, 150))}${(r.acuerdos || '').length > 150 ? '...' : ''}</div><div class="reunion-acciones"><strong>Acciones:</strong><br>${escapeHtml((r.acciones || '').substring(0, 150))}${(r.acciones || '').length > 150 ? '...' : ''}</div>${r.pdfNombre ? `<div class="reunion-pdf-actions"><button class="btn btn-secondary btn-small" onclick="abrirVisorPdf(${r.id})"> Ver PDF</button><button class="btn btn-secondary btn-small" onclick="descargarPdfReunion(${r.id})"> Descargar PDF</button></div>` : '<div class="reunion-pdf-actions"><span class="u-color-muted"> Sin acta PDF</span></div>'}</div>`).join('');
         }
-        
+
         function abrirModalNuevaReunion() {
             const modalHtml = `<div class="modal-content modal-600"><div class="modal-header"><h3> Nueva Reunión</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
                 <input type="hidden" id="reunionId"><div class="form-group"><label>Título</label><input type="text" id="reunionTitulo"></div>
@@ -86,7 +86,7 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         async function guardarReunion() {
             let id = document.getElementById('reunionId').value;
             let titulo = document.getElementById('reunionTitulo').value.trim();
@@ -106,7 +106,7 @@
             else { proyecto.reuniones.push(reunion); }
             guardarProyecto(); renderizarReuniones(); cerrarModalGeneric(); mostrarToast(` Minuta guardada`, 'success');
         }
-        
+
         function editarReunion(id) {
             let r = proyecto.reuniones.find(r => r.id === id);
             if (!r) return;
@@ -123,21 +123,100 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function eliminarReunion(id) {
             if (confirm(tApp('confirmar_eliminar_minuta'))) { proyecto.reuniones = proyecto.reuniones.filter(r => r.id !== id); guardarProyecto(); renderizarReuniones(); mostrarToast(tApp('toast_eliminado'), 'success'); }
         }
-        
+
         function abrirVisorPdf(reunionId) {
             let r = proyecto.reuniones.find(r => r.id === reunionId);
             if (r && r.pdfBase64) { pdfActualBase64 = r.pdfBase64; pdfActualNombre = r.pdfNombre; document.getElementById('visorPdfTitulo').innerHTML = ` ${escapeHtml(r.titulo || 'Acta')} - ${r.pdfNombre || 'PDF'}`; document.getElementById('visorPdfFrame').src = r.pdfBase64; document.getElementById('visorPdfModal').style.display = 'flex'; }
             else { mostrarToast(tApp('toast_no_hay_pdf'), 'error'); }
         }
-        
+
         function cerrarVisorPdf() { document.getElementById('visorPdfModal').style.display = 'none'; document.getElementById('visorPdfFrame').src = ''; pdfActualBase64 = null; pdfActualNombre = null; }
         function descargarPdfActual() { if (pdfActualBase64 && pdfActualNombre) { const link = document.createElement('a'); link.href = pdfActualBase64; link.download = pdfActualNombre; link.click(); mostrarToast(` Descargando ${pdfActualNombre}`, 'success'); } }
         function descargarPdfReunion(reunionId) { let r = proyecto.reuniones.find(r => r.id === reunionId); if (r && r.pdfBase64 && r.pdfNombre) { const link = document.createElement('a'); link.href = r.pdfBase64; link.download = r.pdfNombre; link.click(); mostrarToast(` Descargando ${r.pdfNombre}`, 'success'); } else { mostrarToast(tApp('toast_no_hay_pdf'), 'error'); } }
-        
+
+        // ============================================
+        // PLAN DE COMUNICACIONES (PMI 10.2)
+        // ============================================
+
+        function renderizarPlanComunicaciones() {
+            const tbody = document.getElementById('planComunicacionesBody');
+            if (!tbody) return;
+            if (!Array.isArray(proyecto.planComunicaciones)) proyecto.planComunicaciones = [];
+            tbody.innerHTML = proyecto.planComunicaciones.map(item => `<tr>
+                <td>${escapeHtml(item.audiencia || '-')}</td>
+                <td>${escapeHtml(item.mensaje || '-')}</td>
+                <td>${escapeHtml(item.canal || '-')}</td>
+                <td>${escapeHtml(item.frecuencia || '-')}</td>
+                <td>${escapeHtml(item.responsable || '-')}</td>
+                <td><button class="btn btn-secondary btn-small btn-icon-only" onclick="editarPlanComunicaciones(${Number(item.id) || 0})" title="Editar" aria-label="Editar comunicación del plan"><i data-feather="edit-2"></i></button><button class="btn btn-danger btn-small btn-icon-only" onclick="eliminarPlanComunicaciones(${Number(item.id) || 0})" title="Eliminar" aria-label="Eliminar comunicación del plan"><i data-feather="trash-2"></i></button></td>
+            </tr>`).join('') || '<tr><td colspan="6" class="u-text-center">Sin entradas en el plan</td></tr>';
+        }
+
+        function agregarPlanComunicaciones() {
+            const valor = id => document.getElementById(id)?.value.trim() || '';
+            const audiencia = valor('planComAudiencia');
+            const canal = valor('planComCanal');
+            const mensaje = valor('planComMensaje');
+            const frecuencia = valor('planComFrecuencia');
+            const responsable = valor('planComResponsable');
+            if (!audiencia || !canal || !mensaje || !frecuencia || !responsable) {
+                mostrarToast('Completa audiencia, canal, mensaje, frecuencia y responsable', 'error');
+                return;
+            }
+            if (!Array.isArray(proyecto.planComunicaciones)) proyecto.planComunicaciones = [];
+            const item = { id: Date.now(), audiencia, canal, mensaje, frecuencia, responsable };
+            proyecto.planComunicaciones.push(item);
+            if (typeof registrarBitacora === 'function') registrarBitacora('planComunicaciones', item.id, 'crear', null, item);
+            guardarProyecto();
+            renderizarPlanComunicaciones();
+            ['planComAudiencia', 'planComCanal', 'planComMensaje', 'planComFrecuencia', 'planComResponsable']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            mostrarToast('Comunicación añadida al plan', 'success');
+        }
+
+/** Edita una entrada del plan sin borrar y recrear (conserva la bitácora). */
+        function editarPlanComunicaciones(id) {
+            const item = (proyecto.planComunicaciones || []).find(x => x.id === id);
+            if (!item) return;
+            const campo = (clave, etiqueta) => `<div class="form-group"><label>${escapeHtml(etiqueta)}</label><input id="editPlan_${clave}" value="${escapeHtml(String(item[clave] || ''))}" required maxlength="240"></div>`;
+            const html = ['audiencia:Audiencia', 'canal:Canal', 'mensaje:Mensaje', 'frecuencia:Frecuencia', 'responsable:Responsable']
+                .map(par => campo(par.split(':')[0], par.split(':')[1])).join('');
+            document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal"><div class="modal-content">
+                <div class="modal-header"><h3>Editar comunicación</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
+                ${html}<button class="btn btn-primary" onclick="actualizarPlanComunicaciones(${id})">Guardar cambios</button>
+            </div></div>`;
+            if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(document.getElementById('genericModal'));
+        }
+
+        function actualizarPlanComunicaciones(id) {
+            const item = (proyecto.planComunicaciones || []).find(x => x.id === id);
+            if (!item) return;
+            const claves = ['audiencia', 'canal', 'mensaje', 'frecuencia', 'responsable'];
+            const valores = {};
+            for (const clave of claves) {
+                const valor = document.getElementById('editPlan_' + clave)?.value.trim();
+                if (!valor) { mostrarToast('Todos los campos son obligatorios', 'error'); return; }
+                valores[clave] = valor;
+            }
+            const antes = { ...item };
+            claves.forEach(clave => { item[clave] = valores[clave]; });
+            if (typeof registrarBitacora === 'function') registrarBitacora('planComunicaciones', id, 'actualizar', antes, { ...item });
+            guardarProyecto(); renderizarPlanComunicaciones(); cerrarModalGeneric();
+            mostrarToast('Comunicación actualizada', 'success');
+        }
+
+        function eliminarPlanComunicaciones(id) {
+            const antes = (proyecto.planComunicaciones || []).find(x => x.id === id) || null;
+            proyecto.planComunicaciones = (proyecto.planComunicaciones || []).filter(x => x.id !== id);
+            if (typeof registrarBitacora === 'function') registrarBitacora('planComunicaciones', id, 'eliminar', antes, null);
+            guardarProyecto();
+            renderizarPlanComunicaciones();
+        }
+
         function mostrarSubpanelComunicaciones(subpanel, btn) {
             document.querySelectorAll('.subpanel-comunicaciones').forEach(el => el.style.display = 'none');
             document.getElementById(`subpanel${subpanel.charAt(0).toUpperCase() + subpanel.slice(1)}`).style.display = 'block';
@@ -145,8 +224,9 @@
             btn.style.color = '#007AFF'; btn.style.borderBottom = '2px solid #007AFF';
             if (subpanel === 'reuniones') renderizarReuniones();
             if (subpanel === 'comunicaciones') renderizarComunicaciones();
+            if (subpanel === 'planComunicaciones') renderizarPlanComunicaciones();
         }
-        
+
         // ============================================
         // CRONOGRAMA GANTT
         // ============================================

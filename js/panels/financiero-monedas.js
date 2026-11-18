@@ -1,58 +1,122 @@
+        /** ID con sufijo aleatorio para evitar colisiones entre altas rápidas. */
+        function nuevoIdFinanciero() { return Date.now() + Math.floor(Math.random() * 10000); }
+
+        /** Carga explícita de datos de ejemplo (nunca automática). */
+        function cargarDatosAduanerosDemo() {
+            if (!Array.isArray(proyecto.configAranceles) || !proyecto.configAranceles.length) {
+                proyecto.configAranceles = [
+                    { id: nuevoIdFinanciero(), pais: 'China', paisDestino: 'ES', categoria: 'Electrónica', porcentaje: 15, codigo: '8542' },
+                    { id: nuevoIdFinanciero(), pais: 'USA', paisDestino: 'ES', categoria: 'General', porcentaje: 5, codigo: 'G001' }
+                ];
+            }
+            if (!Array.isArray(proyecto.tasasAduanerasFijas) || !proyecto.tasasAduanerasFijas.length) {
+                proyecto.tasasAduanerasFijas = [{ id: nuevoIdFinanciero(), concepto: 'Tasa de despacho', tipo: 'fijo', valor: 150, moneda: 'EUR' }];
+            }
+            guardarProyecto(); renderizarConfigAranceles(); renderizarTasasAduaneras();
+            mostrarToast('Datos aduaneros de ejemplo cargados', 'success');
+        }
+
         function inicializarConfigFinanciera() {
+            // Las tasas guardadas/editadas deben estar activas desde el primer cálculo.
+            try {
+                const cache = localStorage.getItem('tiposCambioCache');
+                if (cache) tiposCambio = { ...tiposCambio, ...JSON.parse(cache) };
+            } catch (error) {
+                console.warn('[Finanzas] No se pudo leer tiposCambioCache', error);
+            }
             if (!proyecto.configAranceles) proyecto.configAranceles = [];
             if (!proyecto.tasasAduanerasFijas) proyecto.tasasAduanerasFijas = [];
             if (!proyecto.costesFinancierosExtra) proyecto.costesFinancierosExtra = [];
-            if (proyecto.configAranceles.length === 0) proyecto.configAranceles = [{ id: 1, pais: 'China', categoria: 'Electrónica', porcentaje: 15, codigo: '8542' }, { id: 2, pais: 'USA', categoria: 'General', porcentaje: 5, codigo: 'G001' }];
-            if (proyecto.tasasAduanerasFijas.length === 0) proyecto.tasasAduanerasFijas = [{ id: 1, concepto: 'Tasa de despacho', tipo: 'fijo', valor: 150, moneda: 'EUR' }];
+            // Los datos de ejemplo ya no se reinyectan: borrar es definitivo.
+            // Se pueden cargar explícitamente con cargarDatosAduanerosDemo().
             renderizarConfigAranceles(); renderizarTasasAduaneras(); renderizarCostesFinancierosExtra();
         }
-        
-        function renderizarConfigAranceles() { const tbody = document.getElementById('configArancelesBody'); if (!tbody) return; if (!proyecto.configAranceles || proyecto.configAranceles.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay aranceles</td></tr>'; return; } tbody.innerHTML = proyecto.configAranceles.map(a => `<tr><td>${escapeHtml(a.pais)}</td><td>${escapeHtml(a.categoria)}</td><td>${a.porcentaje}%</td><td>${escapeHtml(a.codigo || '-')}</td><td><span class="delete-btn" onclick="eliminarConfigArancel(${a.id})"></span></td></tr>`).join(''); }
-        function renderizarTasasAduaneras() { const tbody = document.getElementById('tasasFijasBody'); if (!tbody) return; if (!proyecto.tasasAduanerasFijas || proyecto.tasasAduanerasFijas.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay tasas</td></tr>'; return; } tbody.innerHTML = proyecto.tasasAduanerasFijas.map(t => `<tr><td>${escapeHtml(t.concepto)}</td><td>${t.tipo === 'fijo' ? 'Fijo' : 'Porcentaje'}</td><td>${t.tipo === 'fijo' ? t.valor + ' ' + t.moneda : t.valor + '%'}</td><td>${t.moneda || '-'}</td><td><span class="delete-btn" onclick="eliminarTasaAduanera(${t.id})"></span></td></tr>`).join(''); }
+
+        function renderizarConfigAranceles() { const tbody = document.getElementById('configArancelesBody'); if (!tbody) return; if (!proyecto.configAranceles || proyecto.configAranceles.length === 0) { tbody.innerHTML = '<tr><td colspan="6">No hay aranceles</td></tr>'; return; } tbody.innerHTML = proyecto.configAranceles.map(a => `<tr><td>${escapeHtml(a.pais)}</td><td>${escapeHtml(a.paisDestino || 'Cualquiera')}</td><td>${escapeHtml(a.categoria)}</td><td>${a.porcentaje}%</td><td>${escapeHtml(a.codigo || '-')}</td><td><span class="edit-btn" onclick="editarConfigArancel(${a.id})"></span><span class="delete-btn" onclick="eliminarConfigArancel(${a.id})"></span></td></tr>`).join(''); }
+        function renderizarTasasAduaneras() { const tbody = document.getElementById('tasasFijasBody'); if (!tbody) return; if (!proyecto.tasasAduanerasFijas || proyecto.tasasAduanerasFijas.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay tasas</td></tr>'; return; } tbody.innerHTML = proyecto.tasasAduanerasFijas.map(t => `<tr><td>${escapeHtml(t.concepto)}</td><td>${t.tipo === 'fijo' ? 'Fijo' : 'Porcentaje'}</td><td>${t.tipo === 'fijo' ? t.valor + ' ' + t.moneda : t.valor + '%'}</td><td>${t.moneda || '-'}</td><td><span class="edit-btn" onclick="editarTasaAduanera(${t.id})"></span><span class="delete-btn" onclick="eliminarTasaAduanera(${t.id})"></span></td></tr>`).join(''); }
         function renderizarCostesFinancierosExtra() { const tbody = document.getElementById('costesFinancierosExtraBody'); if (!tbody) return; if (!proyecto.costesFinancierosExtra || proyecto.costesFinancierosExtra.length === 0) { tbody.innerHTML = '<tr><td colspan="8">No hay costes</td></tr>'; return; } tbody.innerHTML = proyecto.costesFinancierosExtra.map(c => { let total = c.tipo === 'porcentaje' ? (c.base || 0) * (c.tasa / 100) : c.tasa; return `<tr><td>${escapeHtml(c.concepto)}</td><td>${c.tipo === 'porcentaje' ? '%' : 'Fijo'}</td><td>${c.base || '-'}</td><td>${c.tasa}${c.tipo === 'porcentaje' ? '%' : ''}</td><td>${c.moneda}</td><td>${formatearMoneda(convertirMoneda(total, c.moneda))}</td><td>${c.periodicidad || 'Único'}</td><td><span class="delete-btn" onclick="eliminarCosteFinancieroExtra(${c.id})"></span></td></tr>`; }).join(''); }
-        
+
         function calcularTodosLosCostesFinancieros() { calcularAnalisisMateriales(); calcularAnalisisEquipo(); renderizarCostesFinancierosExtra(); }
-        
+
         function calcularTasasFijas(proyecto) {
             return (proyecto.tasasAduanerasFijas || []).filter(t => t.tipo === 'fijo').reduce((sum, t) => sum + convertirMoneda(t.valor, t.moneda), 0);
         }
-        
+
+        /** Resuelve el arancel: personalizado > HS+origen+destino > origen+destino+categoría.
+         *  Un código HS suelto sin país no es suficiente: el destino cambia el arancel. */
+        function resolverArancelMaterial(material, configAranceles) {
+            if (Number(material.arancelPersonalizado) > 0) return Number(material.arancelPersonalizado);
+            const codigoMaterial = String(material.hsCode || '').trim().toUpperCase();
+            const origen = String(material.paisOrigen || '').toLowerCase();
+            const destino = String(material.paisDestino || '').toLowerCase();
+            const coinciden = (a, b) => !a || !b || a === b;
+            // El destino es restrictivo: si el material no lo informa, sólo
+            // aplican reglas genéricas (sin país de destino).
+            const coincideDestino = (configDestino, materialDestino) =>
+                !configDestino || (!!materialDestino && configDestino === materialDestino);
+            const config = (configAranceles || []).find(a => {
+                const codigo = String(a.codigo || '').trim().toUpperCase();
+                if (codigoMaterial && codigo && codigo === codigoMaterial
+                    && coinciden(String(a.pais || '').toLowerCase(), origen)
+                    && coincideDestino(String(a.paisDestino || '').toLowerCase(), destino)) return true;
+                if (!coinciden(String(a.pais || '').toLowerCase(), origen)) return false;
+                if (!coincideDestino(String(a.paisDestino || '').toLowerCase(), destino)) return false;
+                return !a.categoria || String(a.categoria).toLowerCase() === String(material.categoria || '').toLowerCase();
+            });
+            return Number(config?.porcentaje || 0);
+        }
+
         function calcularAnalisisMateriales() {
             const tbody = document.getElementById('analisisMaterialesBody'); if (!tbody) return;
             if (!proyecto.materiales || proyecto.materiales.length === 0) { tbody.innerHTML = '<tr><td colspan="10">No hay materiales</td></tr>'; return; }
             const flete = parseFloat(document.getElementById('factorFlete')?.value || 10) / 100;
             const seguro = parseFloat(document.getElementById('factorSeguro')?.value || 2) / 100;
             const tasasFijas = calcularTasasFijas(proyecto);
-            let totalMateriales = 0, totalAranceles = 0, totalTasas = 0, totalImportacion = 0;
+            let totalMateriales = 0, totalAranceles = 0, totalTasas = 0, totalTasasPorcentuales = 0, totalFlete = 0, totalSeguro = 0, totalImportacion = 0;
             tbody.innerHTML = proyecto.materiales.map(m => {
                 const valorUnitario = convertirMoneda(m.costeUnitario, m.moneda);
                 const valorTotalMaterial = m.cantidad * valorUnitario;
                 const valorCIF = valorTotalMaterial + (valorTotalMaterial * flete) + (valorTotalMaterial * seguro);
-                const arancel = (proyecto.configAranceles || []).find(a => a.pais.toLowerCase() === (m.paisOrigen || '').toLowerCase())?.porcentaje || 0;
+                const arancel = resolverArancelMaterial(m, proyecto.configAranceles);
                 const valorArancel = valorCIF * (arancel / 100);
-                const valorTasas = tasasFijas;
-                const totalItem = valorTotalMaterial + valorArancel + valorTasas;
-                totalMateriales += valorTotalMaterial; totalAranceles += valorArancel; totalImportacion += valorTotalMaterial + valorArancel;
-                return `</table>
+                const tasasPorcentuales = (proyecto.tasasAduanerasFijas || [])
+                    .filter(t => t.tipo !== 'fijo')
+                    .reduce((sum, t) => sum + valorCIF * (Number(t.valor) || 0) / 100, 0);
+                const gastoAgente = Number(document.getElementById('gastoAgenteAduanas')?.value) || 0;
+                const valorFlete = valorTotalMaterial * flete;
+                const valorSeguro = valorTotalMaterial * seguro;
+                const valorTasasItem = tasasPorcentuales + gastoAgente;
+                const totalItem = valorCIF + valorArancel + valorTasasItem;
+                totalMateriales += valorTotalMaterial; totalAranceles += valorArancel;
+                totalTasasPorcentuales += tasasPorcentuales;
+                totalFlete += valorFlete; totalSeguro += valorSeguro;
+                totalImportacion += totalItem;
+                return `<tr>
                     <td>${escapeHtml(m.nombre)}</td>
                     <td>${m.cantidad}</td>
                     <td>${formatearMoneda(valorUnitario)}</td>
                     <td>${m.moneda}</td>
-                    <td>${escapeHtml(m.paisOrigen || '-')}</td>
+                    <td>${escapeHtml(m.paisOrigen || '-')} → ${escapeHtml(m.paisDestino || '-')}</td>
                     <td>${formatearMoneda(valorCIF)}</td>
                     <td>${arancel}% (${formatearMoneda(valorArancel)})</td>
-                    <td>${formatearMoneda(valorTasas)}</td>
+                    <td>${formatearMoneda(valorTasasItem)}</td>
                     <td>${formatearMoneda(totalItem)}</td>
                     <td>Mes ${m.mes || 1}</td>
                 </tr>`;
             }).join('');
-            totalTasas += tasasFijas; totalImportacion += tasasFijas;
+            const gastoAgenteTotal = (proyecto.materiales || []).length * (Number(document.getElementById('gastoAgenteAduanas')?.value) || 0);
+            totalTasas += tasasFijas + totalTasasPorcentuales + gastoAgenteTotal;
+            // El gasto por material ya se incluyó en totalItem; aquí sólo se
+            // contabilizan las tasas fijas una única vez.
+            totalImportacion += tasasFijas;
+            const costlyFleteSeguro = document.getElementById('resumenFleteSeguro');
+            if (costlyFleteSeguro) costlyFleteSeguro.innerHTML = formatearMoneda(totalFlete + totalSeguro);
             document.getElementById('resumenCosteMateriales').innerHTML = formatearMoneda(totalMateriales);
             document.getElementById('resumenTotalAranceles').innerHTML = formatearMoneda(totalAranceles);
             document.getElementById('resumenTotalTasas').innerHTML = formatearMoneda(totalTasas);
             document.getElementById('resumenTotalImportacion').innerHTML = formatearMoneda(totalImportacion);
         }
-        
+
         function calcularAnalisisEquipo() {
             const tbody = document.getElementById('analisisEquipoBody'); if (!tbody) return;
             const duracionMeses = parseFloat(document.getElementById('duracionProyectoMeses')?.value || 12);
@@ -69,7 +133,7 @@
                 <td><span class="edit-btn" onclick="editarEquipo(${m.id})"></span></td>
                 </tr>`; }).join('');
         }
-        
+
         function mostrarSubpanelAnalisis(subpanel, btn) {
             document.querySelectorAll('.subpanel-analisis').forEach(el => el.style.display = 'none');
             document.getElementById(`subpanel${subpanel.charAt(0).toUpperCase() + subpanel.slice(1)}`).style.display = 'block';
@@ -79,20 +143,149 @@
             if (subpanel === 'equipo') calcularAnalisisEquipo();
             if (subpanel === 'servicios') renderizarServicios();
         }
-        
-        function abrirModalConfigArancel() { mostrarToast("Funcionalidad avanzada - usa la tabla para gestionar", 'info'); }
-        function abrirModalTasaAduaneraFija() { mostrarToast("Funcionalidad avanzada", 'info'); }
-        function abrirModalCosteFinancieroExtra() { mostrarToast("Funcionalidad avanzada", 'info'); }
-        function eliminarConfigArancel(id) { proyecto.configAranceles = proyecto.configAranceles.filter(a => a.id !== id); guardarProyecto(); renderizarConfigAranceles(); mostrarToast(tApp('toast_eliminado'), 'success'); }
-        function eliminarTasaAduanera(id) { proyecto.tasasAduanerasFijas = proyecto.tasasAduanerasFijas.filter(t => t.id !== id); guardarProyecto(); renderizarTasasAduaneras(); mostrarToast(tApp('toast_eliminado'), 'success'); }
-        function eliminarCosteFinancieroExtra(id) { proyecto.costesFinancierosExtra = proyecto.costesFinancierosExtra.filter(c => c.id !== id); guardarProyecto(); renderizarCostesFinancierosExtra(); mostrarToast(tApp('toast_eliminado'), 'success'); }
+
+        function abrirModalConfigArancel(item) {
+            const a = item || {};
+            const modal = `<div class="modal-content"><div class="modal-header"><h3>${item ? 'Editar' : 'Nuevo'} arancel</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
+                <div class="form-row">
+                    <div class="form-group"><label>País de origen</label><input id="arqOrigen" value="${escapeHtml(a.pais || '')}" required maxlength="80"></div>
+                    <div class="form-group"><label>País de destino</label><input id="arqDestino" value="${escapeHtml(a.paisDestino || '')}" maxlength="80" placeholder="Cualquiera"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Categoría</label><input id="arqCategoria" value="${escapeHtml(a.categoria || '')}" maxlength="80"></div>
+                    <div class="form-group"><label>Código HS</label><input id="arqCodigo" value="${escapeHtml(a.codigo || '')}" maxlength="20"></div>
+                </div>
+                <div class="form-group"><label>Porcentaje (%)</label><input id="arqPorcentaje" type="number" min="0" max="100" step="0.01" value="${Number(a.porcentaje) || 0}" required></div>
+                <button class="btn btn-primary" onclick="guardarConfigArancel(${item ? Number(item.id) : 0})">Guardar</button>
+            </div>`;
+            document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modal}</div>`;
+        }
+
+        function guardarConfigArancel(id) {
+            const valor = x => document.getElementById(x)?.value.trim() || '';
+            const datos = {
+                pais: valor('arqOrigen'), paisDestino: valor('arqDestino'), categoria: valor('arqCategoria'),
+                codigo: valor('arqCodigo'), porcentaje: Number(document.getElementById('arqPorcentaje')?.value) || 0
+            };
+            if (!datos.pais) { mostrarToast('El país de origen es obligatorio', 'error'); return; }
+            if (!proyecto.configAranceles) proyecto.configAranceles = [];
+            let antes = null, entidadId = id;
+            if (id) {
+                const item = proyecto.configAranceles.find(a => a.id === id);
+                antes = item ? { ...item } : null;
+                if (item) Object.assign(item, datos);
+            } else {
+                entidadId = nuevoIdFinanciero();
+                proyecto.configAranceles.push({ id: entidadId, ...datos });
+            }
+            registrarBitacoraSiExiste('configAranceles', entidadId, id ? 'actualizar' : 'crear', antes, datos);
+            guardarProyecto(); renderizarConfigAranceles(); calcularAnalisisMateriales(); cerrarModalGeneric();
+            mostrarToast('Arancel guardado', 'success');
+        }
+
+        function editarConfigArancel(id) { abrirModalConfigArancel((proyecto.configAranceles || []).find(a => a.id === id)); }
+
+        function abrirModalTasaAduaneraFija(item) {
+            const t = item || {};
+            const modal = `<div class="modal-content"><div class="modal-header"><h3>${item ? 'Editar' : 'Nueva'} tasa aduanera</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
+                <div class="form-group"><label>Concepto</label><input id="tasConcepto" value="${escapeHtml(t.concepto || '')}" required maxlength="120"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Tipo</label><select id="tasTipo"><option value="fijo"${t.tipo === 'fijo' ? ' selected' : ''}>Fijo</option><option value="porcentaje"${t.tipo === 'porcentaje' ? ' selected' : ''}>Porcentaje</option></select></div>
+                    <div class="form-group"><label>Valor</label><input id="tasValor" type="number" min="0" step="0.01" value="${Number(t.valor) || 0}" required></div>
+                </div>
+                <div class="form-group"><label>Moneda</label><input id="tasMoneda" value="${escapeHtml(t.moneda || proyecto.monedaBase || 'EUR')}" maxlength="10"></div>
+                <button class="btn btn-primary" onclick="guardarTasaAduanera(${item ? Number(item.id) : 0})">Guardar</button>
+            </div>`;
+            document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modal}</div>`;
+        }
+
+        function guardarTasaAduanera(id) {
+            const datos = {
+                concepto: document.getElementById('tasConcepto')?.value.trim() || '',
+                tipo: document.getElementById('tasTipo')?.value || 'fijo',
+                valor: Number(document.getElementById('tasValor')?.value) || 0,
+                moneda: document.getElementById('tasMoneda')?.value.trim() || proyecto.monedaBase || 'EUR'
+            };
+            if (!datos.concepto) { mostrarToast('El concepto es obligatorio', 'error'); return; }
+            if (!proyecto.tasasAduanerasFijas) proyecto.tasasAduanerasFijas = [];
+            let antes = null, entidadId = id;
+            if (id) {
+                const item = proyecto.tasasAduanerasFijas.find(t => t.id === id);
+                antes = item ? { ...item } : null;
+                if (item) Object.assign(item, datos);
+            } else {
+                entidadId = nuevoIdFinanciero();
+                proyecto.tasasAduanerasFijas.push({ id: entidadId, ...datos });
+            }
+            registrarBitacoraSiExiste('tasasAduaneras', entidadId, id ? 'actualizar' : 'crear', antes, datos);
+            guardarProyecto(); renderizarTasasAduaneras(); calcularAnalisisMateriales(); cerrarModalGeneric();
+            mostrarToast('Tasa aduanera guardada', 'success');
+        }
+
+        function editarTasaAduanera(id) { abrirModalTasaAduaneraFija((proyecto.tasasAduanerasFijas || []).find(t => t.id === id)); }
+        function abrirModalCosteFinancieroExtra() {
+            document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal"><div class="modal-content">
+                <div class="modal-header"><h3>Nuevo coste financiero</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
+                <div class="form-group"><label>Concepto</label><input id="cfeConcepto" required maxlength="120"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Tipo</label><select id="cfeTipo"><option value="fijo">Fijo</option><option value="porcentaje">Porcentaje</option></select></div>
+                    <div class="form-group"><label>Tasa o importe</label><input id="cfeTasa" type="number" min="0" step="0.01" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Base (sólo porcentaje)</label><input id="cfeBase" type="number" min="0" step="0.01" value="0"></div>
+                    <div class="form-group"><label>Moneda</label><input id="cfeMoneda" value="${escapeHtml(proyecto.monedaBase || 'EUR')}" maxlength="10"></div>
+                </div>
+                <div class="form-group"><label>Periodicidad</label><input id="cfePeriodicidad" maxlength="40" placeholder="Único, mensual, trimestral..."></div>
+                <button class="btn btn-primary" onclick="guardarCosteFinancieroExtra()">Guardar</button>
+            </div></div>`;
+            if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(document.getElementById('genericModal'));
+        }
+
+        function guardarCosteFinancieroExtra() {
+            const datos = {
+                concepto: document.getElementById('cfeConcepto')?.value.trim() || '',
+                tipo: document.getElementById('cfeTipo')?.value || 'fijo',
+                tasa: Number(document.getElementById('cfeTasa')?.value) || 0,
+                base: Number(document.getElementById('cfeBase')?.value) || 0,
+                moneda: document.getElementById('cfeMoneda')?.value.trim() || proyecto.monedaBase || 'EUR',
+                periodicidad: document.getElementById('cfePeriodicidad')?.value.trim() || 'Único'
+            };
+            if (!datos.concepto || datos.tasa <= 0) { mostrarToast('Concepto y tasa obligatorios', 'error'); return; }
+            const id = nuevoIdFinanciero();
+            if (!Array.isArray(proyecto.costesFinancierosExtra)) proyecto.costesFinancierosExtra = [];
+            proyecto.costesFinancierosExtra.push({ id, ...datos });
+            registrarBitacoraSiExiste('costesFinancierosExtra', id, 'crear', null, datos);
+            guardarProyecto(); renderizarCostesFinancierosExtra(); cerrarModalGeneric();
+            mostrarToast('Coste financiero añadido', 'success');
+        }
+        function registrarBitacoraSiExiste(entidad, id, accion, antes, despues) {
+            if (typeof registrarBitacora === 'function') registrarBitacora(entidad, id, accion, antes, despues);
+        }
+        function eliminarConfigArancel(id) {
+            const antes = (proyecto.configAranceles || []).find(a => a.id === id) || null;
+            proyecto.configAranceles = (proyecto.configAranceles || []).filter(a => a.id !== id);
+            registrarBitacoraSiExiste('configAranceles', id, 'eliminar', antes, null);
+            guardarProyecto(); renderizarConfigAranceles(); calcularAnalisisMateriales(); mostrarToast(tApp('toast_eliminado'), 'success');
+        }
+        function eliminarTasaAduanera(id) {
+            const antes = (proyecto.tasasAduanerasFijas || []).find(t => t.id === id) || null;
+            proyecto.tasasAduanerasFijas = (proyecto.tasasAduanerasFijas || []).filter(t => t.id !== id);
+            registrarBitacoraSiExiste('tasasAduaneras', id, 'eliminar', antes, null);
+            guardarProyecto(); renderizarTasasAduaneras(); calcularAnalisisMateriales(); mostrarToast(tApp('toast_eliminado'), 'success');
+        }
+        function eliminarCosteFinancieroExtra(id) {
+            const antes = (proyecto.costesFinancierosExtra || []).find(c => c.id === id) || null;
+            proyecto.costesFinancierosExtra = (proyecto.costesFinancierosExtra || []).filter(c => c.id !== id);
+            registrarBitacoraSiExiste('costesFinancierosExtra', id, 'eliminar', antes, null);
+            guardarProyecto(); renderizarCostesFinancierosExtra(); mostrarToast(tApp('toast_eliminado'), 'success');
+        }
         function actualizarArancelesTodos() { calcularAnalisisMateriales(); mostrarToast(" Aranceles actualizados", 'success'); }
-        
+
         // ============================================
         // APIS Y ACTUALIZACIÓN EXTERNA
         // ============================================
         let ultimaActualizacionCambio = null;
-        
+
 // ============================================
 // TIPOS DE CAMBIO - VERSIÓN CORREGIDA Y UNIFICADA
 // ============================================
@@ -140,8 +333,8 @@ async function actualizarTiposCambioAuto() {
     }
     mostrarToast(" Actualizando tipos de cambio...", 'info');
 
-    const proveedores = proveedorActual === 'auto' 
-        ? ['frankfurter', 'exchangerate'] 
+    const proveedores = proveedorActual === 'auto'
+        ? ['frankfurter', 'exchangerate']
         : [proveedorActual];
 
     for (const provId of proveedores) {
@@ -151,21 +344,21 @@ async function actualizarTiposCambioAuto() {
         try {
             mostrarToast(` Intentando ${prov.nombre}...`, 'info');
             const response = await fetch(prov.url);
-            
+
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
+
             const data = await response.json();
             const rates = prov.parser(data);
-            
+
             if (rates && Object.keys(rates).length > 0) {
                 tiposCambio = { EUR: 1 };
-                
+
                 for (const [moneda, tasa] of Object.entries(rates)) {
                     if (typeof tasa === 'number' && tasa > 0) {
                         tiposCambio[moneda] = tasa;
                     }
                 }
-                
+
                 const faltantes = Object.keys(MONEDAS).filter(m => !tiposCambio[m]);
                 if (faltantes.length && provId !== 'exchangerate') {
                     try {
@@ -181,7 +374,7 @@ async function actualizarTiposCambioAuto() {
                         }
                     } catch (e) {}
                 }
-                
+
                 // Añadir monedas extra que no estén en la API
                 const monedasExtra = {
                     USD: 1.1603, GBP: 0.858, JPY: 178.482, CHF: 0.9465,
@@ -193,24 +386,24 @@ async function actualizarTiposCambioAuto() {
                     RWF: 1714.9784, AOA: 1104.1025, XOF: 655.957, XAF: 655.957,
                     ZMW: 22.2952, BWP: 16.3762, MUR: 54.3755
                 };
-                
+
                 for (const [moneda, tasa] of Object.entries(monedasExtra)) {
                     if (!tiposCambio[moneda]) tiposCambio[moneda] = tasa;
                 }
-                
+
                 // Guardar en caché
                 localStorage.setItem('tiposCambioCache', JSON.stringify(tiposCambio));
                 localStorage.setItem('tiposCambioFuente', provId);
                 ultimaActualizacionCambio = new Date();
                 localStorage.setItem('ultimaActualizacionCambio', ultimaActualizacionCambio.toISOString());
-                
+
                 actualizarTiposCambioUI();
                 mostrarFechaUltimaActualizacion();
                 actualizarStatsMonedas();
-                
+
                 if (typeof calcularCashflow === 'function') calcularCashflow();
                 if (typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
-                
+
                 mostrarToast(` Tipos actualizados desde ${prov.nombre} (${Object.keys(tiposCambio).length} monedas)`, 'success');
                 return;
             }
@@ -259,7 +452,7 @@ function probarConexionAPI() {
     const provId = proveedorActual === 'auto' ? 'frankfurter' : proveedorActual;
     const prov = PROVEEDORES_TASAS[provId];
     if (!prov) return;
-    
+
     mostrarToast(` Probando ${prov.nombre}...`, 'info');
     fetch(prov.url)
         .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
@@ -312,7 +505,7 @@ function procesarImportTiposCambio(e) {
 
 function usarTiposCambioRespaldo() {
     console.log(" Usando tipos de cambio de respaldo (valores fijos)");
-    
+
     tiposCambio = {
         EUR: 1, USD: 1.1603, GBP: 0.858, JPY: 178.482, CHF: 0.9465,
         BRL: 5.9218, MXN: 19.683, COP: 3608.9243, ARS: 1751.9618, CLP: 1089.0409,
@@ -326,19 +519,19 @@ function usarTiposCambioRespaldo() {
         RWF: 1714.9784, AOA: 1104.1025, XOF: 655.957, XAF: 655.957,
         ZMW: 22.2952, BWP: 16.3762, MUR: 54.3755
     };
-    
+
     localStorage.setItem('tiposCambioCache', JSON.stringify(tiposCambio));
     localStorage.setItem('tiposCambioFuente', 'respaldo');
     ultimaActualizacionCambio = new Date();
     localStorage.setItem('ultimaActualizacionCambio', ultimaActualizacionCambio.toISOString());
-    
+
     actualizarTiposCambioUI();
     mostrarFechaUltimaActualizacion();
     actualizarStatsMonedas();
-    
+
     if (typeof calcularCashflow === 'function') calcularCashflow();
     if (typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
-    
+
     mostrarToast(" Usando tipos de cambio de respaldo (valores fijos)", 'info');
 }
 
@@ -364,12 +557,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function actualizarTiposCambioUI() {
     const container = document.getElementById('tiposCambioContainer');
     if (!container) return;
-    
+
     if (!tiposCambio || Object.keys(tiposCambio).length === 0) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon"></div><p>No hay datos de tasas. Pulsa "Actualizar Tasas".</p></div>';
         return;
     }
-    
+
     const monedasConRegion = getMonedasConRegion();
     const rows = Object.entries(tiposCambio).map(([moneda, tasa]) => {
         const info = monedasConRegion[moneda] || { region: 'other', nombre: moneda, flag: '' };
@@ -386,7 +579,7 @@ function actualizarTiposCambioUI() {
             </td>
         </tr>`;
     }).join('');
-    
+
     container.innerHTML = `
         <table class="data-table tasas-table">
             <thead>
@@ -401,7 +594,7 @@ function actualizarTiposCambioUI() {
             <span>${Object.keys(tiposCambio).length} monedas</span>
             <span class="fuente-badge">Fuente: ${getFuenteNombre()}</span>
         </div>`;
-    
+
     actualizarStatsMonedas();
 }
 
@@ -422,7 +615,7 @@ function actualizarStatsMonedas() {
     const fuenteEl = document.getElementById('statFuenteActiva');
     const fechaEl = document.getElementById('statUltimaAct');
     const baseEl = document.getElementById('statMonedaBase');
-    
+
     if (totalEl) totalEl.textContent = Object.keys(tiposCambio || {}).length;
     if (fuenteEl) fuenteEl.textContent = getFuenteNombre().split(' ')[0];
     if (fechaEl && ultimaActualizacionCambio) {
@@ -506,15 +699,22 @@ function filtrarPorRegion(region) {
 function cambiarTabMonedas(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-    
+
     const btn = document.querySelector(`[data-tab="${tabId}"]`);
     const panel = document.getElementById(tabId);
     if (btn) btn.classList.add('active');
     if (panel) panel.classList.add('active');
-    
+
     if (tabId === 'tab-evolucion') {
         setTimeout(() => actualizarGraficoEvolucionMoneda(), 100);
     }
+}
+
+function refrescarCalculosFinancieros() {
+    if (typeof calcularCashflow === 'function') calcularCashflow();
+    if (typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
+    if (typeof actualizarPanelSalud === 'function') actualizarPanelSalud();
+    if (typeof actualizarInformeCompleto === 'function') actualizarInformeCompleto();
 }
 
 function guardarTasa(moneda) {
@@ -526,8 +726,7 @@ function guardarTasa(moneda) {
             localStorage.setItem('tiposCambioCache', JSON.stringify(tiposCambio));
             input.classList.add('saved');
             setTimeout(() => input.classList.remove('saved'), 1000);
-            if (typeof calcularCashflow === 'function') calcularCashflow();
-            if (typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
+            refrescarCalculosFinancieros();
             mostrarToast(` Tasa ${moneda} guardada: ${valor}`, 'success');
         }
     }
@@ -539,8 +738,7 @@ function actualizarTiposCambio() {
         if (input) tiposCambio[moneda] = parseFloat(input.value);
     }
     localStorage.setItem('tiposCambioCache', JSON.stringify(tiposCambio));
-    if (typeof calcularCashflow === 'function') calcularCashflow();
-    if (typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
+    refrescarCalculosFinancieros();
     mostrarToast(tApp('toast_tipos_cambio_guardados'), 'success');
 }
 
@@ -550,8 +748,7 @@ function cambiarMonedaBaseYActualizar() {
         proyecto.monedaBase = nuevaBase;
         guardarProyecto();
         document.getElementById('monedaDisplay').innerHTML = nuevaBase;
-        if (typeof calcularCashflow === 'function') calcularCashflow();
-        if (typeof actualizarResumenGastos === 'function') actualizarResumenGastos();
+        refrescarCalculosFinancieros();
         mostrarToast(` Moneda base cambiada a: ${nuevaBase}`, 'success');
     }
 }
@@ -579,7 +776,7 @@ function exportarExcel() {
     csv += `Coste Total,${document.getElementById('totalCoste')?.innerText || '0'}\n`;
     csv += `Ingreso Total,${document.getElementById('totalIngreso')?.innerText || '0'}\n`;
     csv += `Beneficio,${document.getElementById('totalBeneficio')?.innerText || '0'}\n`;
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -594,24 +791,24 @@ function exportarExcel() {
         // ============================================
         // EXPORTAR PROYECTO ACTUAL A JSON
         // ============================================
-        
+
         async function exportarProyectoActual() {
             if (!proyecto) {
                 mostrarToast(tApp('toast_no_proyecto'), 'error');
                 return;
             }
-            
+
             const datosExportar = {
                 version: "1.0",
                 fechaExportacion: new Date().toISOString(),
                 tipo: "proyecto_unico",
                 proyecto: proyecto
             };
-            
+
             const jsonStr = JSON.stringify(datosExportar, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const nombreArchivo = `${proyecto.nombre.replace(/[^a-z0-9]/gi, '_')}_backup_${new Date().toISOString().split('T')[0]}.json`;
-            
+
             // Usar File System Access API si está disponible (Chrome/Edge)
             if ('showSaveFilePicker' in window) {
                 try {
@@ -639,3 +836,191 @@ function exportarExcel() {
         }
         // ============================================
 // IMPORTAR PROYECTO DESDE ARCHIVO
+
+// ============================================
+// IMPORTACIONES — proveedores, contratos, órdenes y pagos
+// ============================================
+
+function renderizarImportaciones() {
+    const entidades = {
+        proveedores: ['proveedoresBody', p => [p.nombre, p.pais || '—']],
+        contratos: ['contratosBody', c => [c.proveedor, formatearMoneda(convertirMoneda(c.importe || 0, c.moneda || proyecto.monedaBase))]],
+        ordenesCompra: ['ordenesCompraBody', o => {
+            const estado = estadoRecepcionOrden(o);
+            const alerta = estado === 'Retrasada' || estado === 'Fuera de plazo' ? ' ⚠' : '';
+            return [o.numero, formatearMoneda(convertirMoneda(o.importe || 0, o.moneda || proyecto.monedaBase)),
+                o.fechaCompromiso || '—', o.fechaRecepcion || '—', estado + alerta];
+        }],
+        pagosRealizados: ['pagosRealizadosBody', p => [p.orden, formatearMoneda(convertirMoneda(p.importe || 0, p.moneda || proyecto.monedaBase))]]
+    };
+    Object.entries(entidades).forEach(([clave, [tbodyId, columnas]]) => {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const filas = proyecto[clave] || [];
+        const colspanVacio = clave === 'ordenesCompra' ? 6 : 3;
+        tbody.innerHTML = filas.map(item => `<tr>
+            ${columnas(item).map(valor => `<td>${escapeHtml(String(valor))}</td>`).join('')}
+            <td><button class="btn btn-secondary btn-small btn-icon-only" onclick="editarEntidadImportacion('${clave}', ${item.id})" title="Editar" aria-label="Editar registro"><i data-feather="edit-2"></i></button><button class="btn btn-danger btn-small btn-icon-only" onclick="eliminarEntidadImportacion('${clave}', ${item.id})" title="Eliminar" aria-label="Eliminar registro"><i data-feather="trash-2"></i></button></td>
+        </tr>`).join('') || `<tr><td colspan="${colspanVacio}" class="u-text-center">Sin registros</td></tr>`;
+    });
+}
+
+function agregarEntidadImportacion(clave) {
+    if (!proyecto[clave]) proyecto[clave] = [];
+    const base = proyecto.monedaBase || 'EUR';
+    let item;
+    if (clave === 'proveedores') {
+        item = { id: Date.now(), nombre: document.getElementById('impProvNombre').value.trim(), pais: document.getElementById('impProvPais').value.trim() };
+        if (!item.nombre) return;
+    } else if (clave === 'contratos') {
+        item = { id: Date.now(), proveedor: document.getElementById('impContratoProveedor').value.trim(), importe: Number(document.getElementById('impContratoImporte').value) || 0, moneda: base };
+        if (!item.proveedor) return;
+    } else if (clave === 'ordenesCompra') {
+        item = {
+            id: Date.now(), numero: document.getElementById('impOcNumero').value.trim(),
+            importe: Number(document.getElementById('impOcImporte').value) || 0, moneda: base,
+            fechaCompromiso: document.getElementById('impOcCompromiso')?.value || '',
+            fechaRecepcion: document.getElementById('impOcRecepcion')?.value || ''
+        };
+        if (!item.numero) return;
+    } else if (clave === 'pagosRealizados') {
+        item = { id: Date.now(), orden: document.getElementById('impPagoOrden').value.trim(), importe: Number(document.getElementById('impPagoImporte').value) || 0, moneda: base, fecha: new Date().toISOString().slice(0, 10) };
+        if (!item.orden) return;
+    } else return;
+    proyecto[clave].push(item);
+    if (typeof registrarBitacora === 'function') registrarBitacora(clave, item.id, 'crear', null, item);
+    guardarProyecto();
+    renderizarImportaciones();
+    mostrarToast('Registro de importación añadido', 'success');
+}
+
+function editarEntidadImportacion(clave, id) {
+    const item = (proyecto[clave] || []).find(x => x.id === id);
+    if (!item) return;
+    const campos = {
+        proveedores: [['nombre', 'Nombre'], ['pais', 'País']],
+        contratos: [['proveedor', 'Proveedor'], ['importe', 'Importe', 'number']],
+        ordenesCompra: [['numero', 'Número'], ['importe', 'Importe', 'number'],
+            ['fechaCompromiso', 'Fecha compromiso', 'date'], ['fechaRecepcion', 'Fecha recepción', 'date']],
+        pagosRealizados: [['orden', 'Orden de compra'], ['importe', 'Importe', 'number'], ['fecha', 'Fecha', 'date']]
+    }[clave] || [];
+    const html = campos.map(([claveCampo, etiqueta, tipo]) => {
+        const valor = item[claveCampo] ?? '';
+        return `<div class="form-group"><label>${escapeHtml(etiqueta)}</label><input id="editImp_${claveCampo}" type="${tipo || 'text'}" value="${escapeHtml(String(valor))}"></div>`;
+    }).join('');
+    const modal = `<div class="modal-content"><div class="modal-header"><h3>Editar registro</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
+        ${html}<button class="btn btn-primary" onclick="actualizarEntidadImportacion('${clave}', ${id})">Guardar cambios</button></div>`;
+    document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modal}</div>`;
+}
+
+function actualizarEntidadImportacion(clave, id) {
+    const item = (proyecto[clave] || []).find(x => x.id === id);
+    if (!item) return;
+    const antes = { ...item };
+    Object.keys(item).forEach(k => {
+        const el = document.getElementById('editImp_' + k);
+        if (!el) return;
+        item[k] = el.type === 'number' ? (Number(el.value) || 0) : el.value.trim();
+    });
+    registrarBitacoraSiExiste(clave, id, 'actualizar', antes, { ...item });
+    guardarProyecto(); renderizarImportaciones(); cerrarModalGeneric();
+    mostrarToast('Registro actualizado', 'success');
+}
+
+/** Importa un packing list CSV: crea materiales y una orden de compra vinculada. */
+function importarPackingList(input) {
+    const archivo = input.files && input.files[0];
+    if (!archivo) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        const lineas = typeof parsearCSV === 'function' ? parsearCSV(reader.result || '') : String(reader.result || '').split(/\r?\n/).filter(l => l.trim()).map(l => l.split(','));
+        if (lineas.length < 2) { mostrarToast('Packing list vacío', 'error'); return; }
+        const cabeceras = lineas[0].map(h => h.trim().toLowerCase().replace(/\s+/g, ''));
+        const idx = nombre => cabeceras.indexOf(nombre);
+        const columnas = {
+            nombre: idx('nombre'), cantidad: idx('cantidad'), coste: idx('costeunitario'),
+            moneda: idx('moneda'), origen: idx('paisorigen'), destino: idx('paisdestino'), hs: idx('hscode')
+        };
+        if (columnas.nombre < 0) { mostrarToast('Falta la columna nombre', 'error'); return; }
+        const valor = (cols, c) => c >= 0 ? (cols[c] || '').trim() : '';
+        const creados = [];
+        lineas.slice(1).forEach(linea => {
+            const cols = linea;
+            const nombre = valor(cols, columnas.nombre);
+            if (!nombre) return;
+            const material = {
+                id: Date.now() + creados.length,
+                nombre,
+                cantidad: Number(valor(cols, columnas.cantidad)) || 1,
+                costeUnitario: Number(valor(cols, columnas.coste)) || 0,
+                moneda: valor(cols, columnas.moneda) || proyecto.monedaBase || 'EUR',
+                paisOrigen: valor(cols, columnas.origen),
+                paisDestino: valor(cols, columnas.destino),
+                hsCode: valor(cols, columnas.hs)
+            };
+            creados.push(material);
+        });
+        if (!creados.length) { mostrarToast('No se encontraron filas válidas', 'error'); return; }
+        if (!Array.isArray(proyecto.materiales)) proyecto.materiales = [];
+        proyecto.materiales.push(...creados);
+        const numero = `PL-${new Date().toISOString().slice(0, 10)}-${nuevoIdFinanciero()}`;
+        const ordenId = nuevoIdFinanciero();
+        creados.forEach(m => { m.ordenCompraId = ordenId; m.packingList = numero; });
+        if (!Array.isArray(proyecto.ordenesCompra)) proyecto.ordenesCompra = [];
+        const base = proyecto.monedaBase || 'EUR';
+        const importeBase = creados.reduce((sum, m) => {
+            const bruto = (Number(m.cantidad) || 0) * (Number(m.costeUnitario) || 0)
+                * (1 + (Number(m.impuesto) || 0) / 100);
+            const origen = m.moneda || proyecto.monedaVenta || base;
+            return sum + (typeof aBase === 'function' ? aBase(bruto, origen, base) : convertirMoneda(bruto, origen));
+        }, 0);
+        proyecto.ordenesCompra.push({
+            id: ordenId, numero, importe: importeBase,
+            moneda: base, fechaCompromiso: '', fechaRecepcion: '', packingList: numero
+        });
+        let hashArchivo = 0;
+        const texto = String(reader.result || '');
+        for (let i = 0; i < texto.length; i++) hashArchivo = ((hashArchivo << 5) - hashArchivo + texto.charCodeAt(i)) | 0;
+        registrarBitacoraSiExiste('packingList', ordenId, 'importar', null, {
+            numero, archivo: archivo.name, hash: hashArchivo,
+            materialIds: creados.map(m => m.id), ordenCompraId: ordenId
+        });
+        guardarProyecto(); renderizarImportaciones();
+        if (typeof calcularAnalisisMateriales === 'function') calcularAnalisisMateriales();
+        mostrarToast(`Packing list importado: ${creados.length} materiales`, 'success');
+        input.value = '';
+    };
+    reader.readAsText(archivo);
+}
+
+function eliminarEntidadImportacion(clave, id) {
+    if (!proyecto[clave]) return;
+    const antes = proyecto[clave].find(x => x.id === id) || null;
+    proyecto[clave] = proyecto[clave].filter(x => x.id !== id);
+    if (typeof registrarBitacora === 'function') registrarBitacora(clave, id, 'eliminar', antes, null);
+    guardarProyecto();
+    renderizarImportaciones();
+}
+
+window.renderizarImportaciones = renderizarImportaciones;
+window.agregarEntidadImportacion = agregarEntidadImportacion;
+window.eliminarEntidadImportacion = eliminarEntidadImportacion;
+window.editarEntidadImportacion = editarEntidadImportacion;
+window.importarPackingList = importarPackingList;
+window.cargarDatosAduanerosDemo = cargarDatosAduanerosDemo;
+window.guardarCosteFinancieroExtra = guardarCosteFinancieroExtra;
+
+// Cumplimiento de SLA de una orden de compra (fecha compromiso vs. recepción real).
+function estadoRecepcionOrden(orden, hoyParam) {
+    if (!orden) return 'En curso';
+    if (orden.estado === 'Recibido' || orden.fechaRecepcion) {
+        if (orden.fechaCompromiso && orden.fechaRecepcion) {
+            return String(orden.fechaRecepcion) <= String(orden.fechaCompromiso) ? 'En plazo' : 'Fuera de plazo';
+        }
+        return 'Recibido';
+    }
+    const hoy = hoyParam || new Date().toISOString().slice(0, 10);
+    return orden.fechaCompromiso && String(orden.fechaCompromiso) < hoy ? 'Retrasada' : 'En curso';
+}
+
+window.estadoRecepcionOrden = estadoRecepcionOrden;

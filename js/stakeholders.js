@@ -6,21 +6,21 @@
 function renderizarStakeholders() {
     const container = document.getElementById('panelStakeholders');
     if (!container) return;
-    
+
     let stakeholders = proyecto.stakeholders || [];
-    
+
     // Clasificar por matriz poder/interés
     let altaAlta = stakeholders.filter(s => s.poder >= 7 && s.interes >= 7);
     let altaBaja = stakeholders.filter(s => s.poder >= 7 && s.interes < 7);
     let bajaAlta = stakeholders.filter(s => s.poder < 7 && s.interes >= 7);
     let bajaBaja = stakeholders.filter(s => s.poder < 7 && s.interes < 7);
-    
+
     container.innerHTML = `
         <div class="panel-title">
             <span> Partes Interesadas (Stakeholders)</span>
             <button class="btn btn-primary btn-small" onclick="abrirModalStakeholder()"> Añadir Stakeholder</button>
         </div>
-        
+
         <h4 style="margin-bottom: 12px;"> Matriz de Poder / Interés</h4>
         <div class="matrix-container">
             <div class="matrix-quadrant">
@@ -40,7 +40,7 @@ function renderizarStakeholders() {
                 <div class="quadrant-content" id="stBajaBaja">${renderStakeholderList(bajaBaja)}</div>
             </div>
         </div>
-        
+
         <h4 style="margin-top: 24px; margin-bottom: 12px;"> Matriz RACI</h4>
         <div style="overflow-x: auto;">
             <table class="raci-table" id="raciTable">
@@ -51,14 +51,14 @@ function renderizarStakeholders() {
             </table>
         </div>
         <div style="margin-top: 12px; padding: 8px; background: #e8f0fe; border-radius: 6px; font-size: 11px;">
-            <strong> Leyenda RACI:</strong> 
-            <span style="background:#00A85920; padding:2px 6px; border-radius:4px;">R = Responsible (Ejecuta)</span> 
-            <span style="background:#0070C020; padding:2px 6px; border-radius:4px;">A = Accountable (Aprueba)</span> 
-            <span style="background:#FF8C0020; padding:2px 6px; border-radius:4px;">C = Consulted (Consultado)</span> 
+            <strong> Leyenda RACI:</strong>
+            <span style="background:#00A85920; padding:2px 6px; border-radius:4px;">R = Responsible (Ejecuta)</span>
+            <span style="background:#0070C020; padding:2px 6px; border-radius:4px;">A = Accountable (Aprueba)</span>
+            <span style="background:#FF8C0020; padding:2px 6px; border-radius:4px;">C = Consulted (Consultado)</span>
             <span style="background:#888820; padding:2px 6px; border-radius:4px;">I = Informed (Informado)</span>
         </div>
     `;
-    
+
     renderizarRACI();
 }
 
@@ -67,7 +67,7 @@ function renderStakeholderList(lista) {
     if (!lista || lista.length === 0) {
         return '<div style="color: #999; text-align: center; padding: 20px;">Sin stakeholders</div>';
     }
-    
+
     return lista.map(s => `
         <div class="stakeholder-card">
             <div class="stakeholder-name">
@@ -94,7 +94,7 @@ function abrirModalStakeholder(id = null) {
     if (id) {
         stakeholder = proyecto.stakeholders.find(s => s.id === id);
     }
-    
+
     const modalHtml = `
         <div class="modal-content">
             <div class="modal-header">
@@ -166,7 +166,7 @@ function abrirModalStakeholder(id = null) {
             <button class="btn btn-primary" onclick="guardarStakeholder()">Guardar Stakeholder</button>
         </div>
     `;
-    
+
     const modalContainer = document.getElementById('modalContainer');
     modalContainer.innerHTML = `<div id="genericModal" class="modal" style="display:flex">${modalHtml}</div>`;
     document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
@@ -180,7 +180,7 @@ function guardarStakeholder() {
         mostrarToast(" El nombre del stakeholder es obligatorio", "error");
         return;
     }
-    
+
     const id = document.getElementById('stId').value;
     const stakeholder = {
         id: id ? parseInt(id) : Date.now(),
@@ -196,9 +196,9 @@ function guardarStakeholder() {
         interes: parseInt(document.getElementById('stInteres').value),
         estrategia: document.getElementById('stEstrategia').value
     };
-    
+
     if (!proyecto.stakeholders) proyecto.stakeholders = [];
-    
+
     if (id) {
         const index = proyecto.stakeholders.findIndex(s => s.id === parseInt(id));
         if (index >= 0) proyecto.stakeholders[index] = stakeholder;
@@ -207,7 +207,7 @@ function guardarStakeholder() {
         proyecto.stakeholders.push(stakeholder);
         mostrarToast(` Stakeholder "${nombre}" añadido`);
     }
-    
+
     guardarProyecto();
     renderizarStakeholders();
     cerrarModalGeneric();
@@ -218,12 +218,12 @@ function eliminarStakeholder(id) {
     if (confirm("¿Eliminar este stakeholder?")) {
         const stakeholder = proyecto.stakeholders.find(s => s.id === id);
         proyecto.stakeholders = proyecto.stakeholders.filter(s => s.id !== id);
-        
+
         // También eliminar referencias en RACI
         if (proyecto.raci) {
             proyecto.raci = proyecto.raci.filter(r => r.stakeholderId !== id);
         }
-        
+
         guardarProyecto();
         renderizarStakeholders();
         mostrarToast(` Stakeholder "${stakeholder?.nombre}" eliminado`);
@@ -238,32 +238,32 @@ function eliminarStakeholder(id) {
 function renderizarRACI() {
     const stakeholders = proyecto.stakeholders || [];
     const entregables = proyecto.entregables || [];
-    
+
     if (stakeholders.length === 0) {
         const tbody = document.getElementById('raciBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px;">Añade stakeholders para ver la matriz RACI</td></tr>';
         return;
     }
-    
+
     if (entregables.length === 0) {
         const tbody = document.getElementById('raciBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:40px;">Añade entregables para ver la matriz RACI</td></tr>';
         return;
     }
-    
+
     // Cabeceras con nombres de stakeholders
     let headersHtml = '<th>Entregable / Actividad</th>';
     stakeholders.forEach(s => {
         headersHtml += `<th title="${escapeHtml(s.nombre)}">${escapeHtml(s.nombre.split(' ')[0])}</th>`;
     });
     document.getElementById('raciHeaders').innerHTML = headersHtml;
-    
+
     // Filas por entregable
     let bodyHtml = '';
     entregables.forEach(e => {
         bodyHtml += `<tr>
             <td style="text-align: left;"><strong> ${escapeHtml(e.nombre)}</strong></td>`;
-        
+
         stakeholders.forEach(s => {
             const valorActual = (proyecto.raci || []).find(r => r.itemId === e.id && r.stakeholderId === s.id)?.valor || '';
             bodyHtml += `<td>
@@ -278,28 +278,52 @@ function renderizarRACI() {
         });
         bodyHtml += `</tr>`;
     });
-    
+
     document.getElementById('raciBody').innerHTML = bodyHtml;
+}
+
+// Valida la regla RACI: exactamente una persona "Accountable" por fila.
+function validarRACI() {
+    const entregables = proyecto.entregables || [];
+    const problemas = [];
+    entregables.forEach(e => {
+        const responsables = (proyecto.raci || []).filter(r => r.itemId === e.id && r.valor === 'A');
+        if (responsables.length !== 1) problemas.push({ itemId: e.id, nombre: e.nombre, cuantos: responsables.length });
+    });
+    return problemas;
 }
 
 // Actualizar valor RACI
 function actualizarRACI(itemId, stakeholderId, valor) {
     if (!proyecto.raci) proyecto.raci = [];
-    
+
     const existingIndex = proyecto.raci.findIndex(r => r.itemId === itemId && r.stakeholderId === stakeholderId);
-    
+
     if (valor === '') {
         if (existingIndex >= 0) proyecto.raci.splice(existingIndex, 1);
     } else {
+        // "A" es exclusiva: al asignarla se retira de cualquier otro
+        // stakeholder de la misma fila, preservando una sola responsabilidad.
+        if (valor === 'A') {
+            proyecto.raci.forEach(r => {
+                if (r.itemId === itemId && r.stakeholderId !== stakeholderId && r.valor === 'A') r.valor = 'C';
+            });
+        }
         if (existingIndex >= 0) {
             proyecto.raci[existingIndex].valor = valor;
         } else {
             proyecto.raci.push({ itemId, stakeholderId, valor });
         }
     }
-    
+
     guardarProyecto();
-    mostrarToast(` RACI actualizado`, "info");
+    renderizarRACI();
+    const problemas = validarRACI();
+    if (problemas.length) {
+        mostrarToast(` RACI actualizado · ${problemas.length} fila(s) sin responsable único`, 'error');
+    } else {
+        mostrarToast(` RACI actualizado`, "info");
+    }
 }
 
 // ============================================

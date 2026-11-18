@@ -53,7 +53,7 @@ let ganttState = {
     _buscarTimer: null
 };
 
-let cpmResult = { criticalPath: [], totalFloat: 0 };
+let cpmResult = { criticalPath: [], totalFloat: 0, makespan: 0, conCiclo: false };
 let _cronogramaOriginalHTML = null;
 
 let ganttStateEjecucion = {
@@ -68,7 +68,7 @@ let ganttStateEjecucion = {
     _buscarTimer: null
 };
 
-let cpmResultEjecucion = { criticalPath: [], totalFloat: 0 };
+let cpmResultEjecucion = { criticalPath: [], totalFloat: 0, makespan: 0, conCiclo: false };
 let _cronogramaOriginalHTMLEjecucion = null;
 
 let cronogramaActivo = { panelKey: 'planificacion', dataKey: 'elementosGantt' };
@@ -124,7 +124,25 @@ function _normalizarElementosGantt(dataKey) {
         arr = elementosUnicos;
         guardarProyecto();
     }
-    arr.forEach(e => { if (!e.predecesores) e.predecesores = []; });
+    arr.forEach(e => {
+        if (!e.predecesores) e.predecesores = [];
+
+        // Alias de tipos habituales en importaciones / seeds
+        const aliasTipo = { tarea: 'actividad', task: 'actividad', milestone: 'hito', deliverable: 'entregable', summary: 'edt', fase: 'edt' };
+        if (aliasTipo[e.tipo]) e.tipo = aliasTipo[e.tipo];
+
+        // Coherencia inicio/fin/duración: hay orígenes que solo traen fechas.
+        if (e.inicio && e.fin && !(e.duracion > 0) && e.tipo !== 'hito' && e.tipo !== 'edt') {
+            const dIni = parseLocalDate(e.inicio);
+            const dFin = parseLocalDate(e.fin);
+            if (dIni && dFin && dFin > dIni) {
+                e.duracion = Math.max(1, contarDiasHabiles(dIni, dFin));
+            }
+        }
+        if (e.inicio && e.duracion > 0 && !e.fin && e.tipo !== 'edt') {
+            e.fin = sumarDiasHabiles(e.inicio, e.duracion);
+        }
+    });
     return arr;
 }
 
@@ -145,6 +163,7 @@ function cargarElementosGantt() {
         guardarProyecto();
     }
     _normalizarElementosGantt(dataKey);
+    if (typeof aplicarCodigosWBS === 'function') aplicarCodigosWBS(proyecto[dataKey]);
     renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
 }
 
@@ -155,13 +174,10 @@ function cargarElementosGanttEjecucion() {
         guardarProyecto();
     }
     _normalizarElementosGantt('elementosGanttEjecucion');
+    if (typeof aplicarCodigosWBS === 'function') aplicarCodigosWBS(proyecto.elementosGanttEjecucion);
     renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
 }
 
-function sumarDias(f, d) { if (!f) return ''; const p = f.split('-'); const dt = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]) + d); return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'); }
-function parseLocalDate(str) { if (!str) return null; const p = str.split('-'); return new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2])); }
-function formatLocalDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-function diffDias(a, b) { const ta = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()); const tb = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()); return Math.round((ta - tb) / 86400000); }
 function getNombreElemento(id, arr) { const data = arr || (proyecto[cronogramaActivo.dataKey] || []); const e = data.find(x => x.id === id); return e ? e.nombre : '-'; }
 function getTipoIcono(t) { return { edt: '', actividad: '', entregable: '', hito: '' }[t] || ''; }
 function _migrarDuracionHoras(arr) {
@@ -175,38 +191,6 @@ function _migrarDuracionHoras(arr) {
             }
         }
     });
-}
-function esFinDeSemana(d) { const w = d.getDay(); return w === 0 || w === 6; }
-function siguienteDiaHabil(d) { const r = new Date(d); while (esFinDeSemana(r)) r.setDate(r.getDate() + 1); return r; }
-function sumarDiasHabiles(fechaStr, dias) {
-    if (!fechaStr) return '';
-    const dt = parseLocalDate(fechaStr);
-    if (!dt) return '';
-    if (Math.abs(dias) < 1) return formatLocalDate(dt);
-    let contados = 0;
-    if (dias >= 0) {
-        while (contados < dias) {
-            dt.setDate(dt.getDate() + 1);
-            if (!esFinDeSemana(dt)) contados++;
-        }
-    } else {
-        const diasInt = Math.ceil(Math.abs(dias));
-        while (contados < diasInt) {
-            dt.setDate(dt.getDate() - 1);
-            if (!esFinDeSemana(dt)) contados++;
-        }
-    }
-    return formatLocalDate(dt);
-}
-function contarDiasHabiles(inicio, fin) {
-    if (!inicio || !fin) return 0;
-    let n = 0;
-    const d = new Date(inicio);
-    while (d < fin) {
-        if (!esFinDeSemana(d)) n++;
-        d.setDate(d.getDate() + 1);
-    }
-    return n;
 }
 function normalizarFecha(v) {
     if (!v) return '';
@@ -299,6 +283,15 @@ function ejecutarCPM(elementos, cpmRef) {
         orden.push(n);
         (adj[n] || []).forEach(s => { inDeg[s]--; if (inDeg[s] === 0) q.push(s); });
     }
+    // Un ciclo importado no puede producir fechas ni holguras fiables.
+    if (orden.length !== tasks.length) {
+        ref.conCiclo = true; ref.criticalPath = []; ref.totalFloat = 0; ref.makespan = 0;
+        tasks.forEach(t => { t._enCiclo = true; });
+        console.warn('[CPM] Red con ciclos: métricas suspendidas');
+        if (typeof mostrarToast === 'function') mostrarToast('Cronograma con dependencias circulares: revisa las precedencias', 'error');
+        return tasks;
+    }
+    ref.conCiclo = false;
 
     // Convertir duración (días hábiles) a días calendario para CPM
     const duration = {};
@@ -312,8 +305,8 @@ function ejecutarCPM(elementos, cpmRef) {
         }
     });
 
-    const earlyStart = {}, earlyFinish = {};
-    tasks.forEach(t => { earlyStart[t.id] = 0; earlyFinish[t.id] = 0; });
+    const earlyStart = {}, earlyFinish = {}, restricciones = {};
+    tasks.forEach(t => { earlyStart[t.id] = null; earlyFinish[t.id] = 0; });
 
     let proyInicio = null;
     tasks.forEach(t => { if (t.inicio) { const d = parseLocalDate(t.inicio); if (!proyInicio || d < proyInicio) proyInicio = d; } });
@@ -323,7 +316,7 @@ function ejecutarCPM(elementos, cpmRef) {
         if (t.inicio) {
             const d = parseLocalDate(t.inicio);
             const offset = Math.round((d - proyInicio) / 86400000);
-            earlyStart[t.id] = Math.max(0, offset);
+            earlyStart[t.id] = offset;
         }
     });
 
@@ -332,20 +325,31 @@ function ejecutarCPM(elementos, cpmRef) {
         if (!t) return;
         (t.predecesores || []).forEach(p => {
             if (!ids.has(p.id)) return;
-            const predDur = duration[p.id] || 0;
-            const predES = earlyStart[p.id] || 0;
+            const predES = earlyStart[p.id] ?? 0;
             const predEF = earlyFinish[p.id] || 0;
+            const tipo = String(p.tipo || 'FS').trim().toUpperCase();
             let minStart = predEF;
-            if (p.tipo === 'SS') minStart = predES;
-            if (p.tipo === 'FF') minStart = predEF - (duration[id] || 0);
-            if (p.tipo === 'SF') minStart = predES - (duration[id] || 0);
-            minStart += (p.retraso || 0);
-            if (minStart > earlyStart[id]) earlyStart[id] = minStart;
+            if (tipo === 'SS') minStart = predES;
+            if (tipo === 'FF') minStart = predEF - (duration[id] || 0);
+            if (tipo === 'SF') minStart = predES - (duration[id] || 0);
+            const retraso = p.retraso || 0;
+            minStart += (typeof retrasoEnDiasNaturales === 'function')
+                ? retrasoEnDiasNaturales(retraso)
+                : retraso;
+            // Todas las precedencias contribuyen con su restricción; tomar el
+            // máximo hace que un lead negativo no sobrescriba a otro predecesor.
+            restricciones[id] = restricciones[id] === undefined ? minStart : Math.max(restricciones[id], minStart);
         });
+        if (restricciones[id] !== undefined) earlyStart[id] = restricciones[id];
+        else if (earlyStart[id] === null) earlyStart[id] = 0;
         earlyFinish[id] = earlyStart[id] + (duration[id] || 0);
     });
 
-    const proyFin = Object.values(earlyFinish).length ? Math.max(...Object.values(earlyFinish)) : 0;
+    const inicios = Object.values(earlyStart);
+    const desplazamiento = Math.min(0, ...inicios);
+    const proyFin = Object.values(earlyFinish).length
+        ? Math.max(...Object.values(earlyFinish)) - desplazamiento : 0;
+    ref.makespan = proyFin;
     const lateStart = {}, lateFinish = {};
     tasks.forEach(t => { lateFinish[t.id] = proyFin; lateStart[t.id] = proyFin - (duration[t.id] || 0); });
 
@@ -360,10 +364,13 @@ function ejecutarCPM(elementos, cpmRef) {
             const succLF = lateFinish[s] || 0;
             const curDur = duration[id] || 0;
             let maxFinish = succLS;
-            if (p.tipo === 'SS') maxFinish = succLS + curDur;
-            if (p.tipo === 'FF') maxFinish = succLF;
-            if (p.tipo === 'SF') maxFinish = succLF + curDur;
-            maxFinish -= (p.retraso || 0);
+            const tipo = String(p.tipo || 'FS').trim().toUpperCase();
+            if (tipo === 'SS') maxFinish = succLS + curDur;
+            if (tipo === 'FF') maxFinish = succLF;
+            if (tipo === 'SF') maxFinish = succLF + curDur;
+            const baseRetraso = parseLocalDate('2024-01-01');
+            const finRetraso = parseLocalDate(sumarDiasHabiles('2024-01-01', p.retraso || 0));
+            maxFinish -= Math.round((finRetraso - baseRetraso) / 86400000);
             if (maxFinish < lateFinish[id]) lateFinish[id] = maxFinish;
         });
         lateStart[id] = lateFinish[id] - (duration[id] || 0);
@@ -436,15 +443,17 @@ function renderizarCronograma(ctx) {
     const q = (document.getElementById(ctx.buscarId)?.value || '').trim().toLowerCase();
     const elementosVisibles = q ? filtrarElementosGantt(elementos, q) : elementos;
 
-    if (state.vista === 'tarjetas') {
-        renderizarVistaTarjetas(elementosVisibles, ctx);
-        renderizarInfoBar(ctx);
-        return;
+    // En pantallas pequeñas la vista de tarjetas es más legible por defecto.
+    if (!state.vistaManual) {
+        state.vista = window.matchMedia('(max-width: 640px)').matches ? 'tarjetas' : 'gantt';
     }
-
-    // Restore original HTML if it was replaced by tarjetas view
-    if (_getOrigHTML(ctx) && !container.querySelector('#' + ctx.wbsId)) {
-        container.innerHTML = _getOrigHTML(ctx);
+    const btnVista = document.getElementById(ctx.btnToggleVistaId);
+    if (btnVista) {
+        const etiqueta = state.vista === 'gantt' ? 'Tarjetas' : 'Gantt';
+        const lbl = btnVista.querySelector('.btn-label');
+        if (lbl) lbl.textContent = etiqueta;
+        btnVista.setAttribute('aria-pressed', state.vista === 'tarjetas' ? 'true' : 'false');
+        btnVista.setAttribute('aria-label', state.vista === 'gantt' ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de Gantt');
     }
 
     const fechaInicioProy = calcularInicioProyecto(elementosVisibles);
@@ -454,13 +463,32 @@ function renderizarCronograma(ctx) {
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         spanFechas.textContent = ` ${formatearFechaEspa(fmt(fechaInicioProy))} → ${formatearFechaEspa(fmt(fechaFinProy))} (${Math.round((fechaFinProy - fechaInicioProy) / 86400000)} días naturales)`;
     }
+
+    if (state.vista === 'tarjetas') {
+        renderizarVistaTarjetas(elementosVisibles, ctx);
+        renderizarInfoBar(ctx);
+        return;
+    }
+
+    container.classList.remove('crono-main--cards');
+    // Restore original HTML if it was replaced by tarjetas view
+    if (_getOrigHTML(ctx) && !container.querySelector('#' + ctx.wbsId)) {
+        container.innerHTML = _getOrigHTML(ctx);
+    }
+
     // Rendimiento: "año" itera años en vez de días para no congelar.
     const MAX_DIAS = 5000, MAX_ANCHO = 150000;
     const diasTotales = Math.min(MAX_DIAS, Math.max(1, Math.ceil((fechaFinProy - fechaInicioProy) / 86400000) + 60));
-    if (diasTotales > 300 && state.escala === 'día') { state.escala = 'año'; }
+    // Escala automática según el horizonte del proyecto (el usuario puede forzarla).
+    const spanDias = Math.max(1, Math.round((fechaFinProy - fechaInicioProy) / 86400000));
+    if (!state.escalaManual) {
+        const auto = spanDias <= 45 ? 'día' : (spanDias <= 90 ? 'semana' : (spanDias <= 500 ? 'mes' : 'año'));
+        if (state.escala !== auto) state.escala = auto;
+        if (sel) sel.value = state.escala;
+    }
     const meses = generarMeses(fechaInicioProy, diasTotales);
     // Rendimiento: "año" itera años en vez de días para no congelar.
-    const anchoDia = ({día:50,semana:14,mes:28,año:6})[state.escala] * state.zoom || 28 * state.zoom;
+    const anchoDia = ({día:38,semana:12,mes:4.5,año:1.1})[state.escala] * state.zoom || 28 * state.zoom;
     const anchoTotal = Math.min(diasTotales * anchoDia, MAX_ANCHO);
     const headerHeight = state.escala === 'día' ? 60 : 40;
 
@@ -468,6 +496,8 @@ function renderizarCronograma(ctx) {
     const ordenArbol = getOrdenArbol(elementosVisibles, ctx);
 
     renderizarArbolWBS(ordenArbol, elementosVisibles, headerHeight, ctx);
+    container.style.setProperty('--crono-rows', String(ordenArbol.length));
+    container.style.setProperty('--crono-header', headerHeight + 'px');
     renderizarTimelineSVG(ordenArbol, elementosVisibles, fechaInicioProy, diasTotales, anchoDia, meses, anchoTotal, ctx);
     renderizarInfoBar(ctx);
     actualizarZoomLabel(ctx);
@@ -496,7 +526,7 @@ function renderizarCronograma(ctx) {
     if (tlPanel) {
         const hoy = new Date();
         const offsetHoy = Math.round((hoy - fechaInicioProy) / 86400000);
-        if (offsetHoy > 0 && offsetHoy < diasTotales) {
+        if (offsetHoy >= 0 && offsetHoy < diasTotales) {
             const xHoy = offsetHoy * anchoDia;
             const panelW = tlPanel.clientWidth;
             tlPanel.scrollLeft = Math.max(0, xHoy - panelW / 2);
@@ -520,10 +550,13 @@ function calcularFinProyecto(elementos) {
     let max = null;
     elementos.forEach(e => {
         if (e.tipo === 'edt') return;
+        let d = null;
         if (e.inicio && e.duracion) {
-            const d = parseLocalDate(sumarDiasHabiles(e.inicio, e.duracion));
-            if (!max || d > max) max = d;
+            d = parseLocalDate(sumarDiasHabiles(e.inicio, e.duracion));
+        } else if (e.fin) {
+            d = parseLocalDate(e.fin);
         }
+        if (d && (!max || d > max)) max = d;
     });
     if (!max) max = new Date(calcularInicioProyecto(elementos));
     return max;
@@ -531,20 +564,30 @@ function calcularFinProyecto(elementos) {
 
 function generarMeses(fechaInicio, diasTotales) {
     const meses = [];
-    let c = new Date(fechaInicio);
-    c.setDate(1);
     const fin = new Date(fechaInicio);
     fin.setDate(fin.getDate() + diasTotales);
+    let c = new Date(fechaInicio.getFullYear(), fechaInicio.getMonth(), 1);
     while (c <= fin) {
         const finMes = new Date(c.getFullYear(), c.getMonth() + 1, 0);
+        const start = c < fechaInicio ? new Date(fechaInicio) : new Date(c);
+        const end = finMes > fin ? new Date(fin) : finMes;
         meses.push({
             name: c.toLocaleString('es', { month: 'short', year: '2-digit' }),
-            start: new Date(c),
-            end: finMes
+            start,
+            end
         });
-        c.setMonth(c.getMonth() + 1);
+        c = new Date(c.getFullYear(), c.getMonth() + 1, 1);
     }
     return meses;
+}
+
+// Número de semana ISO 8601 (la misma numeración que usan los calendarios).
+function semanaISO(fecha) {
+    const d = new Date(Date.UTC(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()));
+    const dia = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dia);
+    const inicioAno = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil(((d - inicioAno) / 86400000 + 1) / 7);
 }
 
 // ─── ORDEN COMPARTIDO ÁRBOL + TIMELINE ──────────────────────────
@@ -584,56 +627,60 @@ function renderizarArbolWBS(orden, elementos, headerH, ctx) {
     if (!el) return;
     const state = _getState(ctx);
     const critSet = new Set(_getCpmResult(ctx).criticalPath || []);
-    let html = `<div style="height:${headerH}px;flex-shrink:0"></div>`;
+    let html = `<div class="wbs-header" role="presentation" style="height:${headerH}px">
+        <span class="wbs-header-label" aria-hidden="true">Actividad</span>
+        <span class="wbs-header-dur" aria-hidden="true">Dur.</span>
+    </div>`;
     orden.forEach(elem => {
         const depth = calcularProfundidad(elem.id, elementos);
-        const icono = getTipoIcono(elem.tipo);
         const esCritico = critSet.has(elem.id);
         const sel = state.selectedId === elem.id ? 'wbs-selected' : '';
         const colapsado = state.collapsed.has(elem.id);
         const tieneHijos = elem.tipo === 'edt' && elementos.some(x => x.dependeDe === elem.id);
 
-        html += `<div class="wbs-item ${sel}" data-id="${elem.id}" data-type="${elem.tipo}" style="padding-left:${depth * 18}px">`;
+        html += `<div class="wbs-item ${sel}" data-id="${elem.id}" data-type="${elem.tipo}" tabindex="0" role="treeitem" aria-level="${depth + 1}" aria-selected="${sel ? 'true' : 'false'}" style="padding-left:${12 + depth * 16}px">`;
         if (tieneHijos) {
-            html += `<span class="wbs-toggle" data-id="${elem.id}">${colapsado ? '' : '▼'}</span>`;
+            html += `<span class="wbs-toggle" data-id="${elem.id}" role="button" tabindex="0" aria-expanded="${colapsado ? 'false' : 'true'}" aria-label="${colapsado ? 'Expandir' : 'Colapsar'} ${escapeHtml(elem.nombre)}">${colapsado ? '▸' : '▾'}</span>`;
         } else {
-            html += `<span class="wbs-toggle-placeholder"></span>`;
+            html += `<span class="wbs-toggle-placeholder" aria-hidden="true"></span>`;
         }
-        html += `<span class="wbs-icon">${icono}</span>`;
+        html += `<span class="wbs-dot" aria-hidden="true"></span>`;
         const codigo = elem.codigo || (typeof obtenerCodigoElemento === 'function' ? obtenerCodigoElemento(elem, elementos) : '') || '';
         html += `<span class="wbs-code">${escapeHtml(codigo)}</span>`;
-        html += `<span class="wbs-name ${esCritico ? 'wbs-critical' : ''}">${escapeHtml(elem.nombre)}</span>`;
+        // El nombre puede venir ya numerado ("1.2 Análisis"); la columna de
+        // código muestra esa jerarquía, así que se evita duplicarla.
+        const nombreVisible = String(elem.nombre || '').replace(/^\s*\d+(?:\.\d+)*[.)]?\s+/, '') || elem.nombre;
+        html += `<span class="wbs-name ${esCritico ? 'wbs-critical' : ''}">${escapeHtml(nombreVisible)}</span>`;
         const durTxt = elem.tipoDuracion === 'horas' && elem.duracionHoras
             ? elem.duracionHoras + 'h'
-            : (elem.duracion > 0 ? (elem.duracion < 1 ? (Math.round(elem.duracion * 100) / 100) + 'd' : elem.duracion + 'd') : '');
+            : (elem.duracion > 0 ? (elem.duracion < 1 ? (Math.round(elem.duracion * 100) / 100) + 'd' : elem.duracion + 'd') : (elem.tipo === 'hito' ? 'Hito' : '—'));
         const fin = elem.duracion > 0
             ? (elem.tipo === 'edt' ? sumarDias(elem.inicio, elem.duracion) : sumarDiasHabiles(elem.inicio, elem.duracion))
-            : (elem.inicio || '');
-        const inicioTxt = elem.inicio || '—';
-        const finTxt = fin || '—';
-        if (durTxt || elem.inicio) {
-            html += `<span class="wbs-dates" title="Inicio: ${escapeHtml(formatearFechaEspa(inicioTxt))} · Fin: ${escapeHtml(formatearFechaEspa(finTxt))}">`;
-            if (durTxt) html += `<span class="wbs-dur">${escapeHtml(durTxt)}</span>`;
-            html += `<span class="wbs-start">${escapeHtml(formatearFechaEspa(inicioTxt))}</span>`;
-            html += `<span class="wbs-arrow">→</span>`;
-            html += `<span class="wbs-end">${escapeHtml(formatearFechaEspa(finTxt))}</span>`;
-            html += `</span>`;
-        }
+            : (elem.fin || elem.inicio || '');
+        const dateTitle = elem.inicio
+            ? `Inicio: ${formatearFechaEspa(elem.inicio)} · Fin: ${formatearFechaEspa(fin || elem.inicio)}`
+            : 'Sin fechas';
+        html += `<span class="wbs-dur" title="${escapeHtml(dateTitle)}">${escapeHtml(durTxt)}</span>`;
         if (esCritico) html += `<span class="wbs-badge-crit">CP</span>`;
         html += `</div>`;
     });
     el.innerHTML = html;
+    el.setAttribute('role', 'tree');
+    el.setAttribute('aria-label', 'Estructura de desglose del trabajo');
     el.querySelectorAll('.wbs-toggle').forEach(btn => {
-        btn.onclick = function(e) {
+        const toggle = function(e) {
             e.stopPropagation();
+            e.preventDefault();
             const id = parseInt(this.dataset.id);
             if (state.collapsed.has(id)) state.collapsed.delete(id);
             else state.collapsed.add(id);
             renderizarCronograma(ctx);
         };
+        btn.onclick = toggle;
+        btn.onkeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') toggle.call(this, e); };
     });
     el.querySelectorAll('.wbs-item').forEach(item => {
-        item.onclick = function() {
+        const select = function() {
             const id = parseInt(this.dataset.id);
             const elem = (proyecto[ctx.dataKey] || []).find(x => x.id === id);
             state.selectedId = id;
@@ -641,6 +688,10 @@ function renderizarArbolWBS(orden, elementos, headerH, ctx) {
             this.classList.add('wbs-selected');
             resaltarBarraEnTimeline(id, ctx);
             if (elem) mostrarDetalleElemento(elem);
+        };
+        item.onclick = select;
+        item.onkeydown = function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select.call(this); }
         };
     });
     // Doble clic → editar (solo no-EDT; EDTs tienen su propio manejador en edt-panel.js)
@@ -663,9 +714,14 @@ function renderizarArbolWBS(orden, elementos, headerH, ctx) {
 }
 
 function calcularProfundidad(id, elementos) {
+    if (typeof calcularProfundidadSegura === 'function') {
+        return calcularProfundidadSegura(id, elementos, 'dependeDe');
+    }
+    const vistos = new Set([id]);
     let depth = 0;
-    let e = elementos.find(x => x.id === id);
-    while (e && e.dependeDe) {
+    let e = (elementos || []).find(x => x.id === id);
+    while (e && e.dependeDe && !vistos.has(e.dependeDe)) {
+        vistos.add(e.dependeDe);
         depth++;
         e = elementos.find(x => x.id === e.dependeDe);
     }
@@ -756,136 +812,130 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
 
     let defs = `<defs>
         <marker id="arrowFS" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
-            <polygon points="0 0, 7 2.5, 0 7" fill="${isDark ? '#ccc' : '#000'}" style="fill:${isDark ? '#ccc' : '#000'}"/>
+            <polygon points="0 0, 7 2.5, 0 7" fill="${isDark ? 'rgba(148,163,184,0.55)' : 'rgba(71,85,105,0.55)'}" style="fill:${isDark ? 'rgba(148,163,184,0.55)' : 'rgba(71,85,105,0.55)'}"/>
         </marker>
         <marker id="arrowCritical" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#FF3B30" style="fill:#FF3B30"/>
+            <polygon points="0 0, 10 3.5, 0 7" fill="#FF453A" style="fill:#FF453A"/>
         </marker>
+        <linearGradient id="barActividad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#3D8BFD"/><stop offset="1" stop-color="#0062CC"/>
+        </linearGradient>
+        <linearGradient id="barEntregable" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#34C759"/><stop offset="1" stop-color="#007A3D"/>
+        </linearGradient>
+        <linearGradient id="barHito" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFCA28"/><stop offset="1" stop-color="#B85C00"/>
+        </linearGradient>
+        <linearGradient id="barEdt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#94A3B8"/><stop offset="1" stop-color="#475569"/>
+        </linearGradient>
+        <linearGradient id="barCritico" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FF6B60"/><stop offset="1" stop-color="#D92D20"/>
+        </linearGradient>
+        <filter id="barShadow" x="-20%" y="-40%" width="140%" height="200%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-color="#000" flood-opacity="${isDark ? '0.45' : '0.18'}"/>
+        </filter>
     </defs>`;
 
-    // Project progress bar (y=0)
+    // Progreso global (se muestra en la barra de información, no sobre el lienzo)
     const tasksProg = elementos.filter(e => e.tipo !== 'edt' && e.duracion > 0);
     const totalWeight = tasksProg.reduce((s, e) => s + e.duracion, 0);
     const progPct = totalWeight > 0 ? tasksProg.reduce((s, e) => s + (e.progreso || 0) * e.duracion, 0) / totalWeight : 0;
-    const progColor = progPct >= 100 ? '#00A859' : (progPct >= 50 ? '#007AFF' : '#FF9500');
-    let gridHtml = `
-        <rect x="0" y="0" width="${anchoTotal}" height="4" fill="rgba(0,0,0,0.08)" stroke="none" rx="2"/>
-        <rect x="0" y="0" width="${anchoTotal * progPct / 100}" height="4" fill="${progColor}" stroke="none" rx="2"/>
-        <text x="${anchoTotal - 4}" y="3" font-size="8" fill="${isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'}" font-family="system-ui" text-anchor="end" dominant-baseline="central">${Math.round(progPct)}%</text>
-    `;
+    let gridHtml = '';
 
     // Grid y cabeceras según escala
     const escala = state.escala;
+    const hoy = new Date();
+    const offsetHoy = Math.round((hoy - fechaInicio) / 86400000);
+    const hayHoy = offsetHoy >= 0 && offsetHoy < diasTotales;
+    const xHoy = offsetHoy * anchoDia;
+    const paleta = isDark ? {
+        titulo: '#E8EEF7',
+        sub: 'rgba(148,163,184,0.88)',
+        subTenue: 'rgba(148,163,184,0.55)',
+        linea: 'rgba(148,163,184,0.16)',
+        lineaSuave: 'rgba(148,163,184,0.075)',
+        finde: 'rgba(148,163,184,0.062)',
+        findeDia: 'rgba(148,163,184,0.10)'
+    } : {
+        titulo: '#0F172A',
+        sub: 'rgba(71,85,105,0.92)',
+        subTenue: 'rgba(100,116,139,0.7)',
+        linea: 'rgba(15,23,42,0.12)',
+        lineaSuave: 'rgba(15,23,42,0.055)',
+        finde: 'rgba(15,23,42,0.032)',
+        findeDia: 'rgba(15,23,42,0.055)'
+    };
+    const FUENTE = 'Inter, system-ui, sans-serif';
+    const lineaHoy = hayHoy
+        ? `<line x1="${xHoy}" y1="0" x2="${xHoy}" y2="${altoTotal}" stroke="var(--color-primary,#0A84FF)" style="stroke:var(--color-primary,#0A84FF)" stroke-width="1.5" opacity="0.8"/>`
+          + `<circle cx="${xHoy}" cy="3" r="2.6" fill="var(--color-primary,#0A84FF)" style="fill:var(--color-primary,#0A84FF)"/>`
+        : '';
 
-    if (escala === 'día') {
-        // Día: mes arriba, día-semana + día-nº abajo, fines de semana marcados
-        const diasSem = ['D','L','M','X','J','V','S'];
-        const c = {
-            mes: isDark ? '#E0E0E0' : 'rgba(0,0,0,0.7)',
-            diaLab: isDark ? '#FFFFFF' : 'rgba(0,0,0,0.8)',
-            diaFinde: isDark ? '#FF6B6B' : 'rgba(200,40,40,0.85)',
-            numLab: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
-            numFinde: isDark ? 'rgba(255,100,100,0.75)' : 'rgba(200,40,40,0.75)',
-            findeFill: isDark ? 'rgba(255,59,48,0.08)' : 'rgba(200,40,40,0.08)',
-            lineMes: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
-        };
-        // Primero renderizar fines de semana (detrás de todo)
+    // Fines de semana: solo cuando cada día tiene ancho suficiente.
+    if (anchoDia >= 8) {
         for (let d = 0; d < diasTotales; d++) {
             const fecha = new Date(fechaInicio.getTime() + d * 86400000);
             const diaSem = fecha.getDay();
             if (diaSem === 0 || diaSem === 6) {
                 const x = d * anchoDia;
-                gridHtml += `<rect x="${x}" y="${headerHeight}" width="${anchoDia}" height="${altoTotal - headerHeight}" fill="${c.findeFill}" style="fill:${c.findeFill}" stroke="none"/>`;
+                const relleno = escala === 'día' ? paleta.findeDia : paleta.finde;
+                gridHtml += `<rect x="${x}" y="${headerHeight}" width="${anchoDia}" height="${altoTotal - headerHeight}" fill="${relleno}" style="fill:${relleno}" stroke="none"/>`;
             }
         }
-        // Meses (fila superior del header)
+    }
+
+    if (escala === 'día') {
+        // Tres filas: mes · día de la semana · número de día.
         meses.forEach(m => {
             const x = ((m.start - fechaInicio) / 86400000) * anchoDia;
             const w = ((m.end.getTime() + 86400000 - m.start) / 86400000) * anchoDia;
             const centro = x + w / 2;
-            gridHtml += `<text x="${centro}" y="${26}" font-size="11" fill="${c.mes}" style="fill:${c.mes}" font-family="system-ui" text-anchor="middle" font-weight="600">${m.name}</text>`;
-            gridHtml += `<line x1="${x}" y1="${32}" x2="${x}" y2="${altoTotal}" stroke="${c.lineMes}" style="stroke:${c.lineMes}" stroke-width="1"/>`;
+            gridHtml += `<text x="${centro}" y="17" font-size="11" fill="${paleta.titulo}" style="fill:${paleta.titulo}" font-family="${FUENTE}" text-anchor="middle" font-weight="600">${m.name}</text>`;
+            gridHtml += `<line x1="${x}" y1="26" x2="${x}" y2="${altoTotal}" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1"/>`;
         });
-        // Días individuales: día-semana + día-nº
+        gridHtml += `<line x1="0" y1="26" x2="${anchoTotal}" y2="26" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1"/>`;
+        const diasSem = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
         for (let d = 0; d < diasTotales; d++) {
             const x = d * anchoDia;
             const centro = x + anchoDia / 2;
             const fecha = new Date(fechaInicio.getTime() + d * 86400000);
             const diaSem = fecha.getDay();
-            const esFinSemana = diaSem === 0 || diaSem === 6;
-            gridHtml += `<text x="${centro}" y="${46}" font-size="10" fill="${esFinSemana ? c.diaFinde : c.diaLab}" style="fill:${esFinSemana ? c.diaFinde : c.diaLab}" font-family="system-ui" text-anchor="middle" font-weight="600">${diasSem[diaSem]}</text>`;
-            gridHtml += `<text x="${centro}" y="${58}" font-size="10" fill="${esFinSemana ? c.numFinde : c.numLab}" style="fill:${esFinSemana ? c.numFinde : c.numLab}" font-family="system-ui" text-anchor="middle">${fecha.getDate()}</text>`;
-        }
-        // Línea de hoy
-        const hoy = new Date();
-        const offsetHoy = Math.round((hoy - fechaInicio) / 86400000);
-        if (offsetHoy > 0 && offsetHoy < diasTotales) {
-            const xHoy = offsetHoy * anchoDia;
-            gridHtml += `<line x1="${xHoy}" y1="${32}" x2="${xHoy}" y2="${altoTotal}" stroke="#FF3B30" style="stroke:#FF3B30" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.7"/>`;
+            const esFinde = diaSem === 0 || diaSem === 6;
+            const color = esFinde ? paleta.subTenue : paleta.sub;
+            gridHtml += `<text x="${centro}" y="42" font-size="10" fill="${color}" style="fill:${color}" font-family="${FUENTE}" text-anchor="middle" font-weight="600">${diasSem[diaSem]}</text>`;
+            gridHtml += `<text x="${centro}" y="56" font-size="10.5" fill="${esFinde ? paleta.subTenue : paleta.titulo}" style="fill:${esFinde ? paleta.subTenue : paleta.titulo}" font-family="${FUENTE}" text-anchor="middle" font-weight="500">${fecha.getDate()}</text>`;
+            gridHtml += `<line x1="${x}" y1="26" x2="${x}" y2="${altoTotal}" stroke="${paleta.lineaSuave}" style="stroke:${paleta.lineaSuave}" stroke-width="1"/>`;
         }
     } else if (escala === 'semana') {
-        // Semana: meses arriba, número de semana abajo, findes marcados
-        const c = {
-            mes: isDark ? '#E0E0E0' : 'rgba(0,0,0,0.7)',
-            semana: isDark ? '#FFFFFF' : 'rgba(0,0,0,0.75)',
-            findeFill: isDark ? 'rgba(255,59,48,0.08)' : 'rgba(200,40,40,0.08)',
-            lineMes: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-            lineSem: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'
-        };
-        // Fines de semana
-        for (let d = 0; d < diasTotales; d++) {
-            const fecha = new Date(fechaInicio.getTime() + d * 86400000);
-            if (fecha.getDay() === 0 || fecha.getDay() === 6) {
-                const x = d * anchoDia;
-                gridHtml += `<rect x="${x}" y="${headerHeight}" width="${anchoDia}" height="${altoTotal - headerHeight}" fill="${c.findeFill}" style="fill:${c.findeFill}" stroke="none"/>`;
-            }
-        }
-        // Meses
+        // Mes arriba, semana ISO abajo.
         meses.forEach(m => {
             const x = ((m.start - fechaInicio) / 86400000) * anchoDia;
             const w = ((m.end.getTime() + 86400000 - m.start) / 86400000) * anchoDia;
             const centro = x + w / 2;
-            gridHtml += `<text x="${centro}" y="${28}" font-size="11" fill="${c.mes}" style="fill:${c.mes}" font-family="system-ui" text-anchor="middle" font-weight="600">${m.name}</text>`;
-            gridHtml += `<line x1="${x}" y1="${34}" x2="${x}" y2="${altoTotal}" stroke="${c.lineMes}" style="stroke:${c.lineMes}" stroke-width="1"/>`;
+            gridHtml += `<text x="${centro}" y="16" font-size="10.5" fill="${paleta.titulo}" style="fill:${paleta.titulo}" font-family="${FUENTE}" text-anchor="middle" font-weight="600">${m.name}</text>`;
+            gridHtml += `<line x1="${x}" y1="26" x2="${x}" y2="${altoTotal}" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1"/>`;
         });
-        // Semanas
-        let numSemana = 1;
-        for (let d = 0; d < diasTotales; d += 7) {
-            const x = d * anchoDia;
-            gridHtml += `<line x1="${x}" y1="${34}" x2="${x}" y2="${altoTotal}" stroke="${c.lineSem}" style="stroke:${c.lineSem}" stroke-width="1"/>`;
-            gridHtml += `<text x="${x + 4}" y="${headerHeight - 2}" font-size="11" fill="${c.semana}" style="fill:${c.semana}" font-family="system-ui" font-weight="600">S${numSemana}</text>`;
-            numSemana++;
+        gridHtml += `<line x1="0" y1="26" x2="${anchoTotal}" y2="26" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1"/>`;
+        const primerLunes = (8 - fechaInicio.getDay()) % 7;
+        if (primerLunes > 0) {
+            // Semana incompleta inicial: etiqueta en el borde izquierdo.
+            gridHtml += `<text x="4" y="37" font-size="9.5" fill="${paleta.subTenue}" style="fill:${paleta.subTenue}" font-family="${FUENTE}" font-weight="600">S${semanaISO(fechaInicio)}</text>`;
         }
-        // Línea de hoy
-        const hoy = new Date();
-        const offsetHoy = Math.round((hoy - fechaInicio) / 86400000);
-        if (offsetHoy > 0 && offsetHoy < diasTotales) {
-            const xHoy = offsetHoy * anchoDia;
-            gridHtml += `<line x1="${xHoy}" y1="${34}" x2="${xHoy}" y2="${altoTotal}" stroke="#FF3B30" style="stroke:#FF3B30" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.7"/>`;
+        for (let d = primerLunes; d < diasTotales; d += 7) {
+            const x = d * anchoDia;
+            const fechaSem = new Date(fechaInicio.getTime() + d * 86400000);
+            gridHtml += `<line x1="${x}" y1="26" x2="${x}" y2="${altoTotal}" stroke="${paleta.lineaSuave}" style="stroke:${paleta.lineaSuave}" stroke-width="1"/>`;
+            gridHtml += `<text x="${x + 4}" y="37" font-size="9.5" fill="${paleta.sub}" style="fill:${paleta.sub}" font-family="${FUENTE}" font-weight="600">S${semanaISO(fechaSem)}</text>`;
         }
     } else if (escala === 'año') {
-        // Año: trimestres con año visible
-        const c = {
-            qLabel: isDark ? '#E0E0E0' : 'rgba(0,0,0,0.7)',
-            yearLabel: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)',
-            lineQ: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-            findeFill: isDark ? 'rgba(255,59,48,0.06)' : 'rgba(200,40,40,0.06)'
-        };
-        // Fines de semana (solo en años para dar contexto)
-        for (let d = 0; d < diasTotales; d++) {
-            const fecha = new Date(fechaInicio.getTime() + d * 86400000);
-            if (fecha.getDay() === 0 || fecha.getDay() === 6) {
-                const x = d * anchoDia;
-                gridHtml += `<rect x="${x}" y="${headerHeight}" width="${anchoDia}" height="${altoTotal - headerHeight}" fill="${c.findeFill}" style="fill:${c.findeFill}" stroke="none"/>`;
-            }
-        }
+        // Año arriba, trimestres abajo.
         const yearStart = fechaInicio.getFullYear();
         const yearEnd = new Date(fechaInicio.getTime() + diasTotales * 86400000).getFullYear();
         for (let yr = yearStart; yr <= yearEnd; yr++) {
-            // Línea de inicio de año
             const xYear = Math.max(0, ((new Date(yr, 0, 1) - fechaInicio) / 86400000) * anchoDia);
-            gridHtml += `<line x1="${xYear}" y1="${headerHeight}" x2="${xYear}" y2="${altoTotal}" stroke="${c.lineQ}" style="stroke:${c.lineQ}" stroke-width="1.5"/>`;
-            gridHtml += `<text x="${xYear + 4}" y="${headerHeight - 6}" font-size="12" fill="${c.yearLabel}" style="fill:${c.yearLabel}" font-family="system-ui" font-weight="700">${yr}</text>`;
+            gridHtml += `<line x1="${xYear}" y1="26" x2="${xYear}" y2="${altoTotal}" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1.5"/>`;
+            gridHtml += `<text x="${xYear + 6}" y="16" font-size="11" fill="${paleta.titulo}" style="fill:${paleta.titulo}" font-family="${FUENTE}" font-weight="700">${yr}</text>`;
             for (let q = 0; q < 4; q++) {
                 const qStart = new Date(yr, q * 3, 1);
                 const qEnd = new Date(yr, (q + 1) * 3, 0);
@@ -893,53 +943,37 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
                 const w = Math.max(1, ((qEnd.getTime() + 86400000 - Math.max(fechaInicio.getTime(), qStart.getTime())) / 86400000) * anchoDia);
                 if (x >= anchoTotal) break;
                 const centro = x + w / 2;
-                gridHtml += `<text x="${centro}" y="${26}" font-size="12" fill="${c.qLabel}" style="fill:${c.qLabel}" font-family="system-ui" text-anchor="middle" font-weight="600">Q${q + 1}</text>`;
-                gridHtml += `<line x1="${x}" y1="${32}" x2="${x}" y2="${altoTotal}" stroke="${c.lineQ}" style="stroke:${c.lineQ}" stroke-width="0.5"/>`;
+                gridHtml += `<text x="${centro}" y="37" font-size="10" fill="${paleta.sub}" style="fill:${paleta.sub}" font-family="${FUENTE}" text-anchor="middle" font-weight="600">Q${q + 1}</text>`;
+                gridHtml += `<line x1="${x}" y1="26" x2="${x}" y2="${altoTotal}" stroke="${paleta.lineaSuave}" style="stroke:${paleta.lineaSuave}" stroke-width="0.5"/>`;
             }
         }
-        // Línea de hoy
-        const hoy = new Date();
-        const offsetHoy = Math.round((hoy - fechaInicio) / 86400000);
-        if (offsetHoy > 0 && offsetHoy < diasTotales) {
-            const xHoy = offsetHoy * anchoDia;
-            gridHtml += `<line x1="${xHoy}" y1="${32}" x2="${xHoy}" y2="${altoTotal}" stroke="#FF3B30" style="stroke:#FF3B30" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.7"/>`;
-        }
+        gridHtml += `<line x1="0" y1="26" x2="${anchoTotal}" y2="26" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1"/>`;
     } else {
-        // Mes: nombre del mes + año
-        const c = {
-            mes: isDark ? '#E0E0E0' : 'rgba(0,0,0,0.7)',
-            lineMes: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-            lineSem: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)',
-            findeFill: isDark ? 'rgba(255,59,48,0.08)' : 'rgba(200,40,40,0.06)'
-        };
-        // Fines de semana
-        for (let d = 0; d < diasTotales; d++) {
-            const fecha = new Date(fechaInicio.getTime() + d * 86400000);
-            if (fecha.getDay() === 0 || fecha.getDay() === 6) {
-                const x = d * anchoDia;
-                gridHtml += `<rect x="${x}" y="${headerHeight}" width="${anchoDia}" height="${altoTotal - headerHeight}" fill="${c.findeFill}" style="fill:${c.findeFill}" stroke="none"/>`;
-            }
-        }
+        // Vista de mes: una sola fila centrada.
         meses.forEach(m => {
             const x = ((m.start - fechaInicio) / 86400000) * anchoDia;
             const w = ((m.end.getTime() + 86400000 - m.start) / 86400000) * anchoDia;
             const centro = x + w / 2;
-            gridHtml += `<text x="${centro}" y="${headerHeight - 6}" font-size="11" fill="${c.mes}" style="fill:${c.mes}" font-family="system-ui" text-anchor="middle" font-weight="600">${m.name}</text>`;
-            gridHtml += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${altoTotal}" stroke="${c.lineMes}" style="stroke:${c.lineMes}" stroke-width="1"/>`;
+            gridHtml += `<text x="${centro}" y="${headerHeight / 2 + 4}" font-size="11" fill="${paleta.titulo}" style="fill:${paleta.titulo}" font-family="${FUENTE}" text-anchor="middle" font-weight="600">${m.name}</text>`;
+            gridHtml += `<line x1="${x}" y1="0" x2="${x}" y2="${altoTotal}" stroke="${paleta.linea}" style="stroke:${paleta.linea}" stroke-width="1"/>`;
         });
-        // Grid semanas
-        for (let d = 0; d < diasTotales; d += 7) {
-            const x = d * anchoDia;
-            gridHtml += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${altoTotal}" stroke="${c.lineSem}" style="stroke:${c.lineSem}" stroke-width="1"/>`;
-        }
-        // Línea de hoy
-        const hoy = new Date();
-        const offsetHoy = Math.round((hoy - fechaInicio) / 86400000);
-        if (offsetHoy > 0 && offsetHoy < diasTotales) {
-            const xHoy = offsetHoy * anchoDia;
-            gridHtml += `<line x1="${xHoy}" y1="${headerHeight}" x2="${xHoy}" y2="${altoTotal}" stroke="#FF3B30" style="stroke:#FF3B30" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.7"/>`;
+        if (anchoDia >= 6) {
+            for (let d = 0; d < diasTotales; d += 7) {
+                const x = d * anchoDia;
+                gridHtml += `<line x1="${x}" y1="0" x2="${x}" y2="${altoTotal}" stroke="${paleta.lineaSuave}" style="stroke:${paleta.lineaSuave}" stroke-width="1"/>`;
+            }
         }
     }
+    gridHtml += lineaHoy;
+
+    // Separadores de fila y borde inferior de la cabecera
+    const rowLineColor = isDark ? 'rgba(148,163,184,0.055)' : 'rgba(15,23,42,0.05)';
+    const headerLineColor = isDark ? 'rgba(148,163,184,0.20)' : 'rgba(15,23,42,0.12)';
+    for (let i = 0; i <= ordenArbol.length; i++) {
+        const yLine = headerHeight + i * rowHeight;
+        gridHtml += `<line x1="0" y1="${yLine}" x2="${anchoTotal}" y2="${yLine}" stroke="${rowLineColor}" stroke-width="1"/>`;
+    }
+    gridHtml += `<line x1="0" y1="${headerHeight}" x2="${anchoTotal}" y2="${headerHeight}" stroke="${headerLineColor}" stroke-width="1"/>`;
 
     // Barras de tareas
     const critSet = new Set(cpmRef.criticalPath || []);
@@ -975,14 +1009,24 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         dayUsage[dayKey] = (dayUsage[dayKey] || 0) + w;
         const x = startOffset * anchoDia + intraShift;
         const esCritico = critSet.has(elem.id);
-        const color = esCritico ? '#FF3B30' : (elem.tipo === 'actividad' ? '#007AFF' : (elem.tipo === 'entregable' ? '#00A859' : (elem.tipo === 'hito' ? '#FF9500' : '#888')));
+        const gradMap = { actividad: 'barActividad', entregable: 'barEntregable', hito: 'barHito', edt: 'barEdt' };
+        const gradId = esCritico ? 'barCritico' : (gradMap[elem.tipo] || 'barActividad');
+        const solidMap = { barActividad: '#007AFF', barEntregable: '#00A859', barHito: '#FFB300', barEdt: '#64748B', barCritico: '#E74C3C' };
+        const solidColor = solidMap[gradId];
 
-        barPositions[elem.id] = { x, y: y - 8, w: Math.max(w, 8), h: 16, id: elem.id };
-
-        const barH = elem.tipo === 'hito' ? 12 : 16;
+        const isHito = elem.tipo === 'hito';
+        const barH = isHito ? 12 : 18;
         const barY = y - barH / 2;
+        const barW = Math.max(w, isHito ? 12 : 6);
+        const radius = isHito ? 3 : 5;
 
-        barsHtml += `<g class="crono-bar-wrapper" data-id="${elem.id}">`;
+        barPositions[elem.id] = { x, y: y - 9, w: barW, h: 18, id: elem.id };
+
+        const fechaFin = elem.duracion > 0 ? sumarDiasHabiles(elem.inicio, elem.duracion) : (elem.fin || elem.inicio);
+        const tooltip = `${elem.nombre} · ${formatearFechaEspa(elem.inicio)} → ${formatearFechaEspa(fechaFin)}${elem.progreso ? ' · ' + elem.progreso + '%' : ''}${esCritico ? ' · Ruta crítica' : ''}`;
+
+        barsHtml += `<g class="crono-bar-wrapper" data-id="${elem.id}" role="img" aria-label="${escapeHtml(tooltip)}">`;
+        barsHtml += `<title>${escapeHtml(tooltip)}</title>`;
 
         if (lineaBaseActiva) {
             const be = lineaBaseActiva.elementos.find(x => x.id === elem.id);
@@ -996,24 +1040,31 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
                     return Math.max(calDays, be.duracion) * anchoDia;
                 })() : 8, 4);
                 const baseX = baseStartOffset * anchoDia;
-                barsHtml += `<rect class="crono-bar-base" data-id="${elem.id}" x="${baseX}" y="${barY - 7}" width="${Math.max(baseW, 8)}" height="4" rx="2" fill="none" stroke="#FFB800" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.85"/>`;
+                barsHtml += `<rect class="crono-bar-base" data-id="${elem.id}" x="${baseX}" y="${barY - 9}" width="${Math.max(baseW, 8)}" height="3" rx="1.5" fill="none" stroke="#FFB300" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.9"/>`;
             }
         }
 
-        // Sombra
-        barsHtml += `<rect x="${x + 1}" y="${barY + 1}" width="${Math.max(w, 8)}" height="${barH}" rx="4" fill="rgba(0,0,0,0.2)" style="fill:rgba(0,0,0,0.2)"/>`;
+        if (isHito) {
+            // Hito: rombo centrado en la fecha de inicio
+            const cx = x + 6;
+            barsHtml += `<path class="crono-bar crono-bar-hito" d="M ${cx} ${y - 9} L ${cx + 9} ${y} L ${cx} ${y + 9} L ${cx - 9} ${y} Z" fill="url(#${gradId})" stroke="${isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.20)'}" stroke-width="1" filter="url(#barShadow)"/>`;
+        } else {
+            // Pista de la barra
+            barsHtml += `<rect class="crono-bar" x="${x}" y="${barY}" width="${barW}" height="${barH}" rx="${radius}" fill="url(#${gradId})" opacity="${isDark ? 0.28 : 0.20}" stroke="${solidColor}" stroke-opacity="${isDark ? 0.35 : 0.40}" stroke-width="1" filter="url(#barShadow)"/>`;
 
-        // Barra principal
-        barsHtml += `<rect class="crono-bar" x="${x}" y="${barY}" width="${Math.max(w, 8)}" height="${barH}" rx="4" fill="${color}" style="fill:${color}" opacity="${elem.tipo === 'hito' ? 0.9 : 0.75}" stroke="${esCritico ? '#FF3B30' : 'transparent'}" stroke-width="${esCritico ? 2 : 0}"/>`;
+            // Progreso
+            if (elem.progreso > 0) {
+                const pw = Math.max(barW * (elem.progreso / 100), 4);
+                barsHtml += `<rect class="crono-bar-progress" x="${x}" y="${barY}" width="${Math.min(pw, barW)}" height="${barH}" rx="${radius}" fill="url(#${gradId})"/>`;
+            }
 
-        // Progreso
-        if (elem.progreso > 0 && elem.duracion > 0) {
-            const pw = Math.max(w * (elem.progreso / 100), 4);
-            barsHtml += `<rect x="${x}" y="${barY}" width="${Math.min(pw, Math.max(w, 8))}" height="${barH}" rx="4" fill="${color}" style="fill:${color}" opacity="0.9"/>`;
+            // Remates inferiores: convención de barra resumen para las EDT.
+            if (elem.tipo === 'edt') {
+                const cap = 5;
+                barsHtml += `<path d="M ${x} ${barY + barH} L ${x + cap} ${barY + barH} L ${x} ${barY + barH + cap} Z" fill="${solidColor}" opacity="0.85"/>`;
+                barsHtml += `<path d="M ${x + barW} ${barY + barH} L ${x + barW - cap} ${barY + barH} L ${x + barW} ${barY + barH + cap} Z" fill="${solidColor}" opacity="0.85"/>`;
+            }
         }
-
-        // Fecha fin planificada
-        const fechaFin = elem.duracion > 0 ? sumarDiasHabiles(elem.inicio, elem.duracion) : elem.inicio;
 
         // Barra real (fechas reales)
         if (elem.inicioReal) {
@@ -1040,29 +1091,19 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
                 const planEndDate = parseLocalDate(fechaFin);
                 const realEndParsed = realEndStr ? parseLocalDate(realEndStr) : null;
                 const esTarde = realEndParsed && planEndDate && realEndParsed > planEndDate;
-                const realColor = elem.finReal ? (esTarde ? '#FF3B30' : '#00A859') : '#FF9500';
-                const realBarH = 5;
-                const realBarY = barY + barH + 2;
-                barsHtml += `<rect x="${realX}" y="${realBarY}" width="${Math.max(realWidth, 4)}" height="${realBarH}" rx="2" fill="${realColor}" style="fill:${realColor}" opacity="0.85"/>`;
-                if (realEndStr) {
-                    barsHtml += `<text x="${realX + Math.max(realWidth, 4) + 3}" y="${realBarY + realBarH - 1}" font-size="9" font-weight="500" fill="${realColor}" style="fill:${realColor}" font-family="system-ui" text-anchor="start">${escapeHtml(realEndStr)}</text>`;
+                const realColor = elem.finReal ? (esTarde ? '#E74C3C' : '#00A859') : '#FFB300';
+                const realBarH = 4;
+                const realBarY = barY + barH + 3;
+                barsHtml += `<rect x="${realX}" y="${realBarY}" width="${Math.max(realWidth, 4)}" height="${realBarH}" rx="2" fill="${realColor}" opacity="0.9"/>`;
+                if (realEndStr && anchoDia >= 14) {
+                    barsHtml += `<text x="${realX + Math.max(realWidth, 4) + 4}" y="${realBarY + realBarH}" font-size="9" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.55)' : 'rgba(15,23,42,0.60)'}" font-family="var(--font-sans, Inter, system-ui)" text-anchor="start">${escapeHtml(formatearFechaEspa(realEndStr))}</text>`;
                 }
             }
         }
 
-        // Fecha inicio (antes de la barra)
-        barsHtml += `<text x="${x - 5}" y="${y + 4}" font-size="10" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" style="fill:${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" font-family="system-ui" text-anchor="end">${escapeHtml(formatearFechaEspa(elem.inicio))}</text>`;
-
-        // Nombre (dentro de la barra)
-        const label = elem.nombre.length > 25 ? elem.nombre.substring(0, 22) + '…' : elem.nombre;
-        barsHtml += `<text x="${x + 5}" y="${y + 4}" font-size="12" fill="${isDark ? '#fff' : 'rgba(0,0,0,0.85)'}" style="fill:${isDark ? '#fff' : 'rgba(0,0,0,0.85)'}" font-family="system-ui" font-weight="600" text-anchor="start">${escapeHtml(label)}</text>`;
-
-        // Fecha fin (después de la barra)
-        barsHtml += `<text x="${x + Math.max(w, 8) + 5}" y="${y + 4}" font-size="10" font-weight="500" fill="${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" style="fill:${isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)'}" font-family="system-ui" text-anchor="start">${escapeHtml(formatearFechaEspa(fechaFin))}</text>`;
-
-        // Handle de arrastre para dependencias (círculo al final de la barra)
+        // Handle de arrastre para dependencias
         if (elem.tipo !== 'hito') {
-            barsHtml += `<circle class="crono-drag-handle" data-id="${elem.id}" cx="${x + Math.max(w, 8)}" cy="${y}" r="5" fill="${color}" style="fill:${color}" opacity="0" cursor="crosshair"/>`;
+            barsHtml += `<circle class="crono-drag-handle" data-id="${elem.id}" cx="${x + barW}" cy="${y}" r="5" fill="${solidColor}" opacity="0" cursor="crosshair"/>`;
         }
 
         barsHtml += `</g>`;
@@ -1083,7 +1124,7 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
             const y2 = to.y + to.h / 2;
             const midX = (x1 + x2) / 2;
             const path = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
-            connectionsHtml += `<path d="${path}" fill="none" style="fill:none" stroke="${esCrit ? '#FF3B30' : (isDark ? '#999' : '#000')}" stroke-width="${esCrit ? 1.5 : 1}" marker-end="${marker}" class="crono-arrow" data-from="${p.id}" data-to="${elem.id}"/>`;
+            connectionsHtml += `<path d="${path}" fill="none" style="fill:none" stroke="${esCrit ? '#FF453A' : (isDark ? 'rgba(148,163,184,0.55)' : 'rgba(71,85,105,0.55)')}" stroke-width="${esCrit ? 1.6 : 1.2}" marker-end="${marker}" class="crono-arrow" data-from="${p.id}" data-to="${elem.id}"/>`;
         });
     });
 
@@ -1103,12 +1144,12 @@ function renderizarTimelineSVG(ordenArbol, elementos, fechaInicio, diasTotales, 
         w.addEventListener('mouseenter', function() {
             const handle = this.querySelector('.crono-drag-handle');
             if (handle && !state.editandoDependencia) handle.setAttribute('opacity', '0.6');
-            this.querySelectorAll('.crono-bar').forEach(b => b.setAttribute('opacity', '0.9'));
+            this.style.filter = 'brightness(1.12)';
         });
         w.addEventListener('mouseleave', function() {
             const handle = this.querySelector('.crono-drag-handle');
             if (handle && !state.editandoDependencia) handle.setAttribute('opacity', '0');
-            this.querySelectorAll('.crono-bar').forEach(b => b.setAttribute('opacity', '0.75'));
+            this.style.filter = '';
         });
     });
 
@@ -1286,8 +1327,13 @@ function mostrarModalTipoDependencia(fromId, toId) {
 }
 
 function crearDependencia(fromId, toId, tipo, retraso) {
-    const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === toId);
+    const elementos = proyecto[cronogramaActivo.dataKey] || [];
+    const elem = elementos.find(e => e.id === toId);
     if (!elem) return;
+    if (typeof creariaCicloWBS === 'function' && creariaCicloWBS(elementos, toId, fromId, 'predecesores')) {
+        mostrarToast(' Dependencia rechazada: crearía un ciclo en la red', 'error');
+        return;
+    }
     if (!elem.predecesores) elem.predecesores = [];
     if (elem.predecesores.some(p => p.id === fromId)) return;
     elem.predecesores.push({ id: fromId, tipo, retraso });
@@ -1321,6 +1367,11 @@ function autoScheduler(arr) {
         orden.push(n);
         (adj[n] || []).forEach(s => { inDeg[s]--; if (inDeg[s] === 0) q.push(s); });
     }
+    if (orden.length !== tasks.length) {
+        console.warn('[autoScheduler] Red con ciclos: no se reprograma');
+        if (typeof mostrarToast === 'function') mostrarToast('No se puede reprogramar: hay dependencias circulares', 'error');
+        return;
+    }
     const duracion = {};
     tasks.forEach(t => { duracion[t.id] = t.duracion || 0; });
     // Fecha del proyecto: la más temprana entre todas las tareas
@@ -1332,56 +1383,46 @@ function autoScheduler(arr) {
         }
     });
     if (!proyInicio) proyInicio = new Date();
-    // Inicializar fechas: respetar la fecha manual de cada tarea; las dependencias solo pueden retrasarla
+    // La fecha manual es el punto de partida; las dependencias pueden
+    // retrasarla o adelantarla (leads FF/SF negativos).
     const taskDate = {};
     tasks.forEach(t => {
         taskDate[t.id] = t.inicio ? parseLocalDate(t.inicio) : new Date(proyInicio);
     });
-    // Aplicar dependencias en orden topológico
+    const fechaCalculada = {};
     orden.forEach(id => {
         const t = tasks.find(x => x.id === id);
         if (!t) return;
         (t.predecesores || []).forEach(p => {
-            if (!ids.has(p.id)) return;
-            if (!taskDate[p.id]) return;
+            if (!ids.has(p.id) || !taskDate[p.id]) return;
             let nuevaFecha = new Date(taskDate[p.id]);
-            if (p.tipo === 'FS') {
-                // Sumar días hábiles de duración del predecesor
+            const tipo = String(p.tipo || 'FS').trim().toUpperCase();
+            if (tipo === 'FS') {
                 nuevaFecha = parseLocalDate(sumarDiasHabiles(formatLocalDate(nuevaFecha), duracion[p.id]));
-            } else if (p.tipo === 'SS') {
+            } else if (tipo === 'SS') {
                 // Misma fecha de inicio
-            } else if (p.tipo === 'FF') {
-                // El sucesor termina cuando el predecesor termina: inicio = fin del predecesor - duración hábil del sucesor
+            } else if (tipo === 'FF') {
                 const finPred = parseLocalDate(sumarDiasHabiles(formatLocalDate(nuevaFecha), duracion[p.id]));
                 const iniSucesor = parseLocalDate(sumarDiasHabiles(formatLocalDate(finPred), -duracion[id]));
                 nuevaFecha = iniSucesor || finPred;
-            } else if (p.tipo === 'SF') {
-                // El sucesor termina cuando el predecesor empieza: inicio = inicio predecesor - duración hábil del sucesor
+            } else if (tipo === 'SF') {
                 const iniSucesor = parseLocalDate(sumarDiasHabiles(formatLocalDate(nuevaFecha), -duracion[id]));
                 nuevaFecha = iniSucesor || nuevaFecha;
             }
-            // Aplicar retraso (días hábiles)
             if (p.retraso) {
                 nuevaFecha = parseLocalDate(sumarDiasHabiles(formatLocalDate(nuevaFecha), p.retraso));
             }
-            if (nuevaFecha && nuevaFecha > taskDate[id]) {
-                taskDate[id] = new Date(nuevaFecha);
+            // Con varios predecesores prevalece la restricción más tardía.
+            if (nuevaFecha && (fechaCalculada[id] === undefined || nuevaFecha > fechaCalculada[id])) {
+                fechaCalculada[id] = new Date(nuevaFecha);
             }
         });
+        if (fechaCalculada[id] !== undefined) taskDate[id] = new Date(fechaCalculada[id]);
     });
-    // Escribir fechas de vuelta a los elementos: la fecha manual se respeta tal cual;
-    // solo se normaliza a día hábil cuando la fecha proviene del cálculo de dependencias
     tasks.forEach(t => {
-        const manual = parseLocalDate(t.inicio);
-        let fechaStr;
-        if (manual && !(taskDate[t.id] > manual)) {
-            fechaStr = formatLocalDate(manual);
-        } else {
-            fechaStr = formatLocalDate(siguienteDiaHabil(taskDate[t.id] || proyInicio));
-        }
-        if (t.inicio !== fechaStr) {
-            t.inicio = fechaStr;
-        }
+        const fecha = fechaCalculada[t.id] || taskDate[t.id] || proyInicio;
+        const fechaStr = formatLocalDate(siguienteDiaHabil(fecha));
+        if (t.inicio !== fechaStr) t.inicio = fechaStr;
     });
 }
 
@@ -1491,10 +1532,32 @@ function renderizarInfoBar(ctx) {
     const durStr = todasHoras && critHoras > 0
         ? critHoras + 'h'
         : critDias.toFixed(1).replace(/\.0$/, '') + 'd (' + critHoras + 'h)';
+    const makespan = Number(cpmRef.makespan) || 0;
+    const tareas = (proyecto[ctx.dataKey] || []).filter(e => e.tipo !== 'edt' && e.duracion > 0);
+    const peso = tareas.reduce((s, e) => s + e.duracion, 0);
+    const avance = peso > 0 ? Math.round(tareas.reduce((s, e) => s + (e.progreso || 0) * e.duracion, 0) / peso) : 0;
     el.innerHTML = `
-        <span class="info-chip critical"> Ruta crítica: ${nombres.join(' → ') || '—'} (${durStr})</span>
-        <span class="info-chip"> Holgura total: ${float.toFixed(1)} días</span>
-        <span class="info-chip"> Elementos: ${(proyecto[ctx.dataKey] || []).length}</span>
+        <span class="info-chip info-chip--crit" title="Ruta crítica: ${escapeHtml(nombres.join(' → ') || '—')}">
+            <span class="info-dot" aria-hidden="true"></span>Ruta crítica · ${nombres.length} ${nombres.length === 1 ? 'tarea' : 'tareas'} · ${durStr}
+        </span>
+        ${makespan > 0 ? `<span class="info-chip" title="Makespan calculado sobre la red completa (CPM)">
+            <span class="info-dot info-dot--muted" aria-hidden="true"></span>Duración de red: ${makespan.toFixed(1)} d
+        </span>` : ''}
+        <span class="info-chip" title="Holgura total del proyecto">
+            <span class="info-dot info-dot--muted" aria-hidden="true"></span>Holgura: ${float.toFixed(1)} d
+        </span>
+        <span class="info-chip" title="Avance ponderado por duración">
+            <span class="info-dot info-dot--success" aria-hidden="true"></span>Avance: ${avance}%
+        </span>
+        <span class="info-chip" title="Número de elementos del cronograma">
+            <span class="info-dot info-dot--muted" aria-hidden="true"></span>${(proyecto[ctx.dataKey] || []).length} elementos
+        </span>
+        <span class="info-legend" aria-hidden="true">
+            <span class="legend-item"><i class="legend-swatch legend-actividad"></i>Actividad</span>
+            <span class="legend-item"><i class="legend-swatch legend-entregable"></i>Entregable</span>
+            <span class="legend-item"><i class="legend-swatch legend-hito"></i>Hito</span>
+            <span class="legend-item"><i class="legend-swatch legend-critico"></i>Crítico</span>
+        </span>
     `;
 }
 
@@ -1536,7 +1599,9 @@ function actualizarZoomLabel(ctx) {
 
 function cambiarEscala(escala) {
     const ctx = _ctxCronograma(cronogramaActivo.panelKey);
-    _getState(ctx).escala = escala;
+    const state = _getState(ctx);
+    state.escala = escala;
+    state.escalaManual = true;
     renderizarCronograma(ctx);
 }
 
@@ -1559,20 +1624,22 @@ function toggleVistaCronograma() {
     const ctx = _ctxCronograma(cronogramaActivo.panelKey);
     const state = _getState(ctx);
     state.vista = state.vista === 'gantt' ? 'tarjetas' : 'gantt';
+    state.vistaManual = true;
     renderizarCronograma(ctx);
     const btn = document.getElementById(ctx.btnToggleVistaId);
-    if (btn) btn.textContent = state.vista === 'gantt' ? ' Tarjetas' : ' Gantt';
+    if (btn) {
+        const etiqueta = state.vista === 'gantt' ? 'Tarjetas' : 'Gantt';
+        const lbl = btn.querySelector('.btn-label');
+        if (lbl) lbl.textContent = etiqueta;
+        else btn.textContent = etiqueta;
+        btn.setAttribute('aria-pressed', state.vista === 'tarjetas' ? 'true' : 'false');
+    }
 }
 
 function renderizarVistaTarjetas(elementos, ctx) {
     const container = document.getElementById(ctx.containerId);
     if (!container) return;
     const cpmRef = _getCpmResult(ctx);
-
-    // Ensure WBS codes are set (safe inline version, no re-render)
-    elementos.forEach(e => {
-        if (!e.codigo) e.codigo = String(e.id).slice(-4);
-    });
 
     const critSet = new Set(cpmRef.criticalPath || []);
     const noEdts = elementos.filter(e => e.tipo !== 'edt');
@@ -1594,15 +1661,16 @@ function renderizarVistaTarjetas(elementos, ctx) {
         grupos[gId].items.push(e);
     });
 
-    // All EDTs sorted by depth then code
+    const codigoDe = (e) => e.codigo || (typeof obtenerCodigoElemento === 'function' ? obtenerCodigoElemento(e, elementos) : '') || '';
+
+    // All EDTs sorted by depth then WBS code
     const edtsOrdenados = [...elementos.filter(e => e.tipo === 'edt')].sort((a, b) => {
         const dA = calcularProfundidad(a.id, elementos);
         const dB = calcularProfundidad(b.id, elementos);
         if (dA !== dB) return dA - dB;
-        return (a.codigo || '').localeCompare(b.codigo || '');
+        return codigoDe(a).localeCompare(codigoDe(b), 'es', { numeric: true });
     });
 
-    // Build column order: ALL EDTs, then "sin-edt" if it has items
     const colOrder = [];
     edtsOrdenados.forEach(e => {
         if (!colOrder.includes(e.id)) colOrder.push(e.id);
@@ -1610,129 +1678,74 @@ function renderizarVistaTarjetas(elementos, ctx) {
     });
     if (grupos['sin-edt']) colOrder.push('sin-edt');
 
+    const fmt = (iso) => iso ? formatearFechaEspa(iso) : '—';
+    const etiquetaTipo = { actividad: 'Actividad', entregable: 'Entregable', hito: 'Hito' };
+
     let html = `<div class="tv-container"><div class="tv-grid">`;
 
     colOrder.forEach(gId => {
         const g = grupos[gId];
         if (!g || g.items.length === 0) return;
-        const edtNombre = gId === 'sin-edt' ? 'Sin EDT' : escapeHtml(g.nombre);
-        html += `<div class="tv-group-header">${edtNombre} <span class="tv-group-count">${g.items.length} elementos</span></div>`;
+        const nombreGrupo = String(g.nombre || '').replace(/^\s*\d+(?:\.\d+)*[.)]?\s+/, '') || g.nombre;
+        const edtNombre = gId === 'sin-edt' ? 'Sin EDT' : escapeHtml(nombreGrupo);
+        const n = g.items.length;
+        html += `<div class="tv-group-header">
+            <span class="tv-group-title">${edtNombre}</span>
+            <span class="tv-group-count">${n} ${n === 1 ? 'elemento' : 'elementos'}</span>
+        </div>`;
         g.items.forEach(elem => {
-            const icono = getTipoIcono(elem.tipo);
             const esCritico = critSet.has(elem.id);
-            const pct = elem.progreso || 0;
-            const critOrder = esCritico ? (cpmRef.criticalPath.indexOf(elem.id) + 1) : 0;
-            html += `<div class="tv-card ${esCritico ? 'tv-card-critical' : ''}" data-id="${elem.id}" data-type="${elem.tipo}">
-                ${critOrder > 0 ? `<div class="tv-card-order">${critOrder}</div>` : ''}
-                <div class="tv-card-header">
-                    <span class="tv-card-icon">${icono}</span>
-                    <span class="tv-card-type">${elem.tipo}</span>
+            const pct = Math.max(0, Math.min(100, Math.round(elem.progreso || 0)));
+            const nombreVisible = String(elem.nombre || '').replace(/^\s*\d+(?:\.\d+)*[.)]?\s+/, '') || elem.nombre;
+            const fin = elem.duracion > 0
+                ? (elem.tipo === 'edt' ? sumarDias(elem.inicio, elem.duracion) : sumarDiasHabiles(elem.inicio, elem.duracion))
+                : (elem.fin || elem.inicio || '');
+            const durTxt = elem.tipo === 'hito'
+                ? 'Hito'
+                : (elem.duracion > 0 ? `${elem.duracion}d` : '—');
+            const fechas = elem.inicio ? `${fmt(elem.inicio)} → ${fmt(fin)}` : 'Sin fechas';
+            // Sin aria-label: el contenido visible es el nombre accesible y
+            // evita label-content-name-mismatch en lectores de pantalla.
+            html += `<article class="tv-card${esCritico ? ' tv-card-critical' : ''}" data-id="${elem.id}" data-type="${elem.tipo}" tabindex="0" role="button">
+                <div class="tv-card-head">
+                    <span class="tv-dot tv-dot--${elem.tipo}" aria-hidden="true"></span>
+                    <span class="tv-card-type">${etiquetaTipo[elem.tipo] || elem.tipo}</span>
                     ${esCritico ? '<span class="tv-badge-crit">CP</span>' : ''}
-                    <span class="tv-card-id">${elem.codigo || ''}</span>
+                    <span class="tv-card-id">${escapeHtml(codigoDe(elem))}</span>
                 </div>
-                <div class="tv-card-name">${escapeHtml(elem.nombre)}</div>
-                <div class="tv-card-dates">${elem.inicio ? formatearFechaEspa(elem.inicio) : '—'}${elem.duracion > 0 ? ' · ' + (elem.tipoDuracion === 'horas' && elem.duracionHoras ? elem.duracionHoras + 'h' : elem.duracion + 'd') : ''}</div>
-                <div class="tv-card-bar"><div class="tv-card-bar-fill" style="width:${pct}%"></div></div>
-                <div class="tv-card-footer">
-                    <span class="tv-card-resp">${escapeHtml(elem.responsable || '—')}</span>
+                <h4 class="tv-card-name">${escapeHtml(nombreVisible)}</h4>
+                <div class="tv-card-dates">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <span>${fechas}</span>
+                    <span class="tv-card-dur">${durTxt}</span>
+                </div>
+                <div class="tv-card-progress">
+                    <div class="tv-card-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Avance">
+                        <div class="tv-card-bar-fill" style="width:${pct}%"></div>
+                    </div>
                     <span class="tv-card-pct">${pct}%</span>
                 </div>
-                <div class="tv-card-meta">
-                    <span class="tv-card-recurso">${elem.recursoAsignado ? escapeHtml(elem.recursoAsignado.nombre) + (elem.recursoAsignado.rol ? ' (' + escapeHtml(elem.recursoAsignado.rol) + ')' : '') : '—'}</span>
-                    <span class="tv-card-coste">${elem.costeEstimado ? elem.costeEstimado + ' ' + (elem.recursoAsignado?.moneda || '€') : ''}</span>
+                <div class="tv-card-foot">
+                    <span class="tv-card-resp">${escapeHtml(elem.responsable || 'Sin responsable')}</span>
+                    ${elem.costeEstimado ? `<span class="tv-card-coste">${elem.costeEstimado} ${elem.recursoAsignado?.moneda || '€'}</span>` : ''}
                 </div>
-            </div>`;
+            </article>`;
         });
     });
     html += `</div></div>`;
 
+    container.classList.add('crono-main--cards');
     container.innerHTML = html;
 
-    // ── Dependency arrows overlay (simplified for grid) ──
-    const gridEl = container.querySelector('.tv-grid');
-    if (gridEl) {
-        if (gridEl._tvResizeObserver) gridEl._tvResizeObserver.disconnect();
-        const dibujarFlechasTarjetas = () => {
-            const existingSvg = gridEl.querySelector('.tv-arrows-svg');
-            if (existingSvg) existingSvg.remove();
-            const gridRect = gridEl.getBoundingClientRect();
-            const cards = container.querySelectorAll('.tv-card');
-            const cardMap = {};
-            cards.forEach(c => {
-                const id = parseInt(c.dataset.id);
-                if (!isNaN(id)) cardMap[id] = c;
-            });
-            const taskIds = new Set(noEdts.map(e => e.id));
-            const links = [];
-            noEdts.forEach(elem => {
-                (elem.predecesores || []).forEach(p => {
-                    if (!taskIds.has(p.id)) return;
-                    const fromCard = cardMap[p.id];
-                    const toCard = cardMap[elem.id];
-                    if (fromCard && toCard) links.push({ from: fromCard, to: toCard, tipo: p.tipo || 'FS', crit: critSet.has(elem.id) && critSet.has(p.id) });
-                });
-            });
-            if (!links.length) return;
-
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('class', 'tv-arrows-svg');
-            svg.style.position = 'absolute';
-            svg.style.top = '0';
-            svg.style.left = '0';
-            svg.style.width = '100%';
-            svg.style.height = '100%';
-            svg.style.pointerEvents = 'none';
-            svg.style.overflow = 'visible';
-            svg.style.zIndex = '0';
-            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-            const _tvDark = document.documentElement.getAttribute('data-theme') !== 'light';
-            defs.innerHTML = `<marker id="tvArrowFS" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="${_tvDark ? '#ccc' : '#000'}"/></marker>
-                <marker id="tvArrowCrit" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#FF3B30"/></marker>`;
-            svg.appendChild(defs);
-
-            const linkData = links.map(l => {
-                const fr = l.from.getBoundingClientRect();
-                const tr = l.to.getBoundingClientRect();
-                const x1 = fr.right - gridRect.left;
-                const y1 = fr.top + fr.height / 2 - gridRect.top;
-                const x2 = tr.left - gridRect.left;
-                const y2 = tr.top + tr.height / 2 - gridRect.top;
-                return { x1, y1, x2, y2, ...l };
-            });
-
-            linkData.forEach(ld => {
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const mx = (ld.x1 + ld.x2) / 2;
-                path.setAttribute('d', `M ${ld.x1} ${ld.y1} C ${mx} ${ld.y1}, ${mx} ${ld.y2}, ${ld.x2} ${ld.y2}`);
-                path.setAttribute('fill', 'none');
-                const _tvColor = _tvDark ? '#999' : '#000';
-                path.setAttribute('stroke', ld.crit ? '#FF3B30' : _tvColor);
-                path.setAttribute('stroke-width', ld.crit ? '1.5' : '1');
-                path.setAttribute('marker-end', ld.crit ? 'url(#tvArrowCrit)' : 'url(#tvArrowFS)');
-                svg.appendChild(path);
-
-                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('cx', ld.x1);
-                circle.setAttribute('cy', ld.y1);
-                circle.setAttribute('r', '3');
-                circle.setAttribute('fill', ld.crit ? '#FF3B30' : _tvColor);
-                circle.setAttribute('stroke', '#fff');
-                circle.setAttribute('stroke-width', '1');
-                svg.appendChild(circle);
-            });
-
-            gridEl.style.position = 'relative';
-            gridEl.appendChild(svg);
-        };
-        dibujarFlechasTarjetas();
-        gridEl._tvResizeObserver = new ResizeObserver(() => requestAnimationFrame(dibujarFlechasTarjetas));
-        gridEl._tvResizeObserver.observe(gridEl);
-    }
     container.querySelectorAll('.tv-card').forEach(card => {
-        card.addEventListener('click', function() {
+        const activar = function() {
             const id = parseInt(this.dataset.id);
             const elem = elementos.find(x => x.id === id);
             if (elem) mostrarDetalleElemento(elem);
+        };
+        card.addEventListener('click', activar);
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activar.call(this); }
         });
         card.addEventListener('dblclick', function() {
             editarElementoGantt(parseInt(this.dataset.id));
@@ -1744,8 +1757,6 @@ function renderizarVistaTarjetas(elementos, ctx) {
         });
     });
 }
-
-// ─── CRUD: AÑADIR / EDITAR / ELIMINAR ──────────────────────────
 
 function abrirModalNuevoElementoGantt(parentId) {
     const hoy = new Date().toISOString().split('T')[0];
@@ -1832,7 +1843,7 @@ function guardarNuevoElementoGantt() {
             if (r) {
                 const hTot = tipoDuracion === 'horas' ? duracion : (duracion * horasDia);
                 costeEstimado = hTot * r.costeHora;
-                recursoInfo = { id: r.id, nombre: r.nombre, rol: r.rol, costeHora: r.costeHora, moneda: r.moneda, horasDia };
+                recursoInfo = { id: r.id, nombre: r.nombre, rol: r.rol, costeHora: r.costeHora, moneda: r.moneda, horasDia, horasMes: r.horasMes };
             }
         }
         const nuevo = {
@@ -1848,6 +1859,7 @@ function guardarNuevoElementoGantt() {
         console.debug('[gantt] NUEVO elemento añadido:', nuevo.nombre, '| tipo:', nuevo.tipo, '| inicio:', JSON.stringify(nuevo.inicio), '| dependeDe:', nuevo.dependeDe, '| duracion:', nuevo.duracion);
         autoScheduler(proyecto[cronogramaActivo.dataKey]);
         recalcularEdtAuto();
+        if (typeof registrarBitacora === 'function') registrarBitacora('elemento', nuevo.id, 'crear', null, { id: nuevo.id, nombre: nuevo.nombre, tipo: nuevo.tipo });
         guardarProyecto();
         renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
         reordenarNumeracionElementos(proyecto[cronogramaActivo.dataKey], _ctxCronograma(cronogramaActivo.panelKey));
@@ -1898,6 +1910,12 @@ function editarElementoGantt(id) {
         </div>
         <div id="editMsgAuto" style="display:${elem.tipo==='edt'?'block':'none'};font-size:12px;color:#666;background:rgba(0,0,0,0.05);padding:8px;border-radius:6px;margin-bottom:8px"> Fechas y duración calculadas automáticamente según las actividades hijas</div>
         <div class="form-group"><label>Progreso %</label><input type="number" id="editProgreso" value="${elem.progreso || 0}" min="0" max="100"></div>
+        <div class="form-row">
+            <div class="form-group u-flex-1"><label>Coste real (${escapeHtml(proyecto.monedaBase || 'EUR')})</label>
+                <input type="number" id="editCosteReal" min="0" step="0.01" value="${Number(elem.costeReal) || 0}"></div>
+            <div class="form-group u-flex-1"><label>Fecha del gasto</label>
+                <input type="date" id="editFechaGasto" value="${escapeHtml(elem.fechaGasto || elem.finReal || '')}"></div>
+        </div>
         <div class="form-row" id="editHorasDiaGroup" style="display:${(elem.tipoDuracion||'dias')==='dias'?'none':'flex'}">
             <div class="form-group u-flex-1"><label> Horas/día</label><input type="number" id="editHorasDia" class="u-select-glass" value="${elem.horasDia || 8}"></div>
         </div>
@@ -1918,6 +1936,7 @@ function guardarEdicionElementoGantt() {
     const id = parseInt(document.getElementById('editId').value);
     const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === id);
     if (!elem) return;
+    const antes = JSON.parse(JSON.stringify(elem));
     elem.tipo = document.getElementById('editTipo').value;
     elem.nombre = document.getElementById('editNombre').value;
     elem.inicio = document.getElementById('editInicio').value;
@@ -1936,6 +1955,8 @@ function guardarEdicionElementoGantt() {
         elem.duracionHoras = 0;
     }
     elem.progreso = parseInt(document.getElementById('editProgreso').value) || 0;
+    elem.costeReal = Math.max(0, parseFloat(document.getElementById('editCosteReal')?.value) || 0);
+    elem.fechaGasto = document.getElementById('editFechaGasto')?.value || null;
     elem.responsable = document.getElementById('editResponsable').value || '';
     const recursoId = document.getElementById('editRecursoId').value;
     if (recursoId && proyecto.equipo) {
@@ -1943,14 +1964,20 @@ function guardarEdicionElementoGantt() {
         if (r) {
             const hTot = elem.tipoDuracion === 'horas' ? (elem.duracionHoras || elem.duracion * (elem.horasDia || 8)) : elem.duracion * (elem.horasDia || 8);
             elem.costeEstimado = hTot * r.costeHora;
-            elem.recursoAsignado = { id: r.id, nombre: r.nombre, rol: r.rol, costeHora: r.costeHora, moneda: r.moneda, horasDia: elem.horasDia };
+            elem.recursoAsignado = { id: r.id, nombre: r.nombre, rol: r.rol, costeHora: r.costeHora, moneda: r.moneda, horasDia: elem.horasDia, horasMes: r.horasMes };
         }
     } else {
         elem.recursoAsignado = null;
         elem.costeEstimado = 0;
     }
-    elem.dependeDe = parseInt(document.getElementById('editDependeDe').value) || null;
-    autoScheduler(proyecto[cronogramaActivo.dataKey]);
+    const nuevoDependeDe = parseInt(document.getElementById('editDependeDe').value) || null;
+    if (nuevoDependeDe && typeof creariaCicloWBS === 'function' &&
+        creariaCicloWBS(proyecto[cronogramaActivo.dataKey] || [], id, nuevoDependeDe, 'dependeDe')) {
+        mostrarToast(' Jerarquía rechazada: crearía un ciclo EDT', 'error');
+        return;
+    }
+    elem.dependeDe = nuevoDependeDe;
+    if (typeof registrarBitacora === 'function') registrarBitacora('elemento', elem.id, 'editar', antes, { id: elem.id, nombre: elem.nombre, tipo: elem.tipo, horasMes: elem.recursoAsignado?.horasMes });
     recalcularEdtAuto();
     guardarProyecto();
     renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
@@ -1969,12 +1996,17 @@ function guardarEdicionElementoGantt() {
 
 function eliminarElementoGantt(id) {
     if (confirm('¿Eliminar este elemento?')) {
-        proyecto[cronogramaActivo.dataKey] = (proyecto[cronogramaActivo.dataKey] || []).filter(e => e.id !== id);
+        const lista = proyecto[cronogramaActivo.dataKey] || [];
+        const eliminado = lista.find(e => String(e.id) === String(id));
+        proyecto[cronogramaActivo.dataKey] = lista.filter(e => String(e.id) !== String(id));
         proyecto[cronogramaActivo.dataKey].forEach(e => {
-            if (e.predecesores) e.predecesores = e.predecesores.filter(p => p.id !== id);
+            if (e.predecesores) e.predecesores = e.predecesores.filter(p => String(p.id) !== String(id));
+            if (String(e.dependeDe) === String(id)) e.dependeDe = null;
         });
         autoScheduler(proyecto[cronogramaActivo.dataKey]);
         recalcularEdtAuto();
+        reordenarNumeracionElementos(proyecto[cronogramaActivo.dataKey], _ctxCronograma(cronogramaActivo.panelKey));
+        if (typeof registrarBitacora === 'function') registrarBitacora('elemento', id, 'eliminar', eliminado || null, null);
         guardarProyecto();
         renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
         mostrarToast(' Eliminado', 'success');
@@ -2001,15 +2033,24 @@ function aplicarEdicionMultiple(ids) {
     const r = document.getElementById('multiResponsable')?.value;
     const d = document.getElementById('multiDuracion')?.value;
     const des = parseInt(document.getElementById('multiDesplazar')?.value) || 0;
+    const antes = {};
     ids.forEach(id => {
         const e = (proyecto[cronogramaActivo.dataKey] || []).find(x => x.id === id);
         if (!e) return;
+        antes[id] = JSON.parse(JSON.stringify(e));
         if (r) e.responsable = r;
         if (d && !isNaN(parseInt(d))) e.duracion = parseInt(d);
         if (des && e.inicio) e.inicio = sumarDias(e.inicio, des);
     });
     autoScheduler(proyecto[cronogramaActivo.dataKey]);
     recalcularEdtAuto();
+    reordenarNumeracionElementos(proyecto[cronogramaActivo.dataKey], _ctxCronograma(cronogramaActivo.panelKey));
+    ids.forEach(id => {
+        if (!antes[id]) return;
+        const e = (proyecto[cronogramaActivo.dataKey] || []).find(x => String(x.id) === String(id));
+        const despues = clonarParaBitacora(e);
+        if (typeof registrarBitacora === 'function') registrarBitacora('elemento', id, 'editar', antes[id], despues);
+    });
     guardarProyecto();
     renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     cerrarModalGeneric();
@@ -2407,17 +2448,11 @@ function procesarCSV(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
         const raw = e.target.result;
-        // Detectar delimitador
-        const firstLine = raw.split('\n')[0];
-        const comma = (firstLine.match(/,/g) || []).length;
-        const semicolon = (firstLine.match(/;/g) || []).length;
-        const tab = (firstLine.match(/\t/g) || []).length;
-        let sep = ',';
-        if (semicolon > comma && semicolon > tab) sep = ';';
-        if (tab > comma && tab > semicolon) sep = '\t';
-        const lines = raw.split(/\r?\n/).filter(l => l.trim());
-        if (lines.length < 1) { mostrarToast('CSV vacío o sin datos', 'error'); return; }
-        const headers = lines[0].split(sep).map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+        const lineas = (typeof parsearCSV === 'function')
+            ? parsearCSV(raw)
+            : String(raw).split(/\r?\n/).filter(l => l.trim()).map(l => l.split(','));
+        if (lineas.length < 1) { mostrarToast('CSV vacío o sin datos', 'error'); return; }
+        const headers = lineas[0].map(h => h.trim().toLowerCase());
         // Mapeo genérico de columnas
         let colMap = {};
         const namePatterns = [/^(id|wbs|código|codigo|code|task\s?id|orden|order|nº|n°|no|num|numero|número|item|secuencia|sec|posición|posicion)$/i, /^(name|nombre|task\s?name|actividad|activity|tarea)$/i, /^(duration|duración|duracion|dur|work)$/i, /^(start|inicio|start\s?date|begin|comienzo)$/i, /^(finish|fin|end|end\s?date|final|due)$/i, /^(predecessors|predecesores|predecesoras|dependencies|depends|pred|predecesor)$/i, /^(resources|recursos|resource\s?names|asignado|responsible|responsable)$/i, /^(type|tipo|kind)$/i, /^(progress|progreso|%\s?complete|pct|avance)$/i, /^(status|estado)$/i];
@@ -2431,13 +2466,10 @@ function procesarCSV(file) {
         let rows;
         if (colMap.nombre === undefined) {
             colMap = { id: 0, nombre: 1, duracion: 2, inicio: 3, fin: 4 };
-            rows = lines.map(l => l.split(sep).map(v => v.replace(/^"|"$/g, '').trim()));
+            rows = lineas.slice(1);
         } else {
             rows = [];
-            for (let i = 1; i < lines.length; i++) {
-                const vals = lines[i].split(sep).map(v => v.replace(/^"|"$/g, '').trim());
-                rows.push(vals);
-            }
+            rows = lineas.slice(1);
         }
         if (!rows.length) { mostrarToast('Sin datos', 'error'); return; }
 
@@ -2840,12 +2872,15 @@ function editarFechasReales(id) {
 function guardarFechasReales(id) {
     const elem = (proyecto[cronogramaActivo.dataKey] || []).find(e => e.id === id);
     if (!elem) return;
+    const antes = JSON.parse(JSON.stringify(elem));
     elem.inicioReal = document.getElementById('realInicio').value || null;
     elem.finReal = document.getElementById('realFin').value || null;
     elem.progreso = parseInt(document.getElementById('realProgreso').value);
     if (elem.inicioReal && elem.finReal) {
         elem.duracionReal = Math.ceil((parseLocalDate(elem.finReal) - parseLocalDate(elem.inicioReal)) / 86400000);
     }
+    const despues = clonarParaBitacora(elem);
+    if (typeof registrarBitacora === 'function') registrarBitacora('elemento', id, 'editar', antes, despues);
     guardarProyecto();
     renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
     cerrarModalGeneric();
@@ -2980,13 +3015,34 @@ function guardarLineaBase() {
         return;
     }
     const elementos = (proyecto[cronogramaActivo.dataKey] || []).map(e => JSON.parse(JSON.stringify(e)));
+    if (typeof aplicarCodigosWBS === 'function') aplicarCodigosWBS(elementos);
+    const scopeBaseline = typeof crearScopeBaseline === 'function'
+        ? crearScopeBaseline(elementos, (proyecto.cambios || []).filter(c => c.estado === 'Aprobado' || c.estado === 'Implementado'))
+        : null;
     const lineas = _getLineasBase();
-    lineas.push({
+    const lineaBase = {
         id: Date.now(),
         nombre,
         fecha: formatLocalDate(new Date()),
-        elementos
-    });
+        dataKey: cronogramaActivo.dataKey,
+        panelKey: cronogramaActivo.panelKey,
+        elementos,
+        scopeBaseline
+    };
+    const vigentes = lineas.filter(l => !l.superada && l.dataKey === lineaBase.dataKey)
+        .sort((a, b) => Number(b.id) - Number(a.id));
+    const anterior = vigentes[0] || null;
+    if (anterior) {
+        vigentes.forEach(lb => { lb.superada = true; });
+        lineaBase.predecesoraId = anterior.id;
+        if (anterior.scopeBaseline) lineaBase.scopeBaselineAnterior = JSON.parse(JSON.stringify(anterior.scopeBaseline));
+        if (typeof compararScopeBaseline === 'function' && anterior.scopeBaseline) {
+            lineaBase.diffAlcance = compararSnapshotsScope(elementos, anterior.scopeBaseline);
+        }
+    }
+    if (!lineaBase.diffAlcance) lineaBase.diffAlcance = { altas: [], bajas: [], cambios: [], total: 0 };
+    lineas.push(lineaBase);
+    if (typeof registrarBitacora === 'function') registrarBitacora('lineaBase', lineaBase.id, 'crear', null, { id: lineaBase.id, nombre, scopeBaseline });
     guardarProyecto();
     abrirModalLineaBase();
     mostrarToast(` Línea base "${nombre}" guardada`, 'success');
@@ -3004,7 +3060,9 @@ function eliminarLineaBase(id) {
     const lb = _getLineasBase().find(x => x.id === id);
     if (!lb) return;
     if (!confirm(` ¿Eliminar la línea base "${lb.nombre}"?`)) return;
+    const antes = JSON.parse(JSON.stringify(lb));
     proyecto.lineasBase = _getLineasBase().filter(x => x.id !== id);
+    if (typeof registrarBitacora === 'function') registrarBitacora('lineaBase', id, 'eliminar', antes, null);
     const state = _getState(_ctxCronograma(cronogramaActivo.panelKey));
     if (state.lineaBaseVisible === id) state.lineaBaseVisible = null;
     guardarProyecto();
@@ -3036,7 +3094,8 @@ function compararLineaBase(id) {
     if (existing) existing.remove();
 
     const baseList = lb.elementos || [];
-    const actualList = proyecto[cronogramaActivo.dataKey] || [];
+    const actualList = (proyecto[lb.dataKey || cronogramaActivo.dataKey] || []).map(e => JSON.parse(JSON.stringify(e)));
+    if (typeof aplicarCodigosWBS === 'function') aplicarCodigosWBS(actualList);
     const baseById = new Map(baseList.map(e => [e.id, e]));
     const actualById = new Map(actualList.map(e => [e.id, e]));
 
@@ -3054,19 +3113,23 @@ function compararLineaBase(id) {
             filas.push({ nombre, tipo, icono, eliminada: true, html: `
                 <tr style="opacity:0.6">
                     <td>${icono} ${escapeHtml(nombre)}</td>
+                    <td>${escapeHtml(be.codigo || '—')}</td>
                     <td>${be.inicio ? formatearFechaEspa(be.inicio) : '—'}</td>
-                    <td colspan="2" style="color:#E53935;font-weight:600">Eliminada del cronograma</td>
+                    <td colspan="3" style="color:#E53935;font-weight:600">Eliminada del cronograma</td>
                     <td>${finBase ? formatearFechaEspa(finBase) : '—'}</td>
-                    <td colspan="2"><span style="color:#E53935;font-weight:600">—</span></td>
+                    <td colspan="3"><span style="color:#E53935;font-weight:600">—</span></td>
                 </tr>` });
             return;
         }
         const durBase = be.duracion || 0;
         const durAct = ae.duracion || 0;
         const dDur = durAct - durBase;
-        filas.push({ nombre, tipo, html: `
+        const hayRetraso = dIni > 0 || dFin > 0;
+        const hayAdelanto = !hayRetraso && (dIni < 0 || dFin < 0);
+        filas.push({ nombre, tipo, retraso: hayRetraso, adelanto: hayAdelanto, html: `
             <tr>
                 <td>${icono} ${escapeHtml(nombre)}</td>
+                <td>${escapeHtml(be.codigo || '—')}${ae.codigo && ae.codigo !== be.codigo ? ` → ${escapeHtml(ae.codigo)}` : ''}</td>
                 <td>${be.inicio ? formatearFechaEspa(be.inicio) : '—'}</td>
                 <td>${ae.inicio ? formatearFechaEspa(ae.inicio) : '—'}</td>
                 <td>${_fmtDesvio(dIni)}</td>
@@ -3081,7 +3144,8 @@ function compararLineaBase(id) {
             filas.push({ nombre: ae.nombre, nueva: true, html: `
                 <tr style="opacity:0.85">
                     <td>${getTipoIcono(ae.tipo)} ${escapeHtml(ae.nombre)}</td>
-                    <td colspan="2" style="color:#00A859;font-weight:600">Nueva tarea</td>
+                    <td>${escapeHtml(ae.codigo || '—')}</td>
+                    <td colspan="3" style="color:#00A859;font-weight:600">Nueva tarea</td>
                     <td>${_fmtDesvio(null)}</td>
                     <td>—</td>
                     <td>${ae.inicio ? formatearFechaEspa(ae.inicio) : '—'}</td>
@@ -3091,12 +3155,16 @@ function compararLineaBase(id) {
         }
     });
 
-    const retrasadas = filas.filter(f => !f.eliminada && !f.nueva && f.html.includes('retraso')).length;
-    const adelantadas = filas.filter(f => f.html.includes('adelanto')).length;
+    const retrasadas = filas.filter(f => !f.eliminada && !f.nueva && f.retraso).length;
+    const adelantadas = filas.filter(f => !f.eliminada && !f.nueva && f.adelanto).length;
+    const diffAlcance = (typeof compararScopeBaseline === 'function' && lb.scopeBaseline)
+        ? compararSnapshotsScope(actualList, lb.scopeBaseline)
+        : { altas: [], bajas: [], cambios: [], total: 0 };
     const resumen = `<div style="display:flex;gap:16px;font-size:12px;margin-bottom:10px;flex-wrap:wrap">
         <span><strong>${filas.length}</strong> tareas comparadas</span>
         <span style="color:#E53935"><strong>${retrasadas}</strong> con retraso</span>
         <span style="color:#00A859"><strong>${adelantadas}</strong> adelantadas</span>
+        <span>Alcance: <strong>${diffAlcance.total}</strong> diferencias (${diffAlcance.altas.length} altas · ${diffAlcance.bajas.length} bajas · ${diffAlcance.cambios.length} cambios)</span>
         <span>Línea base: <strong>${escapeHtml(lb.nombre)}</strong> (${formatearFechaEspa(lb.fecha)})</span>
     </div>`;
 
@@ -3111,6 +3179,7 @@ function compararLineaBase(id) {
                 <table class="data-table" style="font-size:12px;width:100%;border-collapse:collapse">
                     <thead><tr>
                         <th style="text-align:left">Tarea</th>
+                        <th>Código WBS</th>
                         <th>Inicio base</th>
                         <th>Inicio act.</th>
                         <th>Desvío inicio</th>
@@ -3136,3 +3205,56 @@ function compararLineaBase(id) {
     document.body.appendChild(div);
     div.onclick = (e) => { if (e.target === div) cerrarModalGeneric(); };
 }
+
+
+// ─── CALENDARIO LABORAL CONFIGURABLE ──────────────────────────────────────
+function abrirModalCalendarioLaboral() {
+    let modal = document.getElementById('modalCalendarioLaboral');
+    const cal = (typeof proyecto !== 'undefined' && proyecto.calendario) || {};
+    const dias = Array.isArray(cal.diasNoLaborables) ? cal.diasNoLaborables : [0, 6];
+    const nombres = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalCalendarioLaboral';
+        modal.className = 'modal u-hidden';
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+        <div class="modal-content modal-md">
+            <div class="modal-header"><h3 id="tituloCalendario">Calendario laboral</h3><span class="close-modal" onclick="cerrarModalCalendarioLaboral()">&times;</span></div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+                <p style="font-size:13px;opacity:.7;margin:0;">Selecciona los días de la semana no laborables y lista los festivos (AAAA-MM-DD, uno por línea).</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">${nombres.map((n, i) => `<label style="font-size:12px;"><input type="checkbox" class="cal-dia" value="${i}" ${dias.includes(i) ? 'checked' : ''}> ${n}</label>`).join('')}</div>
+                <label for="calFestivos" style="font-size:12px;">Festivos</label>
+                <textarea id="calFestivos" rows="6" style="width:100%;padding:8px;" aria-label="Festivos, uno por línea">${(cal.festivos || []).join('\n')}</textarea>
+                <button class="btn btn-primary" onclick="guardarCalendarioLaboral()">Guardar calendario</button>
+            </div>
+        </div>`;
+    modal.style.display = 'flex';
+    modal.classList.remove('u-hidden');
+}
+
+function guardarCalendarioLaboral() {
+    const modal = document.getElementById('modalCalendarioLaboral');
+    if (!modal || typeof proyecto === 'undefined') return;
+    const dias = Array.from(modal.querySelectorAll('.cal-dia:checked')).map(c => Number(c.value));
+    const festivos = String(modal.querySelector('#calFestivos').value || '')
+        .split(/[\n,;]+/).map(f => f.trim()).filter(f => /^\d{4}-\d{2}-\d{2}$/.test(f));
+    proyecto.calendario = { diasNoLaborables: dias, festivos };
+    if (typeof guardarProyecto === 'function') guardarProyecto();
+    if (typeof registrarBitacoraSiExiste === 'function') registrarBitacoraSiExiste('calendario', 'proyecto', 'actualizar', null, proyecto.calendario);
+    cerrarModalCalendarioLaboral();
+    if (typeof mostrarToast === 'function') mostrarToast('Calendario laboral actualizado', 'success');
+    if (typeof renderizarCronograma === 'function') renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
+}
+
+function cerrarModalCalendarioLaboral() {
+    const modal = document.getElementById('modalCalendarioLaboral');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.classList.add('u-hidden');
+}
+
+window.abrirModalCalendarioLaboral = abrirModalCalendarioLaboral;
+window.cerrarModalCalendarioLaboral = cerrarModalCalendarioLaboral;
+window.guardarCalendarioLaboral = guardarCalendarioLaboral;

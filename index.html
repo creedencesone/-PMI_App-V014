@@ -8,11 +8,21 @@
     <meta name="apple-mobile-web-app-title" content="PMI Mind">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
     <title>PMI Mind - Iniciar Sesión</title>
-    <script src="auth.js"></script>
-    <script src="js/services/DataService.js"></script>
+    <script src="js/vendor/pbkdf2.js?v=20261120e"></script>
+    <script src="auth.js?v=20261120e"></script>
+    <script src="js/services/DataService.js?v=20261117a"></script>
+    <script defer src="js/core/keyboard-a11y.js?v=20261120e"></script>
+    <script defer src="js/core/modal-a11y.js?v=20261120e"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        @font-face {
+            font-family: 'Inter';
+            font-style: normal;
+            font-weight: 100 900;
+            font-display: swap;
+            src: url('/fonts/InterVariable.woff2') format('woff2');
+        }
         * {
             margin: 0;
             padding: 0;
@@ -269,11 +279,11 @@
         <div id="loginFormWrap" class="login-form-wrap">
             <div class="form-group">
                 <label><i data-feather="mail" class="nav-feather"></i> Correo electrónico</label>
-                <input type="email" id="loginEmail" placeholder="ejemplo@empresa.com" value="admin@pmi.app">
+                <input type="email" id="loginEmail" placeholder="ejemplo@empresa.com">
             </div>
             <div class="form-group">
                 <label><i data-feather="key" class="nav-feather"></i> Contraseña</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" value="admin123" onkeydown="if(event.key==='Enter') iniciarSesion()">
+                <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesion()">
             </div>
             <button class="btn-login" id="loginBtn" onclick="iniciarSesion()"><i data-feather="lock" class="nav-feather"></i> Iniciar Sesión</button>
         </div>
@@ -299,25 +309,25 @@
             <button class="btn-login" id="registerBtn" onclick="registrarUsuario()"><i data-feather="edit-3" class="nav-feather"></i> Crear Cuenta</button>
         </div>
 
-        <div class="demo-users">
+        <div class="demo-users" id="demoUsers">
             <p><i data-feather="lightbulb" class="nav-feather"></i> Usuarios de prueba (haz clic para rellenar)</p>
-            <div class="user-row" onclick="setUser('admin@pmi.app', 'admin123')">
+            <div class="user-row" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="setUser('admin@pmi.app', 'Admin!2026')">
                 <span><i data-feather="award" class="nav-feather"></i> admin@pmi.app</span>
                 <span class="badge badge-admin">Administrador</span>
             </div>
-            <div class="user-row" onclick="setUser('juan@proyecto.com', '123456')">
+            <div class="user-row" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="setUser('juan@proyecto.com', 'Demo!2026')">
                 <span><i data-feather="user" class="nav-feather"></i>‍<i data-feather="briefcase" class="nav-feather"></i> juan@proyecto.com</span>
                 <span class="badge badge-pm">Project Manager</span>
             </div>
-            <div class="user-row" onclick="setUser('maria@sponsor.com', '123456')">
+            <div class="user-row" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="setUser('maria@sponsor.com', 'Demo!2026')">
                 <span><i data-feather="home" class="nav-feather"></i> maria@sponsor.com</span>
                 <span class="badge badge-sponsor">Sponsor</span>
             </div>
-            <div class="user-row" onclick="setUser('carlos@equipo.com', '123456')">
+            <div class="user-row" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="setUser('carlos@equipo.com', 'Demo!2026')">
                 <span><i data-feather="users" class="nav-feather"></i> carlos@equipo.com</span>
                 <span class="badge badge-team">Equipo</span>
             </div>
-            <div class="user-row" onclick="setUser('cliente@empresa.com', '123456')">
+            <div class="user-row" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="setUser('cliente@empresa.com', 'Demo!2026')">
                 <span><i data-feather="handshake" class="nav-feather"></i> cliente@empresa.com</span>
                 <span class="badge badge-client">Cliente</span>
             </div>
@@ -334,21 +344,26 @@
         // ============================================
 
         const DEMO_USERS = [
-            { email: 'admin@pmi.com', password: '123456', nombre: 'Administrador', role: 'admin' },
-            { email: 'juan@proyecto.com', password: '123456', nombre: 'Juan Pérez', role: 'project_manager' },
-            { email: 'maria@sponsor.com', password: '123456', nombre: 'María González', role: 'viewer' },
-            { email: 'carlos@equipo.com', password: '123456', nombre: 'Carlos López', role: 'team_member' },
-            { email: 'cliente@empresa.com', password: '123456', nombre: 'Cliente XYZ', role: 'viewer' }
+            { email: 'admin@pmi.com', password: 'Admin!2026', nombre: 'Administrador', role: 'admin', hash: AuthSystem.SEED_HASHES['admin@pmi.com'] },
+            { email: 'juan@proyecto.com', password: 'Demo!2026', nombre: 'Juan Pérez', role: 'project_manager', hash: AuthSystem.SEED_HASHES['juan@proyecto.com'] },
+            { email: 'maria@sponsor.com', password: 'Demo!2026', nombre: 'María González', role: 'viewer', hash: AuthSystem.SEED_HASHES['maria@sponsor.com'] },
+            { email: 'carlos@equipo.com', password: 'Demo!2026', nombre: 'Carlos López', role: 'team_member', hash: AuthSystem.SEED_HASHES['carlos@equipo.com'] },
+            { email: 'cliente@empresa.com', password: 'Demo!2026', nombre: 'Cliente XYZ', role: 'viewer', hash: AuthSystem.SEED_HASHES['cliente@empresa.com'] }
         ];
 
         function registrarUsuariosDemo() {
-            DEMO_USERS.forEach(u => {
-                if (!AuthSystem.findUser(u.email)) {
-                    AuthSystem.register(u.email, u.password, u.nombre, '', '', u.role);
-                }
-            });
+            DEMO_USERS.forEach(u => AuthSystem.registrarCuentaDemo(u.email, u.password, u.nombre, u.role));
         }
-        registrarUsuariosDemo();
+        // Las credenciales demo sólo se exponen en desarrollo local; nunca en PROD.
+        const PMI_SHOW_DEMO_CREDENTIALS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/.test(location.hostname);
+        window.PMI_SHOW_DEMO_CREDENTIALS = PMI_SHOW_DEMO_CREDENTIALS;
+        if (PMI_SHOW_DEMO_CREDENTIALS) {
+            registrarUsuariosDemo();
+            document.getElementById('loginEmail').value = 'admin@pmi.app';
+            document.getElementById('loginPassword').value = 'Admin!2026';
+        } else {
+            document.getElementById('demoUsers')?.remove();
+        }
 
         // ============================================
         // TABS
@@ -372,8 +387,10 @@
         }
 
         function getRedirectUrl() {
-            var params = new URLSearchParams(window.location.search);
-            return params.get('redirect') || 'proyecto.html';
+            var permitidas = ['index.html', 'dashboard.html', 'proyecto.html'];
+            var destino = new URLSearchParams(window.location.search).get('redirect') || 'proyecto.html';
+            var ruta = destino.replace(/^.*[\\/]/, '');
+            return permitidas.indexOf(ruta) >= 0 ? ruta : 'proyecto.html';
         }
 
         function mostrarError(texto) {
@@ -405,8 +422,11 @@
                     let localUser = AuthSystem.findUser(email);
                     if (!localUser) {
                         AuthSystem.register(email, password, result.user.name || email, '', '', localRole);
-                        localUser = AuthSystem.findUser(email);
                     }
+                    // El registro público siempre crea team_member/viewer: sólo
+                    // un perfil remoto verificado puede promover a admin local.
+                    AuthSystem.sincronizarAdminRemotoVerificado(email);
+                    localUser = AuthSystem.findUser(email);
                     if (localUser) {
                         AuthSystem.login(email, password);
                     }
@@ -451,12 +471,12 @@
             btn.disabled = true;
             btn.textContent = ' Creando cuenta...';
 
-            DataService.register(name, email, password)
+            DataService.register(email, password, name)
                 .then(result => {
                     // Registro API exitoso — crear sesión local
                     let localUser = AuthSystem.findUser(email);
                     if (!localUser) {
-                        AuthSystem.register(email, password, name, '', '', 'project_manager');
+                        AuthSystem.register(email, password, name, '', '', 'team_member');
                     }
                     if (AuthSystem.findUser(email)) {
                         AuthSystem.login(email, password);
@@ -490,7 +510,8 @@
                         if (data.user) {
                             const email = data.user.email;
                             let localUser = AuthSystem.findUser(email);
-                            if (localUser) {
+                            // Un token en localStorage no basta: exige sesión local válida.
+                            if (localUser && AuthSystem.isAuthenticated()) {
                                 AuthSystem._currentUser = localUser;
                                 localStorage.setItem('pmi_sesion_v3', JSON.stringify({
                                     userId: localUser.id,
@@ -517,7 +538,9 @@
         })();
 
         console.log(' PMI Mind - Sistema de Autenticación unificado');
-        console.log(' Usuarios demo:', DEMO_USERS.map(u => `${u.role}: ${u.email}`).join(', '));
+        if (PMI_SHOW_DEMO_CREDENTIALS) {
+            console.log(' Usuarios demo:', DEMO_USERS.map(u => `${u.role}: ${u.email}`).join(', '));
+        }
 
         if ('serviceWorker' in navigator) {
             const _swHadController = !!navigator.serviceWorker.controller;

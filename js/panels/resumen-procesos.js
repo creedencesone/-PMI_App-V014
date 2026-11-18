@@ -1,10 +1,10 @@
 function actualizarResumenGastos() {
     if (!proyecto) return;
-    
+
     console.log("===  ACTUALIZANDO RESUMEN DE GASTOS ===");
     console.log("Moneda base del proyecto:", proyecto.monedaBase);
     console.log("Tipos de cambio disponibles:", tiposCambio);
-    
+
     // Inicializar acumuladores por categoría
     let gastos = {
         personal: 0,
@@ -15,9 +15,9 @@ function actualizarResumenGastos() {
         financieros: 0,
         otros: 0
     };
-    
+
     let desglose = [];
-    
+
     // Definición de nombres de categorías
     const nombresCategoriasLocal = {
         personal: tApp('chart_personal'),
@@ -28,18 +28,18 @@ function actualizarResumenGastos() {
         financieros: tApp('chart_financieros'),
         otros: tApp('chart_otros')
     };
-    
+
     // ========== GASTOS DE MATERIALES (VERSIÓN CORREGIDA) ==========
     console.log("\n--- MATERIALES ---");
     (proyecto.materiales || []).forEach(m => {
         // Calcular coste base
         const costeOriginal = m.cantidad * m.costeUnitario;
         const monedaMaterial = m.moneda;
-        
+
         // Obtener tasa de cambio
         let tasa = tiposCambio[monedaMaterial];
         let costeConvertido = 0;
-        
+
         if (tasa && tasa > 0) {
             costeConvertido = costeOriginal / tasa;
             console.log(` ${m.nombre}: ${costeOriginal} ${monedaMaterial} → ${costeConvertido.toFixed(2)} ${proyecto.monedaBase} (tasa: ${tasa})`);
@@ -48,7 +48,7 @@ function actualizarResumenGastos() {
             mostrarToast(` No hay tasa de cambio para ${monedaMaterial}. Actualiza los tipos de cambio.`, 'warning');
             costeConvertido = costeOriginal;
         }
-        
+
         // Coste de envío
         let costeEnvioOriginal = m.costeEnvio || 0;
         let costeEnvioConvertido = 0;
@@ -63,10 +63,10 @@ function actualizarResumenGastos() {
                 costeEnvioConvertido = costeEnvioOriginal;
             }
         }
-        
+
         const total = costeConvertido + costeEnvioConvertido;
         gastos.materiales += total;
-        
+
         desglose.push({
             categoria: " Materiales",
             subcategoria: m.incoterm || "Compra",
@@ -77,14 +77,14 @@ function actualizarResumenGastos() {
         });
     });
     console.log(` TOTAL MATERIALES: ${gastos.materiales.toFixed(2)} ${proyecto.monedaBase}\n`);
-    
+
     // ========== GASTOS DE SERVICIOS ==========
     console.log("--- SERVICIOS ---");
     (proyecto.servicios || []).forEach(s => {
         const costeOriginal = s.cantidad * s.costeUnitario * (1 + (s.impuesto || 0) / 100);
         const tasa = tiposCambio[s.moneda];
         let total = 0;
-        
+
         if (tasa && tasa > 0) {
             total = costeOriginal / tasa;
             console.log(` ${s.nombre}: ${costeOriginal} ${s.moneda} → ${total.toFixed(2)} ${proyecto.monedaBase}`);
@@ -92,7 +92,7 @@ function actualizarResumenGastos() {
             console.error(` ERROR: No hay tasa para ${s.moneda}`);
             total = costeOriginal;
         }
-        
+
         gastos.servicios += total;
         desglose.push({
             categoria: " Servicios",
@@ -102,14 +102,14 @@ function actualizarResumenGastos() {
             importe: total
         });
     });
-    
+
     // ========== GASTOS DE VIAJES ==========
     console.log("--- VIAJES ---");
     (proyecto.viajes || []).forEach(v => {
         const costeOriginal = (v.costeVuelos || 0) + (v.costeHotel || 0) + (v.costeComidas || 0) + (v.costeTraslados || 0);
         const tasa = tiposCambio[v.moneda];
         let total = 0;
-        
+
         if (tasa && tasa > 0) {
             total = costeOriginal / tasa;
             console.log(` ${v.nombre}: ${costeOriginal} ${v.moneda} → ${total.toFixed(2)} ${proyecto.monedaBase}`);
@@ -117,7 +117,7 @@ function actualizarResumenGastos() {
             console.error(` ERROR: No hay tasa para ${v.moneda}`);
             total = costeOriginal;
         }
-        
+
         gastos.viajes += total;
         desglose.push({
             categoria: " Viajes",
@@ -127,7 +127,7 @@ function actualizarResumenGastos() {
             importe: total
         });
     });
-    
+
     // ========== GASTOS DE LOGÍSTICA (Envios) ==========
     (proyecto.envios || []).forEach(e => {
         let total = convertirMoneda(e.costeTotalEnvio || 0, proyecto.monedaBase);
@@ -140,7 +140,7 @@ function actualizarResumenGastos() {
             importe: total
         });
     });
-    
+
     // ========== GASTOS FINANCIEROS ==========
     (proyecto.costesFinancierosExtra || []).forEach(c => {
         let total = c.tipo === 'porcentaje' ? (c.base || 0) * (c.tasa / 100) : c.tasa;
@@ -154,7 +154,7 @@ function actualizarResumenGastos() {
             importe: total
         });
     });
-    
+
     // ========== GASTOS DE TAREAS DEL GANTT ==========
     (proyecto.elementosGantt || []).forEach(tarea => {
         if (tarea.tipo !== 'hito' && tarea.recursoAsignado && tarea.costeEstimado > 0) {
@@ -169,12 +169,12 @@ function actualizarResumenGastos() {
             });
         }
     });
-    
+
     // Calcular total
     let totalGastos = Object.values(gastos).reduce((a, b) => a + b, 0);
     console.log(`\n TOTAL GENERAL GASTOS: ${totalGastos.toFixed(2)} ${proyecto.monedaBase}`);
     console.log("=== FIN RESUMEN GASTOS ===\n");
-    
+
     // Actualizar tarjetas de resumen
     document.getElementById('resumenTotalGastos').innerHTML = formatearMoneda(totalGastos);
     document.getElementById('resumenGastoPersonal').innerHTML = formatearMoneda(gastos.personal);
@@ -183,15 +183,15 @@ function actualizarResumenGastos() {
     document.getElementById('resumenGastoViajes').innerHTML = formatearMoneda(gastos.viajes);
     document.getElementById('resumenGastoLogistica').innerHTML = formatearMoneda(gastos.logistica);
     document.getElementById('resumenGastoFinancieros').innerHTML = formatearMoneda(gastos.financieros);
-    
+
     // Calcular porcentaje vs presupuesto
     let presupuesto = proyecto.acta?.presupuesto || proyecto.precioVenta || totalGastos;
     let porcentajePresupuesto = totalGastos > 0 ? (totalGastos / presupuesto) * 100 : 0;
     document.getElementById('resumenPorcentajePresupuesto').innerHTML = porcentajePresupuesto.toFixed(1) + '%';
-    
+
     // Ordenar desglose por importe (mayor a menor)
     desglose.sort((a, b) => b.importe - a.importe);
-    
+
     // Generar tabla de desglose
     let desgloseHtml = '';
     desglose.forEach(item => {
@@ -206,19 +206,19 @@ function actualizarResumenGastos() {
             <td class="u-color-success">${porcentaje.toFixed(1)}%</td>
         </tr>`;
     });
-    
+
     document.getElementById('desgloseGastosBody').innerHTML = desgloseHtml || '<tr><td colspan="6" class="u-text-center">No hay datos de gastos</td></tr>';
     document.getElementById('desgloseTotalGeneral').innerHTML = formatearMoneda(totalGastos);
-    
+
     // Generar gráfico de distribución
     const ctx = document.getElementById('distribucionGastosChart')?.getContext('2d');
     if (ctx) {
         if (distribucionGastosChart) distribucionGastosChart.destroy();
-        
+
         let categorias = [];
         let valores = [];
         let colores = [];
-        
+
         const coloresPorCategoria = {
             personal: '#007AFF',
             materiales: '#FF8C00',
@@ -228,7 +228,7 @@ function actualizarResumenGastos() {
             financieros: '#FFCC00',
             otros: '#5856D6'
         };
-        
+
         for (let [key, value] of Object.entries(gastos)) {
             if (value > 0) {
                 categorias.push(nombresCategoriasLocal[key] || key);
@@ -236,7 +236,7 @@ function actualizarResumenGastos() {
                 colores.push(coloresPorCategoria[key] || '#5856D6');
             }
         }
-        
+
         distribucionGastosChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -272,7 +272,7 @@ function actualizarResumenGastos() {
             }
         });
     }
-    
+
     // Generar análisis de gastos
     let categoriaMayor = '';
     let mayorValor = 0;
@@ -282,7 +282,7 @@ function actualizarResumenGastos() {
             categoriaMayor = nombresCategoriasLocal[key];
         }
     }
-    
+
     let analisisHtml = `
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
             <div style="background: rgba(0,122,255,0.15); padding: 12px; border-radius: 12px;">
@@ -303,10 +303,10 @@ function actualizarResumenGastos() {
             ${porcentajePresupuesto > 100 ? ' Se ha superado el presupuesto inicial.' : ' El proyecto está dentro del presupuesto.'}
         </div>
     `;
-    
+
     const analisisElement = document.getElementById('analisisGastosTexto');
     if (analisisElement) analisisElement.innerHTML = analisisHtml;
-    
+
     mostrarToast(" Resumen de gastos actualizado", 'success');
     // Guardar resumen de gastos para el dashboard
     proyecto.resumenGastos = {
@@ -319,9 +319,9 @@ guardarProyecto();
 
 function exportarResumenGastos() {
     if (!proyecto) return;
-    
+
     let csv = "Categoría,Subcategoría,Concepto,Mes,Importe (EUR),% del Total\n";
-    
+
     const filas = document.querySelectorAll('#desgloseGastosBody tr');
     filas.forEach(fila => {
         const celdas = fila.querySelectorAll('td');
@@ -329,7 +329,7 @@ function exportarResumenGastos() {
             csv += `"${celdas[0].innerText.replace(/</g, '&lt;')}","${celdas[1].innerText}","${celdas[2].innerText}","${celdas[3].innerText}","${celdas[4].innerText}","${celdas[5].innerText}"\n`;
         }
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -341,7 +341,7 @@ function exportarResumenGastos() {
     URL.revokeObjectURL(url);
     mostrarToast(" Resumen de gastos exportado a CSV", 'success');
 }
-        
+
         // ============================================
         // PROCESOS PMBOK
         // ============================================
@@ -369,7 +369,7 @@ function exportarResumenGastos() {
             const grupos = {};
             proyecto.procesos.forEach(p => { if (!grupos[p.grupo]) grupos[p.grupo] = []; grupos[p.grupo].push(p); });
 
-            const COLORS_FASES = {"Inicio":"#E54D42","Planificación":"#F59E0B","Ejecución":"#EAB308","Monitoreo y Control":"#10B981","Cierre":"#065F46"};
+            const COLORS_FASES = {"Inicio":"#FF8A80","Planificación":"#FCD34D","Ejecución":"#FDE047","Monitoreo y Control":"#6EE7B7","Cierre":"#34D399"};
          const ORDEN_FASES = ["Inicio","Planificación","Ejecución","Monitoreo y Control","Cierre"];
          const ordenGrupos = ORDEN_FASES;
 
@@ -400,7 +400,7 @@ function exportarResumenGastos() {
                     : '';
 
                 html += `
-                <div class="pmbok-col" style="--fase-color: ${faseColor}">
+                <div class="pmbok-col" data-fase="${grupo}" style="--fase-color: ${faseColor}">
                     <div class="pmbok-col-header">
                         <span class="pmbok-col-icon">${iconoFase}</span>
                         <span class="pmbok-col-title">${escapeHtml(grupo)}</span>
@@ -451,7 +451,7 @@ function exportarResumenGastos() {
             let p = proyecto.procesos.find(p => p.id === id);
             if (p) { p.completado = !p.completado; guardarProyecto(); renderizarProcesos(); calcularCashflow(); mostrarToast(`${p.nombre}: ${p.completado ? 'Completado' : 'Pendiente'}`, 'success'); }
         }
-        
+
         function resetearProcesos() {
             if (confirm(tApp('confirmar_resetear_procesos'))) {
                 proyecto.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
@@ -460,7 +460,7 @@ function exportarResumenGastos() {
                 mostrarToast(tApp('toast_procesos_reseteados'), 'success');
             }
         }
-        
+
         // ============================================
         // MATERIALES
         // ============================================

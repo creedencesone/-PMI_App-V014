@@ -3,8 +3,9 @@ let infChartVariacion = null;
 let infChartForecast = null;
 let infChartHitos = null;
 
-function calcularCosteAgileTotalInforme(proyecto) {
-    return (proyecto?.scrum?.historias || []).filter(h => h.sprintId).reduce((sum, h) => sum + convertirMoneda(h.costeEstimado || 0, proyecto?.monedaBase), 0);
+function calcularCosteAgileTotalInforme(proyectoParam) {
+    return (proyectoParam?.scrum?.historias || []).filter(h => h.sprintId).reduce((sum, h) =>
+        sum + convertirMoneda(h.costeEstimado || 0, (h.recursoAsignado && h.recursoAsignado.moneda) || h.moneda || proyectoParam?.monedaBase, proyectoParam?.monedaBase), 0);
 }
 
 function actualizarInformeCompleto() {
@@ -33,12 +34,16 @@ function actualizarInformeCompleto() {
     }, { min: null, max: null });
     if (!_fechas.min && proyecto.fechaInicio) _fechas.min = new Date(proyecto.fechaInicio);
     if (!_fechas.max && proyecto.fechaFinPlan) _fechas.max = new Date(proyecto.fechaFinPlan);
-    let costeTotal = (proyecto.elementosGantt || []).reduce((sum, e) => sum + (e.costeEstimado || 0), 0);
-    (proyecto.materiales || []).forEach(m => costeTotal += convertirMoneda(m.cantidad * m.costeUnitario, m.moneda));
-    (proyecto.servicios || []).forEach(s => costeTotal += convertirMoneda(s.cantidad * s.costeUnitario, s.moneda));
-    (proyecto.viajes || []).forEach(v => costeTotal += convertirMoneda((v.costeVuelos + v.costeHotel + v.costeComidas + v.costeTraslados), v.moneda));
+    const modeloEVM = typeof calcularModeloEVM === 'function' ? calcularModeloEVM(proyecto) : null;
+    let costeTotal = modeloEVM
+        ? modeloEVM.BAC
+        : ((typeof calcularCosteTotal === 'function')
+            ? calcularCosteTotal(proyecto.elementosGantt || [], proyecto.materiales || [], proyecto.servicios || [], proyecto.viajes || [], convertirMoneda, proyecto.monedaBase || 'EUR')
+            : (proyecto.elementosGantt || []).reduce((sum, e) => sum + (e.costeEstimado || 0), 0));
+    const precioVentaBase = typeof precioVentaEnBase === 'function' ? precioVentaEnBase(proyecto) : (proyecto.precioVenta || 0);
 
-    let BAC = proyecto.precioVenta || 0;
+    // BAC = coste presupuestado; la venta es ingreso, nunca presupuesto.
+    let BAC = costeTotal;
     let _pctTiempo = 1;
     if (_fechas.min && _fechas.max && _fechas.max > _fechas.min) {
         const _ahora = new Date();
@@ -46,17 +51,25 @@ function actualizarInformeCompleto() {
         const _transMs = _ahora - _fechas.min;
         _pctTiempo = Math.min(1, Math.max(0.01, _transMs / _totalMs));
     }
-    let AC = costeTotal * _pctTiempo;
     let elementosGantt = proyecto.elementosGantt || [];
     let metodologia = (proyecto?.metodologia?.tipo || 'cascada').toLowerCase();
     let esAgile = (metodologia === 'agile' || metodologia === 'mixto');
+
+    const fechaCorteInforme = new Date();
+    const sprintsParaACInforme = (esAgile && proyecto.scrum && Array.isArray(proyecto.scrum.sprints)) ? proyecto.scrum.sprints : [];
+    let AC = (typeof calcularDesgloseAC === 'function')
+        ? calcularDesgloseAC(costeTotal, proyecto.elementosGantt || [], fechaCorteInforme, proyecto.fechaInicio, {
+            fechaCorte: fechaCorteInforme, sprints: sprintsParaACInforme,
+            convertirMoneda, monedaBase: proyecto.monedaBase || 'EUR'
+        }).total
+        : costeTotal * _pctTiempo;
 
     let tieneDatosReales = elementosGantt.some(e => (e.progreso || 0) > 0 || e.finReal || e.inicioReal);
     if (esAgile && (proyecto.scrum?.sprints?.filter(s => s.estado === 'completado').length > 0)) {
         tieneDatosReales = true;
     }
 
-    const costeAgileTotal = esAgile ? calcularCosteAgileTotalInforme(proyecto) : 0;
+    const costeAgileTotal = modeloEVM ? modeloEVM.costeAgileReal : (esAgile ? calcularCosteAgileTotalInforme(proyecto) : 0);
 
     let desviacionDias = 0;
     let tareasConDesviacion = 0;
@@ -76,69 +89,55 @@ function actualizarInformeCompleto() {
     let riesgosMedios = riesgos.filter(r => r.nivel === 'Medio' || r.nivel === 'medio').length;
     let riesgoScore = (riesgosCriticos * 5) + (riesgosAltos * 3) + (riesgosMedios * 1);
 
-    let beneficio = BAC - costeTotal;
+    let beneficio = precioVentaBase - costeTotal;
     let saludFinanciera = 100;
-    if (BAC > 0) {
-        let margen = (beneficio / BAC) * 100;
+    if (precioVentaBase > 0) {
+        let margen = (beneficio / precioVentaBase) * 100;
         if (margen < 0) saludFinanciera = Math.max(0, 30 + margen);
         else if (margen < 10) saludFinanciera = 50 + (margen * 2);
         else saludFinanciera = Math.min(100, 70 + (margen - 10));
     }
     saludFinanciera = Math.min(100, Math.max(0, saludFinanciera));
 
-    let EV = 0, PV = 0, CPI = 1, SPI = 1, EAC = BAC;
-    let progresoGeneralVal = 0;
+    let EV = 0, PV = 0, CPI = 1, SPI = 1, EAC = null;
+    let progresoGeneralVal = (typeof calcularProgresoGeneral === 'function') ? calcularProgresoGeneral() : 0;
 
-    if (tieneDatosReales) {
+    if (modeloEVM) {
+        EV = modeloEVM.EV; PV = modeloEVM.PV; CPI = modeloEVM.CPI;
+        SPI = modeloEVM.SPI; EAC = modeloEVM.EAC;
+    } else if (tieneDatosReales) {
         if (esAgile && costeAgileTotal > 0) {
-            let velocityData = proyecto.scrum?.sprints?.filter(s => s.estado === 'completado' && s.velocity);
-            let velocidades = velocityData ? velocityData.map(s => s.velocity) : [];
-            let velocidadPromedioAgile = velocidades.length > 0 ? velocidades.reduce((a, b) => a + b, 0) / velocidades.length : 0;
+            let velocidadPromedioAgile = typeof calcularVelocidadEquipo === 'function'
+                ? calcularVelocidadEquipo(proyecto)
+                : (proyecto.velocidadEquipo || 0);
             let puntosBacklog = (proyecto.scrum?.historias || []).filter(h => h.sprintId).length || 1;
             let agileCPI = AC > 0 ? (costeAgileTotal / AC) : 1;
             let agileSPI = puntosBacklog > 0 ? velocidadPromedioAgile / puntosBacklog : 1;
             CPI = Math.min(2, Math.max(0, agileCPI));
             SPI = Math.min(2, Math.max(0, agileSPI));
-            EAC = CPI < 0.95 ? AC + (BAC - costeAgileTotal) / CPI : AC + (BAC - costeAgileTotal);
+            EAC = (typeof calcularEAC === 'function') ? calcularEAC(BAC, CPI) : (CPI > 0 ? BAC / CPI : null);
             EV = AC * CPI;
             PV = AC * SPI;
         } else {
-            let evAcumulado = 0;
-            let elemsParaEV = elementosGantt.filter(e => e.tipo !== 'edt');
-            if (elemsParaEV.length > 0 && BAC > 0) {
-                let pesoPorElemento = BAC / elemsParaEV.length;
-                elemsParaEV.forEach(e => {
-                    let progreso = e.progreso || 0;
-                    if (e.tipo === 'hito' && e.progreso === 100) progreso = 100;
-                    evAcumulado += pesoPorElemento * (progreso / 100);
-                });
-            }
-            EV = evAcumulado;
+            EV = (typeof calcularEV === 'function')
+                ? calcularEV(elementosGantt, convertirMoneda, proyecto.monedaBase || 'EUR')
+                : elementosGantt.filter(e => e.tipo !== 'edt').reduce((sum, e) => sum + (e.costeEstimado || 0) * (e.progreso || 0) / 100, 0);
             let fechaHoy = new Date();
             let fechaInicio = proyecto.fechaInicio ? new Date(proyecto.fechaInicio) : null;
             let fechaFinPlan = proyecto.fechaFinPlan ? new Date(proyecto.fechaFinPlan) : null;
             if (fechaInicio && fechaFinPlan && fechaInicio <= fechaHoy) {
                 let totalDuracion = (fechaFinPlan - fechaInicio) / (1000 * 60 * 60 * 24);
                 let diasTranscurridos = (fechaHoy - fechaInicio) / (1000 * 60 * 60 * 24);
-                let porcentajePlanificado = totalDuracion > 0 ? Math.min(100, Math.max(0, (diasTranscurridos / totalDuracion) * 100)) : 0;
-                PV = BAC * (porcentajePlanificado / 100);
+                PV = (typeof calcularPV === 'function')
+                    ? calcularPV(elementosGantt, fechaHoy, null, convertirMoneda, proyecto.monedaBase || 'EUR')
+                    : BAC * (totalDuracion > 0 ? Math.min(1, Math.max(0, diasTranscurridos / totalDuracion)) : 0);
             } else {
-                let actividades = elementosGantt.filter(e => e.tipo === 'actividad');
-                let entregables = elementosGantt.filter(e => e.tipo === 'entregable');
-                let hitos = elementosGantt.filter(e => e.tipo === 'hito');
-let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProcesosCompletados(proyecto) : (proyecto.procesos || []).filter(p => p.completado).length) / (typeof PROCESOS_PMBOK !== 'undefined' ? PROCESOS_PMBOK.length : 40) * 100;
-
-                let actProgreso = actividades.length > 0 ? actividades.reduce((s, e) => s + (e.progreso || 0), 0) / actividades.length : 0;
-                let entProgreso = entregables.length > 0 ? entregables.reduce((s, e) => s + (e.progreso || 0), 0) / entregables.length : 0;
-                let hitosCompletados = hitos.filter(e => e.progreso >= 100).length;
-                let hitoProgreso = hitos.length > 0 ? (hitosCompletados / hitos.length) * 100 : 0;
-                progresoGeneralVal = (actProgreso * 0.4) + (entProgreso * 0.3) + (procProgreso * 0.2) + (hitoProgreso * 0.1);
                 PV = BAC * (progresoGeneralVal / 100);
             }
             CPI = AC > 0 ? EV / AC : 1;
             SPI = PV > 0 ? EV / PV : 1;
-            EAC = CPI > 0 ? BAC / CPI : BAC;
-            EAC = Math.max(EAC, AC);
+            EAC = (typeof calcularEAC === 'function') ? calcularEAC(BAC, CPI) : (CPI > 0 ? BAC / CPI : null);
+            if (EAC !== null) EAC = Math.max(EAC, AC);
         }
     } else if ((typeof contarProcesosCompletados === 'function' ? contarProcesosCompletados(proyecto) : (proyecto.procesos || []).filter(p => p.completado).length) > 0 && BAC > 0) {
         const totalProcesos = (typeof PROCESOS_PMBOK !== 'undefined') ? PROCESOS_PMBOK.length : 40;
@@ -148,7 +147,7 @@ let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProc
         PV = BAC * progresoPorProcesos;
         CPI = AC > 0 ? EV / AC : 1;
         SPI = 1;
-        EAC = CPI > 0 ? BAC / CPI : BAC;
+        EAC = (typeof calcularEAC === 'function') ? calcularEAC(BAC, CPI) : (CPI > 0 ? BAC / CPI : null);
     }
     CPI = Math.min(2, Math.max(0, CPI));
     SPI = Math.min(2, Math.max(0, SPI));
@@ -159,30 +158,24 @@ let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProc
     let indiceDefectos = 0;
     let totalEntregables = elementosGantt.filter(e => e.tipo === 'entregable').length || 1;
     if (proyecto.defectos !== undefined) indiceDefectos = proyecto.defectos / totalEntregables;
-    let velocidadEquipo = esAgile ? (proyecto.velocidadEquipo || 0) : 0;
+    let velocidadEquipo = esAgile
+        ? (typeof calcularVelocidadEquipo === 'function' ? calcularVelocidadEquipo(proyecto) : (proyecto.velocidadEquipo || 0))
+        : 0;
     let huellaCarbono = proyecto.huellaCarbono || 0;
 
-    let saludGeneral = 0;
-    saludGeneral = (CPI / 2 * 15) + (SPI / 2 * 15) + ((beneficio > 0 ? Math.min(beneficio / (BAC || 1), 1) : 0) * 20) + ((1 - Math.min(indiceDefectos, 1)) * 10)
-        + (Math.min(velocidadEquipo || 0, 30) / 30 * 10) + (satisfaccion / 5 * 15) + ((1 - Math.min(huellaCarbono / 200, 1)) * 10) + (0 * 15);
-    saludGeneral = Math.min(100, Math.max(0, saludGeneral));
-
-    let actividades = elementosGantt.filter(e => e.tipo === 'actividad');
-    let entregables = elementosGantt.filter(e => e.tipo === 'entregable');
-    let hitos = elementosGantt.filter(e => e.tipo === 'hito');
-let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProcesosCompletados(proyecto) : (proyecto.procesos || []).filter(p => p.completado).length) / (typeof PROCESOS_PMBOK !== 'undefined' ? PROCESOS_PMBOK.length : 40) * 100;
-    let actProgreso = actividades.length > 0 ? actividades.reduce((s, e) => s + (e.progreso || 0), 0) / actividades.length : 0;
-    let entProgreso = entregables.length > 0 ? entregables.reduce((s, e) => s + (e.progreso || 0), 0) / entregables.length : 0;
-    let hitosCompletados = hitos.filter(e => e.progreso >= 100).length;
-    let hitoProgreso = hitos.length > 0 ? (hitosCompletados / hitos.length) * 100 : 0;
-    if (progresoGeneralVal === 0) {
-        progresoGeneralVal = (actProgreso * 0.4) + (entProgreso * 0.3) + (procProgreso * 0.2) + (hitoProgreso * 0.1);
-    }
-    saludGeneral += (progresoGeneralVal / 100 * 15);
-    saludGeneral = Math.min(100, Math.max(0, saludGeneral));
+    let saludGeneral = (typeof calcularSaludGeneral === 'function')
+        ? calcularSaludGeneral({
+            CPI, SPI,
+            ROI: costeTotal > 0 ? (beneficio / costeTotal) * 100 : 0,
+            indiceDefectos, velocidadEquipo, satisfaccion, huellaCarbono,
+            progresoGeneral: progresoGeneralVal / 100
+        })
+        : 0;
 
     let idioma = idiomaApp || 'es';
-    let monedaSimbolo = proyecto.moneda === 'USD' ? '$' : proyecto.moneda === 'GBP' ? '£' : '€';
+    let monedaSimbolo = (typeof getMonedaSimbolo === 'function')
+        ? getMonedaSimbolo(proyecto.monedaBase || 'EUR')
+        : (proyecto.monedaBase === 'USD' ? '$' : proyecto.monedaBase === 'GBP' ? '£' : '€');
     let fmtMon = v => monedaSimbolo + ' ' + v.toLocaleString(idioma, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     let fmtPct = v => v.toFixed(1) + '%';
     let fmtNum = v => v.toLocaleString(idioma, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
@@ -209,7 +202,7 @@ let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProc
     document.getElementById('infAvanceProgreso').innerHTML = fmtPct(progresoGeneralVal);
     document.getElementById('infAvanceDesviacion').innerHTML = (desviacionPromedio > 0 ? '+' : '') + desviacionPromedio.toFixed(0);
     document.getElementById('infAvanceCostoReal').innerHTML = fmtMon(AC);
-    document.getElementById('infAvanceCostoPlan').innerHTML = fmtMon(BAC * (progresoGeneralVal / 100));
+    document.getElementById('infAvanceCostoPlan').innerHTML = fmtMon(PV);
 
     // 3. INFORME DE VARIACIÓN
     let areasVariacion = [
@@ -225,7 +218,7 @@ let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProc
         let umbral = a.tol || 5;
         let malo = a.invert ? desv > umbral : desv < -umbral;
         let bueno = a.invert ? desv < -umbral : desv > umbral;
-        let estado = Math.abs(desv) < umbral ? '' : malo ? '' : '';
+        let estado = Math.abs(desv) < umbral ? 'En rango' : (malo ? 'Desfavorable' : 'Favorable');
         let color = malo ? '#ff4444' : bueno ? '#4CAF50' : '#aaa';
         return '<tr><td>' + a.area + '</td><td>' + (typeof a.plan === 'number' && a.plan > 100 ? fmtMon(a.plan) : a.plan.toFixed(2)) + '</td><td>' + (typeof a.real === 'number' && a.real > 100 ? fmtMon(a.real) : a.real.toFixed(2)) + '</td><td style="color:' + color + '">' + desv.toFixed(1) + '%</td><td>' + estado + '</td></tr>';
     }).join('');
@@ -233,8 +226,10 @@ let procProgreso = (typeof contarProcesosCompletados === 'function' ? contarProc
     // 4. INFORME DE PRONÓSTICO
     document.getElementById('infForecastCPI').innerHTML = CPI.toFixed(2);
     document.getElementById('infForecastSPI').innerHTML = SPI.toFixed(2);
-    document.getElementById('infForecastEAC').innerHTML = fmtMon(EAC);
-    let probExito = Math.max(0, Math.min(100, (saludGeneral * 0.6 + (1 - (EAC - BAC) / (BAC || 1)) * 100 * 0.4)));
+    document.getElementById('infForecastEAC').innerHTML = EAC === null || !isFinite(EAC)
+        ? 'Sin base de pronóstico'
+        : fmtMon(EAC);
+    let probExito = Math.max(0, Math.min(100, (saludGeneral * 0.6 + (EAC !== null && isFinite(EAC) ? (1 - (EAC - BAC) / (BAC || 1)) * 100 * 0.4 : 0))));
     document.getElementById('infForecastProb').innerHTML = fmtPct(probExito);
 
     // 5. INFORME DE EXCEPCIÓN

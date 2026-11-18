@@ -72,6 +72,24 @@ function abrirMonteCarlo() {
                         </div>
                     </div>
 
+                    <div id="mcWhatIfWrap" style="margin-bottom:16px;">
+                        <h4 style="font-size:13px;margin-bottom:8px;">Escenarios de compresión (what-if)</h4>
+                        <table class="data-table">
+                            <caption class="sr-only">Comparativa de duración, coste adicional y riesgo entre línea base, crashing y fast-tracking</caption>
+                            <thead><tr><th scope="col">Escenario</th><th scope="col">Duración (d)</th><th scope="col">Coste adicional</th><th scope="col">Riesgo</th></tr></thead>
+                            <tbody id="mcWhatIfBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="mcHitosWrap" style="margin-bottom:16px;">
+                        <h4 style="font-size:13px;margin-bottom:8px;">Distribución de hitos (días desde el inicio)</h4>
+                        <table class="data-table">
+                            <caption class="sr-only">Percentiles P50, P80 y P95 de cada hito simulado</caption>
+                            <thead><tr><th scope="col">Hito</th><th scope="col">P50</th><th scope="col">P80</th><th scope="col">P95</th></tr></thead>
+                            <tbody id="mcHitosBody"></tbody>
+                        </table>
+                    </div>
+
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
                         <div style="flex:1;min-width:280px;">
                             <h4 style="font-size:13px;margin-bottom:8px;"> Duración del proyecto</h4>
@@ -124,8 +142,80 @@ function _normal(media, desv) {
     return media + desv * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
+
+function _diasCalendario(duracionHabiles, fechaReferencia) {
+    if (!(duracionHabiles > 0)) return 0;
+    const ancla = fechaReferencia || '2024-01-01';
+    const base = parseLocalDate(ancla);
+    const fin = parseLocalDate(sumarDiasHabiles(ancla, duracionHabiles));
+    return Math.max(1, Math.round((fin - base) / 86400000));
+}
+
+function _ordenTopologico(tareas) {
+    const ids = new Set(tareas.map(t => t.id));
+    const ady = {}, grado = {};
+    tareas.forEach(t => { ady[t.id] = []; grado[t.id] = 0; });
+    tareas.forEach(t => {
+        (t.predecesores || []).forEach(p => {
+            if (ids.has(p.id) && ady[p.id]) { ady[p.id].push(t.id); grado[t.id]++; }
+        });
+    });
+    const cola = tareas.filter(t => grado[t.id] === 0).map(t => t.id);
+    const orden = [];
+    while (cola.length) {
+        const id = cola.shift();
+        orden.push(id);
+        (ady[id] || []).forEach(s => { if (--grado[s] === 0) cola.push(s); });
+    }
+    const conCiclo = orden.length !== tareas.length;
+    if (conCiclo) tareas.forEach(t => { if (!orden.includes(t.id)) orden.push(t.id); });
+    return { orden, conCiclo };
+}
+
+/** Calendario CPM de una red con FS/SS/FF/SF y leads (retraso negativo). */
+function _calendarioRed(orden, porId, duraciones) {
+    const inicio = {}, fin = {};
+    orden.forEach(id => {
+        const tarea = porId[id];
+        if (!tarea) return;
+        inicio[id] = null;
+        (tarea.predecesores || []).forEach(p => {
+            if (!porId[p.id]) return;
+            const esPred = inicio[p.id] || 0;
+            const efPred = fin[p.id] || 0;
+            const tipo = String(p.tipo || 'FS').trim().toUpperCase();
+            let minInicio = efPred;
+            if (tipo === 'SS') minInicio = esPred;
+            if (tipo === 'FF') minInicio = efPred - (duraciones[id] || 0);
+            if (tipo === 'SF') minInicio = esPred - (duraciones[id] || 0);
+            minInicio += (typeof retrasoEnDiasNaturales === 'function')
+                ? retrasoEnDiasNaturales(p.retraso)
+                : (p.retraso || 0);
+            if (inicio[id] === null || minInicio > inicio[id]) inicio[id] = minInicio;
+        });
+        if (inicio[id] === null) inicio[id] = 0;
+        fin[id] = inicio[id] + (duraciones[id] || 0);
+    });
+    return { inicio, fin };
+}
+
+function _finTareaRed(id, orden, porId, duraciones) {
+    const { fin } = _calendarioRed(orden, porId, duraciones);
+    return fin[id] || 0;
+}
+
+function _makespanRed(orden, porId, duraciones) {
+    const { inicio, fin } = _calendarioRed(orden, porId, duraciones);
+    const fines = Object.values(fin);
+    if (!fines.length) return 0;
+    // FF/SF con lead pueden comenzar en negativo: se desplaza toda la red
+    // al origen en vez de recortar el inicio del sucesor.
+    const minimo = Math.min(0, ...Object.values(inicio));
+    return Math.max(...fines) - minimo;
+}
+
 function ejecutarMonteCarlo() {
-    const elementos = (proyecto.elementosGantt || []).filter(e => e.tipo !== 'edt' && e.duracion > 0);
+    const elementos = (proyecto.elementosGantt || []).filter(e => e.tipo !== 'edt');
     if (elementos.length === 0) {
         mostrarToast(' No hay tareas en el cronograma', 'warning');
         return;
@@ -147,66 +237,50 @@ function ejecutarMonteCarlo() {
     resultados.style.display = 'none';
     if (mcTotal) mcTotal.textContent = iteraciones;
 
-    // Usar requestAnimationFrame para no bloquear la UI
+    const porId = {};
+    elementos.forEach(e => { porId[e.id] = e; });
+    const topologia = _ordenTopologico(elementos);
+    if (topologia.conCiclo) {
+        mostrarToast('Hay dependencias circulares: la simulación usa un orden aproximado', 'warning');
+    }
+
+    const duracionesPlan = {};
+    elementos.forEach(e => { duracionesPlan[e.id] = _diasCalendario(e.duracion || 0, e.inicio); });
+
     const resultadosDuracion = [];
     const resultadosCoste = [];
+    const resultadosHitos = {};
+    const hitos = elementos.filter(e => e.tipo === 'hito');
+    hitos.forEach(h => { resultadosHitos[h.id] = []; });
+
+    function mostrarUnaDuracion(base) {
+        const optimista = base * (1 - variacion);
+        const pesimista = base * (1 + variacion);
+        if (distribucion === 'triangular') return _triangular(optimista, base, pesimista);
+        if (distribucion === 'normal') return _normal(base, (pesimista - optimista) / 6);
+        return optimista + Math.random() * (pesimista - optimista);
+    }
 
     function runBatch(batchStart, batchSize) {
         const batchEnd = Math.min(batchStart + batchSize, iteraciones);
         for (let i = batchStart; i < batchEnd; i++) {
-            let maxDias = 0;
+            const duraciones = {};
             let costeSim = 0;
-            const fechasSim = {};
 
             elementos.forEach(e => {
-                let d = e.duracion;
-                const optimista = d * (1 - variacion);
-                const pesimista = d * (1 + variacion);
-
-                let varD = d;
-                if (distribucion === 'triangular') {
-                    varD = _triangular(optimista, d, pesimista);
-                } else if (distribucion === 'normal') {
-                    const desv = (pesimista - optimista) / 6;
-                    varD = _normal(d, desv);
-                } else {
-                    varD = optimista + Math.random() * (pesimista - optimista);
-                }
-                varD = Math.max(0.05, varD);
-
-                // Calcular fecha fin con la duración variada
-                let inicio = e.inicio;
-                if (e.predecesores && e.predecesores.length > 0) {
-                    e.predecesores.forEach(p => {
-                        const predInicio = fechasSim[p.id];
-                        if (predInicio && (!inicio || predInicio > inicio)) {
-                            inicio = predInicio;
-                        }
-                    });
-                }
-                // Aplicar FF si existe
-                if (e.tipo === 'ff' && e.predecesores && e.predecesores.some(p => p.tipo === 'FF')) {
-                    // FF: tarea no puede terminar antes que su predecesora
-                    e.predecesores.forEach(p => {
-                        const predFin = fechasSim[p.id];
-                        if (predFin && inicio && predFin > inicio) {
-                            inicio = predFin;
-                        }
-                    });
-                }
-
-                if (inicio) {
-                    const fin = sumarDiasHabiles(inicio, varD);
-                    const dias = Math.round((parseLocalDate(fin) - parseLocalDate(inicio)) / 86400000);
-                    maxDias = Math.max(maxDias, dias);
-                    fechasSim[e.id] = fin;
-                }
-
-                costeSim += (e.costeEstimado || 0) * (varD / Math.max(e.duracion, 0.01));
+                const base = Math.max(0, e.duracion || 0);
+                let varHabiles = base > 0 ? Math.max(0.05, mostrarUnaDuracion(base)) : 0;
+                duraciones[e.id] = _diasCalendario(varHabiles, e.inicio);
+                costeSim += (e.costeEstimado || 0) * (base > 0 ? varHabiles / base : 1);
             });
 
-            resultadosDuracion.push(maxDias);
+            const calendario = _calendarioRed(topologia.orden, porId, duraciones);
+            const minimo = Math.min(0, ...Object.values(calendario.inicio));
+            resultadosDuracion.push(Math.round(Math.max(...Object.values(calendario.fin)) - minimo));
             resultadosCoste.push(costeSim);
+            hitos.forEach(h => {
+                resultadosHitos[h.id].push((calendario.fin[h.id] || 0) - minimo);
+            });
         }
 
         if (mcProgreso) mcProgreso.textContent = batchEnd;
@@ -214,7 +288,8 @@ function ejecutarMonteCarlo() {
         if (batchEnd < iteraciones) {
             setTimeout(() => runBatch(batchEnd, batchSize), 0);
         } else {
-            mostrarResultados(resultadosDuracion, resultadosCoste, elementos);
+            mostrarResultados(resultadosDuracion, resultadosCoste, elementos, resultadosHitos);
+            renderizarEscenariosWhatIf();
             loading.style.display = 'none';
             resultados.style.display = 'block';
         }
@@ -224,37 +299,54 @@ function ejecutarMonteCarlo() {
     runBatch(0, batchSize);
 }
 
-function mostrarResultados(dias, costes, elementos) {
+function mostrarResultados(dias, costes, elementos, resultadosHitos) {
     dias.sort((a, b) => a - b);
     costes.sort((a, b) => a - b);
     const n = dias.length;
 
+    // Percentil nearest-rank: ceil(n·p)-1, sin desplazamiento hacia abajo.
+    const cuantil = (valores, p) => valores[Math.max(0, Math.ceil(valores.length * p) - 1)];
+
     // Estadísticos duración
-    const p50d = dias[Math.floor(n * 0.5)];
-    const p80d = dias[Math.floor(n * 0.8)];
-    const p95d = dias[Math.floor(n * 0.95)];
+    const p50d = Math.round(cuantil(dias, 0.5));
+    const p80d = Math.round(cuantil(dias, 0.8));
+    const p95d = Math.round(cuantil(dias, 0.95));
     const mediaD = dias.reduce((a, b) => a + b, 0) / n;
 
     // Estadísticos coste
-    const p50c = costes[Math.floor(n * 0.5)];
-    const p80c = costes[Math.floor(n * 0.8)];
-    const p95c = costes[Math.floor(n * 0.95)];
+    const p50c = cuantil(costes, 0.5);
+    const p80c = cuantil(costes, 0.8);
+    const p95c = cuantil(costes, 0.95);
 
     // Probabilidad dentro del plan
-    const duracionPlan = elementos.reduce((max, e) => {
-        if (e.inicio && e.duracion) {
-            const fin = sumarDiasHabiles(e.inicio, e.duracion);
-            const d = diffDias(parseLocalDate(fin), parseLocalDate(e.inicio));
-            return Math.max(max, d);
-        }
-        return max;
-    }, 0);
+    const porIdPlan = {};
+    const duracionesPlan = {};
+    elementos.forEach(e => {
+        porIdPlan[e.id] = e;
+        duracionesPlan[e.id] = _diasCalendario(e.duracion || 0, e.inicio);
+    });
+    const cpmMakespan = (typeof cpmResult !== 'undefined' && cpmResult && Number(cpmResult.makespan) > 0)
+        ? Number(cpmResult.makespan)
+        : _makespanRed(_ordenTopologico(elementos).orden, porIdPlan, duracionesPlan);
+    const duracionPlan = Math.round(cpmMakespan);
     const dentroPlan = dias.filter(d => d <= duracionPlan).length / n * 100;
 
     document.getElementById('mcP50').textContent = p50d + ' días';
     document.getElementById('mcP80').textContent = p80d + ' días';
     document.getElementById('mcP95').textContent = p95d + ' días';
     document.getElementById('mcProbPlan').textContent = dentroPlan.toFixed(1) + '%';
+
+    const hitosBody = document.getElementById('mcHitosBody');
+    if (hitosBody) {
+        const hitos = elementos.filter(e => e.tipo === 'hito');
+        hitosBody.innerHTML = hitos.map(h => {
+            const valores = (resultadosHitos && resultadosHitos[h.id]) || [];
+            if (!valores.length) return `<tr><td>${escapeHtml(h.nombre || 'Hito')}</td><td colspan="3">Sin datos</td></tr>`;
+            valores.sort((a, b) => a - b);
+            const q = p => Math.round(cuantil(valores, p));
+            return `<tr><td>${escapeHtml(h.nombre || 'Hito')}</td><td>${q(0.5)}</td><td>${q(0.8)}</td><td>${q(0.95)}</td></tr>`;
+        }).join('') || '<tr><td colspan="4" class="u-text-center">No hay hitos en el cronograma</td></tr>';
+    }
 
     // Obtener colores según tema
     const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
@@ -387,3 +479,17 @@ function _histograma(data, numBins) {
 
     return { labels, counts };
 }
+
+
+function renderizarEscenariosWhatIf() {
+    const cuerpo = document.getElementById('mcWhatIfBody');
+    if (!cuerpo || typeof simularEscenariosCompresion !== 'function') return;
+    const escenarios = simularEscenariosCompresion(proyecto);
+    cuerpo.innerHTML = escenarios.map(e => `<tr>
+        <th scope="row">${escapeHtml(e.nombre)}</th>
+        <td>${e.duracion}</td>
+        <td>${e.costeExtra ? formatearMoneda(e.costeExtra) : '—'}</td>
+        <td>${escapeHtml(e.riesgo)}</td>
+    </tr>`).join('');
+}
+window.renderizarEscenariosWhatIf = renderizarEscenariosWhatIf;

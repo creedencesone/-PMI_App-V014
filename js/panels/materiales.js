@@ -5,10 +5,10 @@
         tbody.innerHTML = '<tr><td colspan="15" class="u-text-center">No hay materiales registrados</td></tr>';
         return;
     }
-    
+
     // Determinar si estamos en modo ágil o mixto
     const esAgile = (proyecto.metodologia?.tipo === 'agile' || proyecto.metodologia?.tipo === 'mixto');
-    
+
     tbody.innerHTML = proyecto.materiales.map(m => {
         // Calcular costes adicionales
         let costeEnvioConv = convertirMoneda(m.costeEnvio || 0, m.monedaEnvio || m.moneda);
@@ -16,7 +16,7 @@
         let seguroFijoConv = convertirMoneda(m.seguroFijo || 0, m.moneda);
         let gastosAduanaConv = convertirMoneda(m.gastosAduana || 0, m.monedaAduana || m.moneda);
         let totalCostesAdicionales = costeEnvioConv + seguroCalc + seguroFijoConv + gastosAduanaConv;
-        
+
         let incotermLabel = '';
         switch(m.incoterm) {
             case 'EXW': incotermLabel = ' EXW'; break;
@@ -24,14 +24,14 @@
             case 'CIF': incotermLabel = ' CIF'; break;
             default: incotermLabel = m.incoterm || 'N/D';
         }
-        
+
         let arancelInfo = '';
         if (m.arancelPersonalizado && m.arancelPersonalizado > 0) {
             arancelInfo = `${m.arancelPersonalizado}% (manual)`;
         } else {
             arancelInfo = 'Auto-calculado';
         }
-        
+
         // Mostrar Sprint si es modo ágil, sino mostrar Mes
         let periodoMostrar = '';
         if (esAgile && m.sprint) {
@@ -42,13 +42,13 @@
         } else {
             periodoMostrar = `Mes ${m.mes || 1}`;
         }
-        
+
         // Mostrar también el método de gestión si es mixto
         let gestionLabel = '';
         if (proyecto.metodologia?.tipo === 'mixto' && m.tipoGestion) {
             gestionLabel = m.tipoGestion === 'agile' ? ' Ágil' : ' Cascada';
         }
-        
+
         // ============================================
         // PLAZO DE SUMINISTRO Y FECHA DE RECEPCIÓN
         // ============================================
@@ -64,7 +64,7 @@
         } else {
             plazoInfo = '<div style="font-size: 10px; color: #888;">-</div>';
         }
-        
+
         // ============================================
         // GENERAR TEXTO DE CONDICIONES DE PAGO
         // ============================================
@@ -88,7 +88,7 @@
         } else {
             condicionesPagoHtml = '<span class="badge-pendiente">Sin condiciones</span>';
         }
-        
+
         return `
             <tr>
                 <td><strong>${escapeHtml(m.nombre)}</strong>${gestionLabel ? `<br><small style="font-size: 9px;">${gestionLabel}</small>` : ''}</td>
@@ -111,17 +111,17 @@
             </tr>
         `;
     }).join('');
-    
+
     calcularCashflow();
 }
-        
+
 function abrirModalMaterial() {
     const esAgile = (proyecto.metodologia?.tipo === 'agile' || proyecto.metodologia?.tipo === 'mixto');
-    
+
     // Obtener valores por defecto
     const hoy = new Date().toISOString().split('T')[0];
     const monedaPorDefecto = proyecto.monedaBase || 'EUR';
-    
+
     let modalHtml = `
         <div class="modal-content modal-lg" style="max-width: 750px;">
             <div class="modal-header">
@@ -129,7 +129,7 @@ function abrirModalMaterial() {
                 <span class="close-modal" onclick="cerrarModalGeneric()">&times;</span>
             </div>
             <input type="hidden" id="matId">
-            
+
             <!-- ============================================ -->
             <!-- DATOS BÁSICOS DEL MATERIAL -->
             <!-- ============================================ -->
@@ -137,7 +137,7 @@ function abrirModalMaterial() {
                 <label>Nombre del material *</label>
                 <input type="text" id="matNombre" placeholder="Ej: Servidor Dell PowerEdge" class="u-select-glass">
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Proveedor</label>
@@ -148,7 +148,7 @@ function abrirModalMaterial() {
                     <input type="text" id="matPartNumber" placeholder="Ej: R750-XS" class="u-select-glass">
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>Cantidad</label>
@@ -165,13 +165,13 @@ function abrirModalMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!--  NUEVO: HS CODE Y PESO UNITARIO -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> DATOS PARA COMERCIO EXTERIOR</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Peso unitario (kg)</label>
@@ -184,15 +184,20 @@ function abrirModalMaterial() {
                     <small class="u-fs-10 u-color-muted">Código para comercio internacional</small>
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> País de origen</label>
                     <input type="text" id="matPaisOrigen" placeholder="Ej: China, USA, España" class="u-select-glass">
                     <small class="u-fs-10 u-color-muted">Para cálculo de aranceles</small>
                 </div>
+                <div class="form-group">
+                    <label>País de destino</label>
+                    <input type="text" id="matPaisDestino" placeholder="Ej: España, USA" class="u-select-glass">
+                    <small class="u-fs-10 u-color-muted">Destino de la importación</small>
+                </div>
     `;
-    
+
     if (esAgile) {
         modalHtml += `
                 <div class="form-group">
@@ -212,14 +217,14 @@ function abrirModalMaterial() {
             </div>
         `;
     }
-    
+
     modalHtml += `
             <!-- ============================================ -->
             <!-- PLAZO DE SUMINISTRO -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> PLAZO DE SUMINISTRO</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Plazo de suministro (días)</label>
@@ -235,13 +240,13 @@ function abrirModalMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!-- CONDICIONES DE PAGO -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> CONDICIONES DE PAGO</h4>
-            
+
             <div class="form-group">
                 <label>Tipo de pago</label>
                 <select id="matTipoPago" class="u-select-glass" onchange="toggleCondicionesPagoMaterial()">
@@ -252,14 +257,14 @@ function abrirModalMaterial() {
                     <option value="contra_recepcion"> Pago contra recepción</option>
                 </select>
             </div>
-            
+
             <!-- Opción: Pago contra recepción -->
             <div id="pagoContraRecepcionGroup" class="u-hidden">
                 <div class="info-card-modal" style="padding: 8px; background: rgba(0,168,89,0.15);">
                     <small> El pago se realizará <strong>contra recepción del material</strong>.</small>
                 </div>
             </div>
-            
+
             <!-- Opción: Porcentajes -->
             <div id="pagoPorcentajesGroup" class="u-hidden">
                 <label style="font-size: 12px; margin-bottom: 8px; display: block;"> Distribución de pagos</label>
@@ -285,7 +290,7 @@ function abrirModalMaterial() {
                 <div id="listaTramosPagoMaterial" class="u-mt-8"></div>
                 <small class="u-fs-11 u-color-muted"> La suma de los porcentajes debe ser 100%</small>
             </div>
-            
+
             <!-- Opción: Plazo -->
             <div id="pagoPlazoGroup" class="u-hidden">
                 <div class="form-row">
@@ -303,7 +308,7 @@ function abrirModalMaterial() {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Opción: Mixto -->
             <div id="pagoMixtoGroup" class="u-hidden">
                 <div class="form-row">
@@ -324,13 +329,13 @@ function abrirModalMaterial() {
                     </div>
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!-- LOGÍSTICA Y TRANSPORTE -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> LOGÍSTICA Y TRANSPORTE</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>INCOTERM</label>
@@ -352,13 +357,13 @@ function abrirModalMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!-- ARANCELES Y ADUANAS -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> ARANCELES Y ADUANAS</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> % Arancel personalizado</label>
@@ -375,12 +380,12 @@ function abrirModalMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label> Notas adicionales</label>
                 <textarea rows="2" id="matNotas" placeholder="Condiciones particulares..." class="u-select-glass"></textarea>
             </div>
-            
+
             <div class="info-card-modal u-mt-16" style="background: rgba(0,122,255,0.1);">
                 <small> <strong>Resumen del material:</strong><br>
                 • <strong>HS Code:</strong> Se usará para comercio exterior y packing list<br>
@@ -388,15 +393,15 @@ function abrirModalMaterial() {
                 • <strong>País de origen:</strong> Para cálculo de aranceles
                 </small>
             </div>
-            
+
             <button class="btn btn-secondary u-mt-16" id="btnImportarPDF" style="width:100%;margin-bottom:8px;"> Importar desde Orden de Compra (PDF)</button>
             <button class="btn btn-primary" onclick="guardarMaterial()" style="width:100%;"> Guardar Material</button>
         </div>
     `;
-    
+
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
     document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
-    
+
     // Inicializar visibilidad de opciones de pago
     setTimeout(() => {
         toggleCondicionesPagoMaterial();
@@ -418,7 +423,7 @@ function toggleCondicionesPagoMaterial() {
 function agregarFilaPagoMaterial() {
     const container = document.getElementById('listaTramosPagoMaterial');
     const index = container.children.length;
-    
+
     const rowHtml = `
         <div class="form-row u-mb-8" data-tramo-index="${index}">
             <div class="form-group u-flex-2">
@@ -444,30 +449,31 @@ function agregarFilaPagoMaterial() {
 function eliminarFilaPagoMaterial(btn) {
     btn.closest('.form-row').remove();
 }
-        
+
 function guardarMaterial() {
     let nombre = document.getElementById('matNombre').value.trim();
     if (!nombre) {
         mostrarToast(tApp('toast_nombre_obligatorio'), "error");
         return;
     }
-    
+
     let id = document.getElementById('matId').value;
     const esAgile = (proyecto.metodologia?.tipo === 'agile' || proyecto.metodologia?.tipo === 'mixto');
-    
+
     // ============================================
     //  RECOGER HS CODE Y PESO UNITARIO
     // ============================================
     const hsCode = document.getElementById('matHsCode').value.trim() || '';
     const pesoUnitario = parseFloat(document.getElementById('matPesoUnitario').value) || 1;
     const paisOrigen = document.getElementById('matPaisOrigen').value.trim() || '';
-    
+    const paisDestino = document.getElementById('matPaisDestino')?.value.trim() || '';
+
     // ============================================
     // RECOGER PLAZO DE SUMINISTRO
     // ============================================
     const plazoSuministro = parseInt(document.getElementById('matPlazoSuministro').value) || 0;
     const referenciaPlazo = document.getElementById('matReferenciaPlazo').value;
-    
+
     // ============================================
     // RECOGER CONDICIONES DE PAGO
     // ============================================
@@ -481,29 +487,29 @@ function guardarMaterial() {
         plazoResto: 0,
         contraRecepcion: tipoPago === 'contra_recepcion'
     };
-    
+
     if (tipoPago === 'porcentajes') {
         const porcInicial = parseFloat(document.getElementById('pagoPorcInicial').value) || 0;
         const momentoInicial = document.getElementById('pagoPorcMomentoInicial').value;
         condicionesPago.tramos.push({ porcentaje: porcInicial, momento: momentoInicial });
-        
+
         const tramos = document.querySelectorAll('#listaTramosPagoMaterial .form-row');
         tramos.forEach(tramo => {
             const porc = parseFloat(tramo.querySelector('.pagoPorcValor')?.value) || 0;
             const momento = tramo.querySelector('.pagoPorcMomento')?.value || 'compra';
             condicionesPago.tramos.push({ porcentaje: porc, momento: momento });
         });
-        
+
     } else if (tipoPago === 'plazo') {
         condicionesPago.plazoDias = parseInt(document.getElementById('pagoPlazoDias').value) || 0;
         condicionesPago.plazoReferencia = document.getElementById('pagoPlazoReferencia').value;
-        
+
     } else if (tipoPago === 'mixto') {
         condicionesPago.porcentajeInicial = parseFloat(document.getElementById('pagoMixtoPorcInicial').value) || 0;
         condicionesPago.plazoResto = parseInt(document.getElementById('pagoMixtoPlazo').value) || 0;
         condicionesPago.plazoReferencia = document.getElementById('pagoMixtoReferencia').value;
     }
-    
+
     // Construir objeto base del material
     let nuevoMaterial = {
         id: id ? parseInt(id) : Date.now(),
@@ -514,45 +520,46 @@ function guardarMaterial() {
         costeUnitario: parseFloat(document.getElementById('matCosteUnitario').value),
         moneda: document.getElementById('matMoneda').value,
         paisOrigen: paisOrigen,
-        
+        paisDestino: paisDestino,
+
         //  NUEVOS CAMPOS
         hsCode: hsCode,
         pesoUnitario: pesoUnitario,
-        
+
         // Plazo de suministro
         plazoSuministro: plazoSuministro,
         referenciaPlazo: referenciaPlazo,
         fechaRecepcionEstimada: null,
-        
+
         // Logística
         incoterm: document.getElementById('matIncoterm').value,
         costeEnvio: parseFloat(document.getElementById('matCosteEnvio').value),
         monedaEnvio: document.getElementById('matMonedaEnvio').value,
-        
+
         // Aranceles
         arancelPersonalizado: parseFloat(document.getElementById('matArancelPersonalizado').value),
         gastosAduana: parseFloat(document.getElementById('matGastosAduana').value),
         monedaAduana: document.getElementById('matMonedaAduana').value,
         notas: document.getElementById('matNotas').value,
-        
+
         // Condiciones de pago
         condicionesPago: condicionesPago,
-        
+
         // Seguimiento de pagos reales
         pagosRealizados: []
     };
-    
+
     // Calcular fecha de recepción estimada
     if (proyecto.fechaInicio) {
         const fechaBase = new Date(proyecto.fechaInicio);
         const mesCompra = nuevoMaterial.mes || 1;
         fechaBase.setMonth(fechaBase.getMonth() + (mesCompra - 1));
-        
+
         if (plazoSuministro > 0) {
             const fechaRecepcion = new Date(fechaBase);
             fechaRecepcion.setDate(fechaRecepcion.getDate() + plazoSuministro);
             nuevoMaterial.fechaRecepcionEstimada = fechaRecepcion.toISOString().split('T')[0];
-            
+
             const diffMeses = (fechaRecepcion.getFullYear() - new Date(proyecto.fechaInicio).getFullYear()) * 12 +
                               (fechaRecepcion.getMonth() - new Date(proyecto.fechaInicio).getMonth());
             nuevoMaterial.mesRecepcion = Math.max(1, diffMeses + 1);
@@ -560,7 +567,7 @@ function guardarMaterial() {
             nuevoMaterial.mesRecepcion = nuevoMaterial.mes || 1;
         }
     }
-    
+
     // Período según metodología
     if (esAgile) {
         nuevoMaterial.sprint = parseInt(document.getElementById('matSprint')?.value) || 1;
@@ -573,7 +580,7 @@ function guardarMaterial() {
         nuevoMaterial.historiaAsociada = null;
         nuevoMaterial.tipoGestion = 'cascada';
     }
-    
+
     // Guardar o actualizar
     if (id) {
         let index = proyecto.materiales.findIndex(m => m.id === parseInt(id));
@@ -582,16 +589,16 @@ function guardarMaterial() {
         if (!proyecto.materiales) proyecto.materiales = [];
         proyecto.materiales.push(nuevoMaterial);
     }
-    
+
     guardarProyecto();
     renderizarMateriales();
-    
+
     if (esAgile && typeof calcularCostesPorSprint === 'function') {
         setTimeout(() => calcularCostesPorSprint(), 500);
     }
-    
+
     cerrarModalGeneric();
-    
+
     // Mensaje con resumen
     let msgPago = '';
     if (tipoPago === 'contado') msgPago = ' (Pago de contado)';
@@ -599,31 +606,31 @@ function guardarMaterial() {
     else if (tipoPago === 'porcentajes') msgPago = ` (${condicionesPago.tramos.length} pagos)`;
     else if (tipoPago === 'plazo') msgPago = ` (Pago a ${condicionesPago.plazoDias} días)`;
     else if (tipoPago === 'mixto') msgPago = ` (${condicionesPago.porcentajeInicial}% ahora, resto a ${condicionesPago.plazoResto} días)`;
-    
+
     let hsCodeMsg = hsCode ? ` | HS Code: ${hsCode}` : '';
     let pesoMsg = ` | Peso: ${pesoUnitario} kg/unidad`;
-    
+
     if (plazoSuministro > 0) {
         msgPago += `  Plazo suministro: ${plazoSuministro} días → Recepción: ${nuevoMaterial.fechaRecepcionEstimada ? formatearFechaEspa(nuevoMaterial.fechaRecepcionEstimada) : 'calculada'}`;
     }
-    
+
     mostrarToast(` Material "${nombre}" guardado${msgPago}${hsCodeMsg}${pesoMsg}`, "success");
 }
-        
+
     function editarMaterial(id) {
     let material = proyecto.materiales.find(m => m.id === id);
     if (!material) return;
-    
+
     const esAgile = (proyecto.metodologia?.tipo === 'agile' || proyecto.metodologia?.tipo === 'mixto');
     const condiciones = material.condicionesPago || { tipo: 'contado' };
-    
+
     // Preparar valores para los campos de condiciones de pago
     let tipoPago = condiciones.tipo || 'contado';
     let porcentajeInicial = condiciones.porcentajeInicial || 50;
     let plazoResto = condiciones.plazoResto || 30;
     let plazoDias = condiciones.plazoDias || 60;
     let plazoReferencia = condiciones.plazoReferencia || 'compra';
-    
+
     // Preparar tramos de porcentajes
     let tramosHtml = '';
     if (condiciones.tramos && condiciones.tramos.length > 0) {
@@ -650,15 +657,15 @@ function guardarMaterial() {
             `;
         }
     }
-    
+
     // Valores de plazo de suministro
     let plazoSuministro = material.plazoSuministro || 0;
     let referenciaPlazo = material.referenciaPlazo || 'compra';
-    
+
     //  Obtener HS Code y peso unitario del material
     let hsCode = material.hsCode || material.partNumber || '';
     let pesoUnitario = material.pesoUnitario || 1;
-    
+
     let modalHtml = `
         <div class="modal-content modal-lg" style="max-width: 750px;">
             <div class="modal-header">
@@ -666,7 +673,7 @@ function guardarMaterial() {
                 <span class="close-modal" onclick="cerrarModalGeneric()">&times;</span>
             </div>
             <input type="hidden" id="matId" value="${material.id}">
-            
+
             <!-- ============================================ -->
             <!-- DATOS BÁSICOS -->
             <!-- ============================================ -->
@@ -674,7 +681,7 @@ function guardarMaterial() {
                 <label>Nombre del material *</label>
                 <input type="text" id="matNombre" value="${escapeHtml(material.nombre)}" class="u-select-glass">
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Proveedor</label>
@@ -685,7 +692,7 @@ function guardarMaterial() {
                     <input type="text" id="matPartNumber" value="${escapeHtml(material.partNumber || '')}" class="u-select-glass">
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>Cantidad</label>
@@ -702,13 +709,13 @@ function guardarMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!--  NUEVO: HS CODE Y PESO UNITARIO -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> DATOS PARA COMERCIO EXTERIOR</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Peso unitario (kg)</label>
@@ -721,15 +728,20 @@ function guardarMaterial() {
                     <small class="u-fs-10 u-color-muted">Código para comercio internacional</small>
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> País de origen</label>
                     <input type="text" id="matPaisOrigen" value="${escapeHtml(material.paisOrigen || '')}" class="u-select-glass">
                     <small class="u-fs-10 u-color-muted">Para cálculo de aranceles</small>
                 </div>
+                <div class="form-group">
+                    <label>País de destino</label>
+                    <input type="text" id="matPaisDestino" value="${escapeHtml(material.paisDestino || '')}" class="u-select-glass">
+                    <small class="u-fs-10 u-color-muted">Destino de la importación</small>
+                </div>
     `;
-    
+
     if (esAgile) {
         modalHtml += `
                 <div class="form-group">
@@ -757,14 +769,14 @@ function guardarMaterial() {
             </div>
         `;
     }
-    
+
     modalHtml += `
             <!-- ============================================ -->
             <!-- PLAZO DE SUMINISTRO -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> PLAZO DE SUMINISTRO</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Plazo de suministro (días)</label>
@@ -780,19 +792,19 @@ function guardarMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             ${material.fechaRecepcionEstimada ? `
             <div class="info-card-modal" style="margin-bottom: 12px; padding: 8px; background: rgba(0,122,255,0.1);">
                 <small> <strong>Fecha de recepción estimada actual:</strong> ${formatearFechaEspa(material.fechaRecepcionEstimada)}</small>
             </div>
             ` : ''}
-            
+
             <!-- ============================================ -->
             <!-- CONDICIONES DE PAGO -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> CONDICIONES DE PAGO</h4>
-            
+
             <div class="form-group">
                 <label>Tipo de pago</label>
                 <select id="matTipoPago" class="u-select-glass" onchange="toggleCondicionesPagoMaterial()">
@@ -803,14 +815,14 @@ function guardarMaterial() {
                     <option value="contra_recepcion" ${tipoPago === 'contra_recepcion' ? 'selected' : ''}> Pago contra recepción</option>
                 </select>
             </div>
-            
+
             <!-- Opción: Pago contra recepción -->
             <div id="pagoContraRecepcionGroup" style="display: ${tipoPago === 'contra_recepcion' ? 'block' : 'none'};">
                 <div class="info-card-modal" style="padding: 8px; background: rgba(0,168,89,0.15);">
                     <small> El pago se realizará <strong>contra recepción del material</strong>.</small>
                 </div>
             </div>
-            
+
             <!-- Opción: Porcentajes -->
             <div id="pagoPorcentajesGroup" style="display: ${tipoPago === 'porcentajes' ? 'block' : 'none'};">
                 <label style="font-size: 12px; margin-bottom: 8px; display: block;"> Distribución de pagos</label>
@@ -838,7 +850,7 @@ function guardarMaterial() {
                 </div>
                 <small class="u-fs-11 u-color-muted"> La suma de los porcentajes debe ser 100%</small>
             </div>
-            
+
             <!-- Opción: Plazo -->
             <div id="pagoPlazoGroup" style="display: ${tipoPago === 'plazo' ? 'block' : 'none'};">
                 <div class="form-row">
@@ -856,7 +868,7 @@ function guardarMaterial() {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Opción: Mixto -->
             <div id="pagoMixtoGroup" style="display: ${tipoPago === 'mixto' ? 'block' : 'none'};">
                 <div class="form-row">
@@ -877,13 +889,13 @@ function guardarMaterial() {
                     </div>
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!-- LOGÍSTICA Y TRANSPORTE -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> LOGÍSTICA Y TRANSPORTE</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label>INCOTERM</label>
@@ -905,7 +917,7 @@ function guardarMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> Seguro de transporte (%)</label>
@@ -916,13 +928,13 @@ function guardarMaterial() {
                     <input type="number" id="matSeguroFijo" value="${material.seguroFijo || 0}" class="u-select-glass">
                 </div>
             </div>
-            
+
             <!-- ============================================ -->
             <!-- ARANCELES Y ADUANAS -->
             <!-- ============================================ -->
             <hr class="u-hr">
             <h4 class="u-section-title"> ARANCELES Y ADUANAS</h4>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label> % Arancel personalizado</label>
@@ -939,12 +951,12 @@ function guardarMaterial() {
                     </select>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label> Notas adicionales</label>
                 <textarea rows="2" id="matNotas" class="u-select-glass">${escapeHtml(material.notas || '')}</textarea>
             </div>
-            
+
             <div class="info-card-modal u-mt-16" style="background: rgba(0,122,255,0.1);">
                 <small> <strong>Resumen del material:</strong><br>
                 • <strong>HS Code:</strong> ${hsCode || 'No definido'} - Se usará en el packing list<br>
@@ -952,14 +964,14 @@ function guardarMaterial() {
                 • <strong>País de origen:</strong> ${material.paisOrigen || 'No definido'} - Para cálculo de aranceles
                 </small>
             </div>
-            
+
             <button class="btn btn-primary u-mt-16" onclick="guardarMaterial()" style="width:100%;"> Actualizar Material</button>
         </div>
     `;
-    
+
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
     document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
-    
+
     // Inicializar la visibilidad de las opciones de pago
     setTimeout(() => {
         toggleCondicionesPagoMaterial();
@@ -969,9 +981,9 @@ function guardarMaterial() {
         function eliminarMaterial(id) {
             if (confirm(tApp('confirmar_eliminar_material'))) { proyecto.materiales = proyecto.materiales.filter(m => m.id !== id); guardarProyecto(); renderizarMateriales(); mostrarToast(tApp('toast_eliminado'), 'success'); }
         }
-        
+
         function actualizarArancelesMateriales() { if (typeof calcularAnalisisMateriales === 'function') calcularAnalisisMateriales(); mostrarToast(" Aranceles actualizados", 'info'); }
-        
+
         // ============================================
         // IMPORTAR DESDE PDF (ORDEN DE COMPRA)
         // ============================================
@@ -1000,7 +1012,7 @@ function guardarMaterial() {
                     for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
                         const content = await page.getTextContent();
-                        
+
                         // Agrupar items por posición Y para preservar filas de la tabla
                         const filas = {};
                         for (const item of content.items) {
@@ -1008,7 +1020,7 @@ function guardarMaterial() {
                             if (!filas[y]) filas[y] = [];
                             filas[y].push(item);
                         }
-                        
+
                         // Ordenar filas de arriba a abajo (Y descendente en PDF)
                         const sortedYs = Object.keys(filas).map(Number).sort((a, b) => b - a);
                         let texto = '';
@@ -1021,10 +1033,10 @@ function guardarMaterial() {
                         }
                         textoCompleto += texto;
                     }
-                    
+
                     pdfProveedorGlobal = extraerProveedor(textoCompleto);
                     pdfItemsDetectados = parsearItemsPDF(textoCompleto);
-                    
+
                     if (pdfItemsDetectados.length === 0) {
                         mostrarToast(' No se detectaron items. Revisa el formato del PDF.', 'error');
                         mostrarTextoCrudo(textoCompleto);
@@ -1066,10 +1078,10 @@ function guardarMaterial() {
 
         function parsearItemsPDF(texto) {
             const items = [];
-            
+
             const hsGlobalMatch = texto.match(/(?:HS|HS Code|HSCODE|Código|Codigo|Part Number|PN|TARIC)\s*[:;]\s*([\d]{4,}\.?[\d]{0,}\.?[\d]{0,})/i);
             const hsCodeGlobal = hsGlobalMatch ? hsGlobalMatch[1] : '';
-            
+
             function limpiarNumero(str) {
                 if (!str) return NaN;
                 let s = str.trim().replace(/^[$]/g, '');
@@ -1080,7 +1092,7 @@ function guardarMaterial() {
                 }
                 return parseFloat(s);
             }
-            
+
             function agregarItem(nombre, cantidad, precioUnitario) {
                 if (!nombre || cantidad <= 0 || precioUnitario <= 0 || nombre.length >= 150) return;
                 const headerWords = ['item', 'description', "q'ty", 'unit price', 'amount', 'price in', 'yen', 'total',
@@ -1103,7 +1115,7 @@ function guardarMaterial() {
                     seleccionado: true
                 });
             }
-            
+
             // Dividir el texto en partes por el límite PRECIO + Nº SIGUIENTE ITEM
             const separador = /(\$?[\d,]+\.\d{2})\s+(?=\d+\s+\S)/g;
             const partes = [];
@@ -1114,7 +1126,7 @@ function guardarMaterial() {
                 ultimoIndex = sep.index + sep[0].length;
             }
             partes.push(texto.substring(ultimoIndex));
-            
+
             // Patrones en orden de especificidad
             const patronesConUnidad = [
                 // 1. Toshiba: ITEM# + DESCRIPCION + CANT + UNIT + PRECIO1 + PRECIO2
@@ -1128,7 +1140,7 @@ function guardarMaterial() {
                 // 3. Spares: ITEM# + PART# (alfanumérico con +, x, .) + PRECIO1 + PRECIO2
                 /(\d+)\s+([A-Za-z0-9][A-Za-z0-9\s\-+x.,\/#]*?)\s+\$?([\d,]+\.\d+)\s+\$?([\d,]+\.\d+)/i,
             ];
-            
+
             for (const parte of partes) {
                 let match = null;
                 for (const p of patronesConUnidad) {
@@ -1156,7 +1168,7 @@ function guardarMaterial() {
                         }
                     }
             }
-            
+
             return items;
         }
 
@@ -1269,17 +1281,17 @@ function guardarMaterial() {
                 const moneda = document.querySelector(`.pdf-item-moneda[data-index="${i}"]`).value;
                 const hsCode = document.querySelector(`.pdf-item-hs[data-index="${i}"]`).value.trim();
                 const proveedor = document.querySelector(`.pdf-item-prov[data-index="${i}"]`).value.trim();
-                
+
                 if (nombre && precioUnitario > 0) {
                     seleccionados.push({ nombre, cantidad, precioUnitario, moneda, hsCode, proveedor });
                 }
             });
-            
+
             if (seleccionados.length === 0) {
                 mostrarToast(' Selecciona al menos un item válido', 'error');
                 return;
             }
-            
+
             // Rellenar formulario con el primer item
             document.getElementById('matNombre').value = seleccionados[0].nombre;
             document.getElementById('matCantidad').value = seleccionados[0].cantidad;
@@ -1290,7 +1302,7 @@ function guardarMaterial() {
                 const hsInput = document.getElementById('matHsCode');
                 if (hsInput) hsInput.value = seleccionados[0].hsCode;
             }
-            
+
             // Crear los demás items directamente
             for (let i = 1; i < seleccionados.length; i++) {
                 const item = seleccionados[i];
@@ -1328,15 +1340,15 @@ function guardarMaterial() {
                 if (!proyecto.materiales) proyecto.materiales = [];
                 proyecto.materiales.push(nuevoMaterial);
             }
-            
+
             cerrarPDFPreview();
             mostrarToast(` Importados ${seleccionados.length} items desde PDF`, 'success');
-            
+
             if (seleccionados.length > 1) {
                 guardarProyecto();
                 renderizarMateriales();
             }
         }
-        
+
         // Exponer al ámbito global
         window.importarDesdePDF = importarDesdePDF;

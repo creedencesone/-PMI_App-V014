@@ -6,19 +6,20 @@ function renderizarActa() {
     let pm = proyecto.projectManager || {};
     let sp = proyecto.sponsor || {};
     let cl = proyecto.cliente || {};
-    
+
     let hitosHtml = '';
     if (proyecto.hitosFinancieros && proyecto.hitosFinancieros.length > 0) {
         hitosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_hitos_pago') + '</div><div class="acta-value">';
         proyecto.hitosFinancieros.forEach(h => {
-            let importe = (proyecto.precioVenta * h.porcentaje) / 100;
+            const precioBase = (typeof precioVentaEnBase === 'function') ? precioVentaEnBase(proyecto) : (proyecto.precioVenta || 0);
+            let importe = (precioBase * (Number(h.porcentaje) || 0)) / 100;
             hitosHtml += `<div class="acta-hito">• ${escapeHtml(h.nombre)}: ${h.porcentaje}% (${formatearMoneda(importe)}) - Mes ${h.mes}</div>`;
         });
         hitosHtml += `</div></div>`;
     } else {
         hitosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_hitos_pago') + '</div><div class="acta-value">' + tApp('acta_sin_hitos') + '</div></div>';
     }
-    
+
     let avalesHtml = '';
     if (proyecto.avales && proyecto.avales.length > 0) {
         avalesHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_avales') + '</div><div class="acta-value">';
@@ -36,7 +37,7 @@ function renderizarActa() {
     } else {
         avalesHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_avales') + '</div><div class="acta-value">' + tApp('acta_sin_avales') + '</div></div>';
     }
-    
+
     let segurosHtml = '';
     if (proyecto.seguros && proyecto.seguros.length > 0) {
         segurosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_seguros') + '</div><div class="acta-value">';
@@ -52,7 +53,7 @@ function renderizarActa() {
     } else {
         segurosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_seguros') + '</div><div class="acta-value">' + tApp('acta_sin_seguros') + '</div></div>';
     }
-    
+
     let riesgosHtml = '';
     if (proyecto.riesgos && proyecto.riesgos.length > 0) {
         riesgosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_riesgos') + '</div><div class="acta-value">';
@@ -63,12 +64,12 @@ function renderizarActa() {
     } else {
         riesgosHtml = '<div class="acta-field"><div class="acta-label">' + tApp('acta_riesgos') + '</div><div class="acta-value">' + tApp('acta_sin_riesgos') + '</div></div>';
     }
-    
+
     // Metodología
     const metodologia = proyecto.metodologia || { tipo: 'cascada', fasesAgile: [], fechaTransicion: null };
     let metodologiaTexto = '';
     let metodologiaDetalle = '';
-    
+
     if (metodologia.tipo === 'cascada') {
         metodologiaTexto = ' Gestión Tradicional (Cascada)';
         metodologiaDetalle = 'Planificación secuencial, fases definidas, entregables por etapa.';
@@ -83,13 +84,13 @@ function renderizarActa() {
         }).join(', ') || 'Ninguna';
         metodologiaDetalle = ` Transición: ${metodologia.fechaTransicion ? formatearFechaEspa(metodologia.fechaTransicion) : 'No definida'} |  Fases Ágiles: ${fasesTexto}`;
     }
-    
+
     const actaIniciales = (nombre) => {
         const parts = (nombre || '').trim().split(/\s+/);
         if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         return (parts[0] || '?').substring(0, 2).toUpperCase();
     };
-    
+
     document.getElementById('actaContent').innerHTML = `
         <div class="acta-cover">
             <div class="acta-cover-badge">ACTA DE CONSTITUCIÓN</div>
@@ -102,7 +103,7 @@ function renderizarActa() {
                 <span class="acta-pill">${tApp('acta_moneda')}: ${a.moneda || proyecto.monedaBase}</span>
             </div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">01</span>
@@ -121,7 +122,7 @@ function renderizarActa() {
                 <div class="acta-field"><div class="acta-label">${tApp('acta_moneda')}</div><div class="acta-value">${a.moneda || proyecto.monedaBase}</div></div>
             </div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">02</span>
@@ -161,7 +162,7 @@ function renderizarActa() {
                 </div>
             </div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">03</span>
@@ -174,7 +175,7 @@ function renderizarActa() {
             <div class="acta-field"><div class="acta-label">${tApp('acta_objetivo_general')}</div><div class="acta-value">${escapeHtml(a.objetivoGeneral || 'No definido')}</div></div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_criterios_exito')}</div><div class="acta-value">${escapeHtml(a.criteriosExito || 'No definidos')}</div></div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">04</span>
@@ -186,7 +187,7 @@ function renderizarActa() {
             </div>
             <div class="acta-field"><div class="acta-label">${tApp('acta_descripcion')}</div><div class="acta-value">${escapeHtml(a.alcance || proyecto.descripcion || 'No definido')}</div></div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">05</span>
@@ -203,7 +204,7 @@ function renderizarActa() {
                 <div class="acta-field"><div class="acta-label">${tApp('acta_roi')}</div><div class="acta-value">${a.roi ? a.roi + '%' : '-'}</div></div>
             </div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">06</span>
@@ -217,7 +218,7 @@ function renderizarActa() {
             ${hitosHtml}
             <div class="acta-field"><div class="acta-label">${tApp('acta_entregables_clave')}</div><div class="acta-value">${escapeHtml(a.entregablesClave || 'No definidos')}</div></div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">07</span>
@@ -230,7 +231,7 @@ function renderizarActa() {
             ${avalesHtml}
             ${segurosHtml}
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">08</span>
@@ -245,7 +246,7 @@ function renderizarActa() {
                 <div class="acta-field"><div class="acta-label">${tApp('acta_fecha_aprobacion')}</div><div class="acta-value">${formatearFechaEspa(a.fechaAprobacion)}</div></div>
             </div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">09</span>
@@ -264,7 +265,7 @@ function renderizarActa() {
                 <div class="acta-value">${metodologiaDetalle}</div>
             </div>
         </div>
-        
+
         <div class="acta-section">
             <div class="acta-heading acta-heading-blue">
                 <span class="acta-heading-num">10</span>
@@ -276,7 +277,7 @@ function renderizarActa() {
             </div>
             ${riesgosHtml}
         </div>
-        
+
         <div class="info-card u-mt-16">
             <p class="u-p-sm"> Los hitos de pago se gestionan en Finanzas → Venta y Hitos | Los avales se gestionan en Finanzas → Avales y Garantías | Los riesgos se gestionan en el panel Riesgos</p>
         </div>
@@ -286,7 +287,7 @@ function renderizarActa() {
 function editarActa() {
     let a = proyecto.acta || {};
     const metodologia = proyecto.metodologia || { tipo: 'cascada', fasesAgile: [], fechaTransicion: null };
-    
+
     const modalHtml = `<div class="modal-content modal-md"><div class="modal-header"><h3> ${tApp('btn_editar')} ${tApp('sidebar_acta')}</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
         <div class="form-group"><label>${tApp('acta_nombre')}</label><input type="text" id="actaNombre" value="${escapeHtml(a.nombreProyecto || proyecto.nombre)}"></div>
         <div class="form-group"><label>${tApp('acta_codigo')}</label><input type="text" id="actaCodigo" value="${escapeHtml(a.codigo || '')}"></div>
@@ -300,7 +301,7 @@ function editarActa() {
         <div class="form-group"><label>${tApp('acta_contrato')}</label><input type="number" id="actaPrecioVenta" value="${proyecto.precioVenta || 0}" step="1000"></div></div>
         <div class="form-row"><div class="form-group"><label>${tApp('acta_moneda_venta')}</label><select id="actaMonedaVenta">${Object.keys(MONEDAS).map(m => `<option value="${m}" ${(proyecto.monedaVenta || proyecto.monedaBase) === m ? 'selected' : ''}>${m} - ${MONEDAS[m]}</option>`).join('')}</select></div>
         <div class="form-group"><label>${tApp('acta_roi')}</label><input type="number" id="actaROI" value="${a.roi || 0}"></div></div>
-        
+
         <hr class="u-hr">
         <h4 class="u-fs-13"> ${tApp('acta_metodologia_tipo')}</h4>
         <div class="form-group">
@@ -312,7 +313,7 @@ function editarActa() {
             </select>
             <small class="u-fs-11">Define cómo se gestionará el proyecto. Puedes cambiarlo en cualquier momento.</small>
         </div>
-        
+
         <div id="mixtoConfig" style="display: ${metodologia.tipo === 'mixto' ? 'block' : 'none'};">
             <div class="form-group">
                 <label> Fecha de transición a Ágil</label>
@@ -330,7 +331,7 @@ function editarActa() {
                 <small>Mantén pulsado Ctrl/Cmd para seleccionar múltiples fases</small>
             </div>
         </div>
-        
+
         <div class="info-card-modal u-mt-16" >
             <small> <strong>¿Cuál elegir?</strong><br>
             • <strong>Cascada:</strong> Ideal para proyectos con requisitos estables, regulados o de construcción.<br>
@@ -338,7 +339,7 @@ function editarActa() {
             • <strong>Mixto:</strong> Combina planificación inicial en cascada con desarrollo iterativo ágil.
             </small>
         </div>
-        
+
         <div class="form-row">
             <div class="form-group"><label> Beneficio Proyectado (€)</label><input type="number" id="actaBeneficioProyectado" value="${a.beneficioProyectado || 0}"></div>
             <div class="form-group"><label> Fecha estimada beneficio</label><input type="date" id="actaFechaBeneficio" value="${a.fechaBeneficio || ''}"></div>
@@ -362,7 +363,7 @@ function toggleMetodologiaCampos() {
         mixtoConfig.style.display = tipo === 'mixto' ? 'block' : 'none';
     }
 }
-        
+
         function guardarActa() {
     let actaData = {
         nombreProyecto: document.getElementById('actaNombre').value,
@@ -381,71 +382,71 @@ function toggleMetodologiaCampos() {
         fechaBeneficio: document.getElementById('actaFechaBeneficio').value,
         indicadoresBeneficio: document.getElementById('actaIndicadoresBeneficio').value
     };
-    
+
     let precioVentaActa = parseFloat(document.getElementById('actaPrecioVenta').value);
     let monedaVentaActa = document.getElementById('actaMonedaVenta').value;
     let condicionesPagoActa = document.getElementById('actaCondicionesPago').value;
-    
+
     proyecto.acta = actaData;
-    
+
     //  CORRECCIÓN: Guardar metodología seleccionada
     const metodologiaTipo = document.getElementById('metodologiaTipo')?.value || 'cascada';
     const metodologiaFechaTransicion = document.getElementById('metodologiaFechaTransicion')?.value || null;
-    
+
     // Obtener fases ágiles seleccionadas (soporta múltiple selección)
     const metodologiaFasesSelect = document.getElementById('metodologiaFasesAgile');
     let metodologiaFasesAgile = [];
     if (metodologiaFasesSelect) {
         metodologiaFasesAgile = Array.from(metodologiaFasesSelect.selectedOptions).map(opt => opt.value);
     }
-    
+
     proyecto.metodologia = {
         tipo: metodologiaTipo,
         fasesAgile: metodologiaFasesAgile,
         fechaTransicion: metodologiaFechaTransicion
     };
-    
+
     console.log(" Metodología guardada:", proyecto.metodologia); // Para depuración
-    
+
     if (actaData.nombreProyecto) proyecto.nombre = actaData.nombreProyecto;
     if (actaData.alcance) proyecto.descripcion = actaData.alcance;
     if (actaData.fechaInicio) proyecto.fechaInicio = actaData.fechaInicio;
     if (actaData.fechaFin) proyecto.fechaFinPlan = actaData.fechaFin;
-    
+
     if (!isNaN(precioVentaActa)) proyecto.precioVenta = precioVentaActa;
     proyecto.monedaVenta = monedaVentaActa;
     proyecto.condicionesPago = condicionesPagoActa;
-    
+
     document.getElementById('precioVenta').value = proyecto.precioVenta;
     document.getElementById('precioVenta2').value = proyecto.precioVenta;
     document.getElementById('monedaVenta').value = proyecto.monedaVenta;
     document.getElementById('monedaVenta2').value = proyecto.monedaVenta;
     document.getElementById('condicionesPago').value = proyecto.condicionesPago;
     document.getElementById('condicionesPago2').value = proyecto.condicionesPago;
-    
+
     guardarProyecto();
     renderizarActa();
     calcularCashflow();
     renderizarHitosFinancieros();
-    
+
     //  Aplicar visibilidad de paneles según metodología guardada
     if (typeof mostrarPanelesSegunMetodologia === 'function') {
         mostrarPanelesSegunMetodologia();
     }
-    
+
     cerrarModalGeneric();
     mostrarToast(tApp('toast_acta_guardada'), 'success');
 }
-        
+
                 // ============================================
         // ROLES - VERSIÓN MEJORADA (con más datos y vCard)
         // ============================================
-        
+
         function renderizarRoles() {
             let pm = proyecto.projectManager || {};
             let sp = proyecto.sponsor || {};
             let cl = proyecto.cliente || {};
-            
+
             document.getElementById('rolesContent').innerHTML = `
                 <div class="info-card">
                     <h4> Project Manager</h4>
@@ -456,8 +457,8 @@ function toggleMetodologiaCampos() {
                     <div class="details"> ${pm.direccion || '-'}</div>
                     <div class="details"> ${pm.departamento || '-'}</div>
                     <div class="u-mt-8">
-                        <span class="edit-icon" onclick="abrirModalPM()"> Editar</span>
-                        ${pm.nombre ? `<span class="edit-icon u-ml-8 u-bg-blue-faint" onclick="exportarVCard('pm')"> Exportar vCard</span>` : ''}
+                        <span class="edit-icon" role="button" tabindex="0" onclick="abrirModalPM()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirModalPM()}"> Editar</span>
+                        ${pm.nombre ? `<span class="edit-icon u-ml-8 u-bg-blue-faint" role="button" tabindex="0" onclick="exportarVCard('pm')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportarVCard('pm')}"> Exportar vCard</span>` : ''}
                     </div>
                 </div>
                 <div class="info-card">
@@ -469,8 +470,8 @@ function toggleMetodologiaCampos() {
                     <div class="details"> ${sp.direccion || '-'}</div>
                     <div class="details"> ${sp.departamento || '-'}</div>
                     <div class="u-mt-8">
-                        <span class="edit-icon" onclick="abrirModalSponsor()"> Editar</span>
-                        ${sp.nombre ? `<span class="edit-icon u-ml-8 u-bg-blue-faint" onclick="exportarVCard('sponsor')"> Exportar vCard</span>` : ''}
+                        <span class="edit-icon" role="button" tabindex="0" onclick="abrirModalSponsor()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirModalSponsor()}"> Editar</span>
+                        ${sp.nombre ? `<span class="edit-icon u-ml-8 u-bg-blue-faint" role="button" tabindex="0" onclick="exportarVCard('sponsor')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportarVCard('sponsor')}"> Exportar vCard</span>` : ''}
                     </div>
                 </div>
                 <div class="info-card">
@@ -482,13 +483,13 @@ function toggleMetodologiaCampos() {
                     <div class="details"> ${cl.direccion || '-'}</div>
                     <div class="details"> ${cl.departamento || '-'}</div>
                     <div class="u-mt-8">
-                        <span class="edit-icon" onclick="abrirModalCliente()"> Editar</span>
-                        ${cl.nombre ? `<span class="edit-icon u-ml-8 u-bg-blue-faint" onclick="exportarVCard('cliente')"> Exportar vCard</span>` : ''}
+                        <span class="edit-icon" role="button" tabindex="0" onclick="abrirModalCliente()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirModalCliente()}"> Editar</span>
+                        ${cl.nombre ? `<span class="edit-icon u-ml-8 u-bg-blue-faint" role="button" tabindex="0" onclick="exportarVCard('cliente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();exportarVCard('cliente')}"> Exportar vCard</span>` : ''}
                     </div>
                 </div>
             `;
         }
-        
+
         function abrirModalPM() {
             let p = proyecto.projectManager || {};
             const modalHtml = `
@@ -527,9 +528,9 @@ function toggleMetodologiaCampos() {
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function guardarPM() {
-            proyecto.projectManager = { 
+            proyecto.projectManager = {
                 nombre: document.getElementById('pmNombre').value,
                 cargo: document.getElementById('pmCargo').value,
                 email: document.getElementById('pmEmail').value,
@@ -537,12 +538,12 @@ function toggleMetodologiaCampos() {
                 direccion: document.getElementById('pmDireccion').value,
                 departamento: document.getElementById('pmDepartamento').value
             };
-            guardarProyecto(); 
+            guardarProyecto();
             renderizarRoles(); renderizarActa();
-            cerrarModalGeneric(); 
+            cerrarModalGeneric();
             mostrarToast(tApp('toast_pm_actualizado'), 'success');
         }
-        
+
         function abrirModalSponsor() {
             let s = proyecto.sponsor || {};
             const modalHtml = `
@@ -581,9 +582,9 @@ function toggleMetodologiaCampos() {
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function guardarSponsor() {
-            proyecto.sponsor = { 
+            proyecto.sponsor = {
                 nombre: document.getElementById('sponsorNombre').value,
                 cargo: document.getElementById('sponsorCargo').value,
                 email: document.getElementById('sponsorEmail').value,
@@ -591,12 +592,12 @@ function toggleMetodologiaCampos() {
                 direccion: document.getElementById('sponsorDireccion').value,
                 departamento: document.getElementById('sponsorDepartamento').value
             };
-            guardarProyecto(); 
+            guardarProyecto();
             renderizarRoles(); renderizarActa();
-            cerrarModalGeneric(); 
+            cerrarModalGeneric();
             mostrarToast(tApp('toast_sponsor_actualizado'), 'success');
         }
-        
+
         function abrirModalCliente() {
             let c = proyecto.cliente || {};
             const modalHtml = `
@@ -639,9 +640,9 @@ function toggleMetodologiaCampos() {
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function guardarCliente() {
-            proyecto.cliente = { 
+            proyecto.cliente = {
                 nombre: document.getElementById('clienteNombre').value,
                 contacto: document.getElementById('clienteContacto').value,
                 cargo: document.getElementById('clienteCargo').value,
@@ -650,9 +651,9 @@ function toggleMetodologiaCampos() {
                 direccion: document.getElementById('clienteDireccion').value,
                 departamento: document.getElementById('clienteDepartamento').value
             };
-            guardarProyecto(); 
+            guardarProyecto();
             renderizarRoles(); renderizarActa();
-            cerrarModalGeneric(); 
+            cerrarModalGeneric();
             mostrarToast(tApp('toast_cliente_actualizado'), 'success');
         }
 
@@ -696,16 +697,16 @@ function actualizarVisibilidadGrupos() {
 
 function mostrarPanelesSegunMetodologia() {
     const metodologia = proyecto?.metodologia?.tipo || 'cascada';
-    
+
     // Paneles específicos de cada metodología (módulos que dependen de la metodología)
     const panelesCascada = ['materiales', 'servicios', 'logistica', 'viajes', 'avales', 'garantia'];
     const panelesAgile = ['sprintBacklog', 'sprintBurndown', 'velocityTracking', 'retrospectives', 'agileMetrics', 'sprintList'];
-    
+
     // Selectores de los dos módulos clave: Cronograma y menú Scrum
     const CRONO = `.nav-header[data-panel="cronograma"]`;
     const CRONO_EJEC = `.nav-header[data-panel="ejecucionCronograma"]`;
     const SCRUM_MENU = `.nav-header[data-submenu="scrum"]`;
-    
+
     if (metodologia === 'cascada') {
         // Tradicional: SOLO Cronograma (ocultar Scrum Ágil por completo)
         setNavSectionVisibility(SCRUM_MENU, false);
@@ -715,7 +716,7 @@ function mostrarPanelesSegunMetodologia() {
             const elemento = document.querySelector(`.nav-header[data-panel="${p}"], .submenu-item[data-panel="${p}"]`);
             if (elemento) { const s = elemento.closest('.nav-section') || elemento; s.style.display = ''; }
         });
-        
+
     } else if (metodologia === 'agile') {
         // Ágil: SOLO Scrum (Cronograma de Ejecución es para proyectos tradicionales o mixtos)
         setNavSectionVisibility(CRONO, false);
@@ -725,7 +726,7 @@ function mostrarPanelesSegunMetodologia() {
             const elemento = document.querySelector(`.nav-header[data-panel="${p}"], .submenu-item[data-panel="${p}"]`);
             if (elemento) { const s = elemento.closest('.nav-section') || elemento; s.style.display = ''; }
         });
-        
+
     } else if (metodologia === 'mixto') {
         // Mixto: AMBOS visibles (Cronograma y Scrum)
         setNavSectionVisibility(CRONO, true);
@@ -747,14 +748,14 @@ function mostrarPanelesSegunMetodologia() {
 
 function mostrarIndicadorMetodologiaMixta() {
     if (proyecto?.metodologia?.tipo !== 'mixto') return;
-    
+
     const fechaTransicion = proyecto.metodologia.fechaTransicion;
     if (!fechaTransicion) return;
-    
+
     const hoy = new Date();
     const fechaTransicionDate = new Date(fechaTransicion);
     const modoActual = hoy < fechaTransicionDate ? 'Cascada' : 'Ágil / Scrum';
-    
+
     let banner = document.getElementById('metodologiaBanner');
     if (!banner) {
         banner = document.createElement('div');
@@ -773,10 +774,10 @@ function mostrarIndicadorMetodologiaMixta() {
         `;
         document.body.appendChild(banner);
     }
-    
+
     banner.innerHTML = ` Modo recomendado: <strong>${modoActual}</strong> `;
     banner.title = `Proyecto Mixto: Usar ${modoActual}`;
-    
+
     banner.onclick = () => {
         if (modoActual === 'Cascada') {
             mostrarPanel('Cronograma');
@@ -788,11 +789,11 @@ function mostrarIndicadorMetodologiaMixta() {
 
 function recomendarMetodologia() {
     if (!proyecto) return;
-    
+
     let puntajeAgile = 0;
     let puntajeCascada = 0;
     let razones = [];
-    
+
     // 1. Estabilidad de requisitos (por hitos financieros)
     const hitos = proyecto.hitosFinancieros?.length || 0;
     if (hitos > 2) {
@@ -802,7 +803,7 @@ function recomendarMetodologia() {
         puntajeAgile += 30;
         razones.push(" Pocos hitos → requisitos pueden cambiar → Agile");
     }
-    
+
     // 2. Tamaño del equipo
     const equipoSize = proyecto.equipo?.length || 0;
     if (equipoSize > 5) {
@@ -812,7 +813,7 @@ function recomendarMetodologia() {
         puntajeAgile += 20;
         razones.push(" Equipo pequeño → Agile es más efectivo");
     }
-    
+
     // 3. Complejidad técnica
     const materiales = proyecto.materiales?.length || 0;
     const servicios = proyecto.servicios?.length || 0;
@@ -823,7 +824,7 @@ function recomendarMetodologia() {
         puntajeAgile += 15;
         razones.push(" Pocos componentes → fácil de iterar");
     }
-    
+
     // 4. Riesgos identificados
     const riesgosAltos = (proyecto.riesgos || []).filter(r => r.nivel === 'Alto' || r.nivel === 'Crítico').length;
     if (riesgosAltos > 3) {
@@ -833,14 +834,14 @@ function recomendarMetodologia() {
         puntajeCascada += 10;
         razones.push(" Riesgos controlables → Cascada es viable");
     }
-    
+
     const recomendacion = puntajeAgile > puntajeCascada ? 'agile' : (puntajeCascada > puntajeAgile ? 'cascada' : 'mixto');
     const textosReco = {
         cascada: ' Cascada / Tradicional',
         agile: ' Ágil / Scrum',
         mixto: ' Mixto (combinación)'
     };
-    
+
     const modalHtml = `
         <div class="modal-content modal-600">
             <div class="modal-header">
@@ -855,21 +856,21 @@ function recomendarMetodologia() {
                     Puntuación: Agile ${puntajeAgile} | Cascada ${puntajeCascada}
                 </div>
             </div>
-            
+
             <div class="info-card">
                 <h4> Análisis detallado</h4>
                 <ul class="u-ml-20 u-fs-12">
                     ${razones.map(r => `<li>${r}</li>`).join('')}
                 </ul>
             </div>
-            
+
             <div class="u-flex-gap-12 u-mt-20">
                 <button class="btn btn-secondary" onclick="cerrarModalGeneric()">Cancelar</button>
                 <button class="btn btn-primary" onclick="aplicarMetodologiaRecomendada('${recomendacion}')"> Aplicar recomendación</button>
             </div>
         </div>
     `;
-    
+
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
 }
 
@@ -881,15 +882,15 @@ function aplicarMetodologiaRecomendada(tipo) {
     cerrarModalGeneric();
     mostrarToast(` Metodología configurada: ${tipo.toUpperCase()}`, 'success');
 }
-        
+
         // ============================================
         // EXPORTAR TARJETA DE VISITA (vCard)
         // ============================================
-        
+
         function exportarVCard(tipo) {
             let data = {};
             let nombreArchivo = '';
-            
+
             if (tipo === 'pm') {
                 data = proyecto.projectManager || {};
                 nombreArchivo = `contacto_pm_${(data.nombre || 'project_manager').replace(/\s/g, '_')}.vcf`;
@@ -900,12 +901,12 @@ function aplicarMetodologiaRecomendada(tipo) {
                 data = proyecto.cliente || {};
                 nombreArchivo = `contacto_cliente_${(data.nombre || 'cliente').replace(/\s/g, '_')}.vcf`;
             }
-            
+
             if (!data.nombre) {
                 mostrarToast(" No hay datos de contacto para exportar", 'error');
                 return;
             }
-            
+
             // Construir vCard versión 4.0
             let vCard = [
                 'BEGIN:VCARD',
@@ -920,7 +921,7 @@ function aplicarMetodologiaRecomendada(tipo) {
                 `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
                 'END:VCARD'
             ].filter(line => line !== '').join('\r\n');
-            
+
             // Crear y descargar archivo
             const blob = new Blob([vCard], { type: 'text/vcard;charset=utf-8;' });
             const link = document.createElement('a');
@@ -931,19 +932,19 @@ function aplicarMetodologiaRecomendada(tipo) {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            
+
             mostrarToast(` Tarjeta de visita exportada: ${data.nombre}`, 'success');
         }
-        
+
         // Función adicional: Exportar todos los contactos en un solo archivo
         function exportarTodosVCard() {
             let allVCards = [];
             let nombres = [];
-            
+
             const pm = proyecto.projectManager || {};
             const sponsor = proyecto.sponsor || {};
             const cliente = proyecto.cliente || {};
-            
+
             if (pm.nombre) {
                 allVCards.push(generarVCardString(pm, 'pm'));
                 nombres.push(pm.nombre);
@@ -956,12 +957,12 @@ function aplicarMetodologiaRecomendada(tipo) {
                 allVCards.push(generarVCardString(cliente, 'cliente'));
                 nombres.push(cliente.nombre);
             }
-            
+
             if (allVCards.length === 0) {
                 mostrarToast(" No hay contactos para exportar", 'error');
                 return;
             }
-            
+
             const vcfContent = allVCards.join('\r\n\r\n');
             const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8;' });
             const link = document.createElement('a');
@@ -972,10 +973,10 @@ function aplicarMetodologiaRecomendada(tipo) {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            
+
             mostrarToast(` Exportados ${allVCards.length} contactos: ${nombres.join(', ')}`, 'success');
         }
-        
+
         function generarVCardString(data, tipo) {
             let lines = [
                 'BEGIN:VCARD',
@@ -992,7 +993,7 @@ function aplicarMetodologiaRecomendada(tipo) {
             ];
             return lines.filter(l => l !== '').join('\r\n');
         }
-        
+
         // ============================================
         // VENTA Y HITOS FINANCIEROS
         // ============================================

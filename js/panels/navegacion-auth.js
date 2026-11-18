@@ -1,15 +1,15 @@
         // ============================================
         // NAVEGACIÓN Y CARGA INICIAL
         // ============================================
-         function mostrarPanel(panelId) {
+         function mostrarPanel(panelId, opts) {
             // Limpiar intervalos de alarmas al cambiar de panel
             if (typeof detenerComprobacionAlarmas === 'function') detenerComprobacionAlarmas();
-            
+
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             const panel = document.getElementById(`panel${panelId}`);
             if(panel) panel.classList.add('active');
             const pid = panelId.toLowerCase();
-            if(pid === 'financiero') { inicializarConfigFinanciera(); calcularTodosLosCostesFinancieros(); }
+            if(pid === 'financiero') { inicializarConfigFinanciera(); calcularTodosLosCostesFinancieros(); if (typeof renderizarImportaciones === 'function') renderizarImportaciones(); }
             if(pid === 'cashflow') calcularCashflow();
             if(pid === 'resumengastos') { actualizarResumenGastos(); }
             if(pid === 'cronograma') cargarElementosGantt();
@@ -20,9 +20,10 @@
             if(pid === 'monedas') { actualizarTiposCambioUI(); mostrarFechaUltimaActualizacion(); poblarSelectMonedas(); setTimeout(actualizarGraficoEvolucionMoneda, 300); }
             if(pid === 'equipo') renderizarEquipo();
             if(pid === 'organigrama') renderizarOrganigrama();
+            if(pid === 'cargatrabajo' && typeof renderizarCargaTrabajo === 'function') renderizarCargaTrabajo();
             if(pid === 'materiales') renderizarMateriales();
             if(pid === 'servicios') renderizarServicios();
-            if(pid === 'comunicaciones') { renderizarComunicaciones(); renderizarReuniones(); document.querySelectorAll('.subpanel-comunicaciones').forEach(el => el.style.display = 'none'); document.getElementById('subpanelComunicaciones').style.display = 'block'; }
+            if(pid === 'comunicaciones') { renderizarComunicaciones(); renderizarReuniones(); if (typeof renderizarPlanComunicaciones === 'function') renderizarPlanComunicaciones(); document.querySelectorAll('.subpanel-comunicaciones').forEach(el => el.style.display = 'none'); document.getElementById('subpanelComunicaciones').style.display = 'block'; }
             if(pid === 'acta') renderizarActa();
             if(pid === 'procesos') renderizarProcesos();
             if(pid === 'roles') renderizarRoles();
@@ -38,6 +39,7 @@
             if(pid === 'metricasagiles') actualizarBurnDown();
             if(pid === 'sprintbacklog') renderizarSprintBacklog();
             if(pid === 'sprintburndown') renderizarBurndown();
+            if(pid === 'daily') { normalizarDatosAgiles(); renderizarDaily(); }
             if(pid === 'velocitytracking') renderizarVelocityTracking();
             if(pid === 'retrospectives') renderizarRetrospectives();
             if(pid === 'agilemetrics') renderizarAgileMetrics();
@@ -45,7 +47,7 @@
             if(pid === 'agilecostcontrol') actualizarCostesSprint();
             if(pid === 'logistica') { inicializarModuloLogistica(); }
             if(pid === 'agenda') { cargarAgenda(); }
-            
+
             // Aplicar permisos de edición por módulo
             var proyectoId = localStorage.getItem('proyectoSeleccionado');
             if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
@@ -63,13 +65,51 @@
                     deleteBtns.forEach(function(btn) { btn.style.display = mostrar ? '' : 'none'; });
                 }
             }
+
+            if (typeof hacerScrollAccesible === 'function') hacerScrollAccesible();
+
+            // Estado de navegación: accesible, enlazable y con foco predecible
+            var nombrePanel = String(panelId || '');
+            var inferiorPanel = nombrePanel.toLowerCase();
+            document.querySelectorAll('.nav-header[data-panel], .submenu-item[data-panel]').forEach(function (nav) {
+                var activo = (nav.getAttribute('data-panel') || '').toLowerCase() === inferiorPanel;
+                nav.classList.toggle('active', activo);
+                if (activo) nav.setAttribute('aria-current', 'page');
+                else nav.removeAttribute('aria-current');
+            });
+
+            if (!opts || opts.url !== false) {
+                var hashPanel = '#panel' + nombrePanel;
+                if (window.location.hash !== hashPanel) {
+                    if (opts && opts.replaceUrl) window.history.replaceState(null, '', hashPanel);
+                    else window.history.pushState(null, '', hashPanel);
+                }
+            }
+
+            var activoActual = document.activeElement;
+            var debeMoverFoco = !opts || opts.foco === true ||
+                !activoActual || activoActual === document.body ||
+                (activoActual.closest && activoActual.closest('.sidebar'));
+            if (debeMoverFoco) {
+                var destinoFoco = panel && panel.querySelector('h2, h1, .panel-title, [data-titulo-panel]');
+                if (!destinoFoco && panel) {
+                    panel.setAttribute('tabindex', '-1');
+                    destinoFoco = panel;
+                }
+                if (destinoFoco) {
+                    setTimeout(function () {
+                        try { destinoFoco.focus({ preventScroll: true }); }
+                        catch (e) { destinoFoco.focus(); }
+                    }, 0);
+                }
+            }
         }
-        
+
  async function cargarProyecto() {
     // Verificar autenticación: requiere sesión local O token API
     const tieneSesionLocal = !!AuthSystem.getCurrentUser();
     const tieneTokenAPI = typeof DataService !== 'undefined' && DataService.getToken();
-    
+
     if (!tieneSesionLocal && !tieneTokenAPI) {
         console.warn(' Usuario no autenticado, redirigiendo a login');
         window.location.href = 'index.html?redirect=' + encodeURIComponent(window.location.href);
@@ -87,7 +127,7 @@
     let id = parseInt(idRaw, 10);
     // Los IDs de Supabase son UUID (string): NO usar parseInt para decidir la ruta
     const idEsValido = !!idRaw && idRaw !== 'null' && idRaw !== 'undefined';
-    
+
     // Intentar cargar desde API primero (solo si hay token, para no pisar datos locales)
     if (idEsValido && typeof DataService !== 'undefined' && DataService.getToken()) {
         try {
@@ -111,7 +151,7 @@
             console.log(' API no disponible para cargar proyecto, usando localStorage');
         }
     }
-    
+
     if (!proyecto) {
         let todos = cargarProyectosStorage();
         let p = null;
@@ -127,11 +167,14 @@
             proyecto = p;
         }
     }
-    
+
     if(proyecto) {
         if(!proyecto.configAranceles) proyecto.configAranceles = [];
         if(!proyecto.tasasAduanerasFijas) proyecto.tasasAduanerasFijas = [];
         if(!proyecto.costesFinancierosExtra) proyecto.costesFinancierosExtra = [];
+        ['proveedores', 'contratos', 'ordenesCompra', 'pagosRealizados', 'lineasBase', 'cambios', 'bitacora', 'planComunicaciones'].forEach(function (clave) {
+            if (!Array.isArray(proyecto[clave])) proyecto[clave] = [];
+        });
         if(!proyecto.hitosFinancieros) proyecto.hitosFinancieros = [];
         if(!proyecto.stakeholders) proyecto.stakeholders = [];
         if(!proyecto.organigrama) proyecto.organigrama = [];
@@ -174,35 +217,35 @@
             window.location.href = 'dashboard.html';
             return;
         }
-        
+
         //  NUEVO PROYECTO - AHORA CON AVALES Y GARANTIA
-        proyecto = { 
-            id: parseInt(id) || Date.now(), 
-            nombre: "Nuevo Proyecto", 
-            descripcion: "", 
-            monedaBase: "EUR", 
-            monedaVenta: "EUR", 
-            precioVenta: 0, 
-            condicionesPago: "", 
-            hitosFinancieros: [], 
-            stakeholders: [], 
+        proyecto = {
+            id: parseInt(id) || Date.now(),
+            nombre: "Nuevo Proyecto",
+            descripcion: "",
+            monedaBase: "EUR",
+            monedaVenta: "EUR",
+            precioVenta: 0,
+            condicionesPago: "",
+            hitosFinancieros: [],
+            stakeholders: [],
             organigrama: [],
-            raci: [], 
-            equipo: [], 
-            materiales: [], 
-            servicios: [], 
-            procesos: JSON.parse(JSON.stringify(PROCESOS_PMBOK)), 
-            projectManager: {}, 
-            sponsor: {}, 
-            cliente: {}, 
-            acta: {}, 
-            configAranceles: [], 
-            tasasAduanerasFijas: [], 
-            costesFinancierosExtra: [], 
-            elementosGantt: [], 
-            riesgos: [], 
-            accionesMitigacion: [], 
-            comunicaciones: [], 
+            raci: [],
+            equipo: [],
+            materiales: [],
+            servicios: [],
+            procesos: JSON.parse(JSON.stringify(PROCESOS_PMBOK)),
+            projectManager: {},
+            sponsor: {},
+            cliente: {},
+            acta: {},
+            configAranceles: [],
+            tasasAduanerasFijas: [],
+            costesFinancierosExtra: [],
+            elementosGantt: [],
+            riesgos: [],
+            accionesMitigacion: [],
+            comunicaciones: [],
             reuniones: [],
             viajes: [],           //  Viajes
             avales: [],           //  Avales y garantías bancarias
@@ -212,11 +255,21 @@
             velocidadEquipo: 0,
             huellaCarbono: 0,
             satisfacciones: [],
-            satisfaccionPromedio: 0
+            satisfaccionPromedio: 0,
+            metodologia: { tipo: 'cascada', fasesAgile: [], fechaTransicion: null },
+            beneficios: { proyectado: 0, real: 0, historial: [], hitos: [] }
         };
         sincronizarActaConProyecto();
+        // Persistir de inmediato: sin esto el proyecto sólo vivía en memoria
+        // y desaparecía al recargar o al volver a la cartera.
+        localStorage.setItem('proyectoSeleccionado', String(proyecto.id));
+        const todosProyectos = cargarProyectosStorage();
+        const indice = todosProyectos.findIndex(p => String(p.id) === String(proyecto.id));
+        if (indice >= 0) todosProyectos[indice] = proyecto;
+        else todosProyectos.push(proyecto);
+        guardarProyectosStorage(todosProyectos);
     }
-    document.getElementById('projectName').innerHTML = proyecto.nombre;
+    document.getElementById('projectName').innerHTML = escapeHtml(proyecto.nombre || '');
     document.getElementById('projectDesc') && (document.getElementById('projectDesc').innerHTML = proyecto.descripcion || '');
     const monedaBaseSelect = document.getElementById('monedaBase');
     if(monedaBaseSelect) monedaBaseSelect.innerHTML = Object.keys(MONEDAS).map(m => `<option value="${m}" ${proyecto.monedaBase === m ? 'selected' : ''}>${m} - ${MONEDAS[m]}</option>`).join('');
@@ -267,7 +320,7 @@
             throughput: [],
             predictibilidad: []
         }
-        
+
     };
 }
     inicializarScrum();
@@ -279,27 +332,27 @@
 
  function aplicarRestriccionesPermisos(usuario) {
     console.log(' aplicarRestriccionesPermisos() ejecutándose...');
-    
+
     if (usuario.role === 'admin') {
         console.log(' Admin - Acceso total a todos los paneles');
         return;
     }
-    
+
     var proyectoId = localStorage.getItem('proyectoSeleccionado');
     if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
         proyectoId = DataService.resolveId(proyectoId);
     }
-    
+
     var elementos = document.querySelectorAll('.nav-header[data-panel], .nav-header.has-submenu, .submenu-item[data-panel]');
     for (var i = 0; i < elementos.length; i++) {
         var el = elementos[i];
         var panelId = el.dataset.panel;
-        
+
         if (!panelId && el.classList && el.classList.contains('has-submenu')) {
             var firstChild = el.querySelector('.submenu-item[data-panel]');
             if (firstChild) panelId = firstChild.dataset.panel;
         }
-        
+
         if (panelId) {
             var nivel = AuthSystem.getNivelAccesoModulo(proyectoId, panelId);
             if (nivel === 'none') {
@@ -311,7 +364,7 @@
             }
         }
     }
-    
+
     console.log(' Restricciones aplicadas correctamente');
 }
 // ============================================================
@@ -320,15 +373,15 @@
 
 function actualizarUIProyecto(usuario) {
     if (!usuario) return;
-    
+
     // Avatar
     var avatar = document.getElementById('userAvatar');
     if (avatar) avatar.textContent = usuario.nombre.charAt(0).toUpperCase();
-    
+
     // Nombre
     var nombre = document.getElementById('userNameDisplay');
     if (nombre) nombre.textContent = usuario.nombre;
-    
+
     // Rol
     var rol = document.getElementById('userRoleDisplay');
     if (rol) {
@@ -336,7 +389,7 @@ function actualizarUIProyecto(usuario) {
         rol.textContent = roleInfo?.nombre || usuario.role;
         rol.style.color = roleInfo?.color || '#888';
     }
-    
+
     // Mostrar controles de compartir (todos los usuarios autenticados)
     var adminControls = document.getElementById('adminControlsProyecto');
     if (adminControls) {
@@ -376,6 +429,8 @@ function mostrarGestionUsuarios() {
         return;
     }
     modal.classList.remove('u-hidden');
+    modal.style.display = 'flex';
+    if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(modal);
     document.getElementById('shareEmail').value = '';
     document.getElementById('shareRole').value = 'editor';
     document.getElementById('sharedUsersList').innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Cargando...</p>';
@@ -384,7 +439,7 @@ function mostrarGestionUsuarios() {
 
 function cerrarModalCompartir() {
     var modal = document.getElementById('modalCompartir');
-    if (modal) modal.classList.add('u-hidden');
+    if (modal) { modal.classList.add('u-hidden'); modal.style.display = 'none'; }
 }
 
 function getCurrentProjectId() {
@@ -418,9 +473,9 @@ function renderizarUsuariosCompartidos() {
         var esPropietario = u.role === 'owner';
         html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;">';
         html += '<div><div style="font-weight:500;font-size:14px;">' + escapeHtml(u.name || u.email) + '</div>';
-        html += '<div style="font-size:11px;color:var(--text-muted);">' + escapeHtml(u.email) + ' · <span style="text-transform:capitalize;">' + u.role + '</span></div></div>';
+        html += '<div style="font-size:11px;color:var(--text-muted);">' + escapeHtml(u.email) + ' · <span style="text-transform:capitalize;">' + escapeHtml(u.role || '') + '</span></div></div>';
         if (!esPropietario) {
-            html += '<button class="btn btn-danger btn-small" onclick="eliminarUsuarioCompartido(' + u.id + ')" style="padding:6px 12px;font-size:12px;"></button>';
+            html += '<button class="btn btn-danger btn-small" onclick="eliminarUsuarioCompartido(' + Number(u.id) + ')" style="padding:6px 12px;font-size:12px;"></button>';
         } else {
             html += '<span style="font-size:11px;color:var(--text-muted);"> Propietario</span>';
         }
@@ -510,6 +565,18 @@ function initNavegacion() {
             if (panelId) mostrarPanel(panelId.charAt(0).toUpperCase() + panelId.slice(1));
         });
     });
+
+    function abrirPanelDesdeHash() {
+        const coincidencia = /^#panel(.+)$/.exec(window.location.hash || '');
+        if (!coincidencia) return;
+        const id = coincidencia[1];
+        if (document.getElementById('panel' + id) && typeof mostrarPanel === 'function') {
+            mostrarPanel(id, { foco: true, url: false, replaceUrl: true });
+        }
+    }
+    window.addEventListener('hashchange', abrirPanelDesdeHash);
+    window.addEventListener('popstate', abrirPanelDesdeHash);
+    setTimeout(abrirPanelDesdeHash, 400);
 }
 
 window.procesoActivo = 'Inicio';
@@ -553,33 +620,36 @@ function cerrarModalSatisfaccion() {
 // SISTEMA DE NUMERACIÓN JERÁRQUICA EDT-ACTIVIDAD (CORREGIDO)
 // ============================================
 
-function obtenerPrefijoEDT(elementos, edtId) {
+function obtenerPrefijoEDT(elementos, edtId, visitados) {
     const edt = elementos.find(e => e.id === edtId);
     if (!edt) return '';
-    
+    const vistos = visitados || new Set();
+    if (vistos.has(edtId)) return '';
+    vistos.add(edtId);
+
     // Buscar el prefijo de la EDT padre
     let prefijo = '';
     if (edt.dependeDe) {
         const padreEDT = elementos.find(e => e.id === edt.dependeDe && e.tipo === 'edt');
         if (padreEDT) {
-            prefijo = obtenerPrefijoEDT(elementos, padreEDT.id);
+            prefijo = obtenerPrefijoEDT(elementos, padreEDT.id, vistos);
         }
     }
-    
+
     // Obtener todas las EDT al mismo nivel (mismo padre)
     const mismasEdt = elementos
         .filter(e => e.tipo === 'edt' && e.dependeDe === edt.dependeDe)
         .sort((a, b) => a.id - b.id); // Ordenar por ID para mantener consistencia
-    
+
     const indice = mismasEdt.findIndex(e => e.id === edtId) + 1;
-    
+
     return prefijo ? `${prefijo}.${indice}` : `${indice}`;
 }
 
 function obtenerNumeroActividad(elementos, actividadId) {
     const actividad = elementos.find(e => e.id === actividadId);
     if (!actividad) return '';
-    
+
     // Si la actividad tiene una EDT padre (dependeDe)
     if (actividad.dependeDe) {
         const edtPadre = elementos.find(e => e.id === actividad.dependeDe && e.tipo === 'edt');
@@ -593,7 +663,7 @@ function obtenerNumeroActividad(elementos, actividadId) {
             return `${prefijoEDT}.${indice}`;
         }
     }
-    
+
     // Si no tiene EDT padre, usar numeración simple
     const actividadesSinPadre = elementos
         .filter(e => e.tipo === 'actividad' && (!e.dependeDe || !elementos.find(edt => edt.id === e.dependeDe)))
@@ -605,7 +675,7 @@ function obtenerNumeroActividad(elementos, actividadId) {
 function obtenerNumeroEntregable(elementos, entregableId) {
     const entregable = elementos.find(e => e.id === entregableId);
     if (!entregable) return '';
-    
+
     if (entregable.dependeDe) {
         const edtPadre = elementos.find(e => e.id === entregable.dependeDe && e.tipo === 'edt');
         if (edtPadre) {
@@ -617,7 +687,7 @@ function obtenerNumeroEntregable(elementos, entregableId) {
             return `${prefijoEDT}.${indice}`;
         }
     }
-    
+
     const entregablesSinPadre = elementos
         .filter(e => e.tipo === 'entregable' && (!e.dependeDe || !elementos.find(edt => edt.id === e.dependeDe)))
         .sort((a, b) => a.id - b.id);
@@ -628,7 +698,7 @@ function obtenerNumeroEntregable(elementos, entregableId) {
 function obtenerNumeroHito(elementos, hitoId) {
     const hito = elementos.find(e => e.id === hitoId);
     if (!hito) return '';
-    
+
     if (hito.dependeDe) {
         const edtPadre = elementos.find(e => e.id === hito.dependeDe && e.tipo === 'edt');
         if (edtPadre) {
@@ -640,7 +710,7 @@ function obtenerNumeroHito(elementos, hitoId) {
             return `H-${prefijoEDT}.${indice}`;
         }
     }
-    
+
     const hitosSinPadre = elementos
         .filter(e => e.tipo === 'hito' && (!e.dependeDe || !elementos.find(edt => edt.id === e.dependeDe)))
         .sort((a, b) => a.id - b.id);
@@ -649,18 +719,37 @@ function obtenerNumeroHito(elementos, hitoId) {
 }
 
 function obtenerCodigoElemento(elemento, elementos) {
-    switch (elemento.tipo) {
-        case 'edt':
-            return obtenerPrefijoEDT(elementos, elemento.id);
-        case 'actividad':
-            return obtenerNumeroActividad(elementos, elemento.id);
-        case 'entregable':
-            return obtenerNumeroEntregable(elementos, elemento.id);
-        case 'hito':
-            return obtenerNumeroHito(elementos, elemento.id);
-        default:
-            return '';
+    if (!elemento || !elementos || !elementos.length) return '';
+    if (typeof WbsCodeService !== 'undefined') {
+        return WbsCodeService.generar(elementos).codigos.get(elemento.id) || elemento.codigo || '';
     }
+    // Numeración WBS unificada: todos los hijos de un mismo padre se numeran
+    // en secuencia (actividades, entregables e hitos comparten jerarquía).
+    const hijosDe = new Map();
+    elementos.forEach(e => {
+        const key = (e.dependeDe == null) ? 'root' : String(e.dependeDe);
+        if (!hijosDe.has(key)) hijosDe.set(key, []);
+        hijosDe.get(key).push(e);
+    });
+    const codigos = {};
+    const visitados = new Set();
+    const walk = (key, prefijo) => {
+        if (visitados.has(key)) return;
+        visitados.add(key);
+        const hijos = (hijosDe.get(key) || []).slice().sort((a, b) => {
+            const ca = a.codigo || '';
+            const cb = b.codigo || '';
+            if (ca && cb && ca !== cb) return ca.localeCompare(cb, 'es', { numeric: true });
+            return (a.id || 0) - (b.id || 0);
+        });
+        hijos.forEach((h, i) => {
+            const code = prefijo ? `${prefijo}.${i + 1}` : String(i + 1);
+            codigos[h.id] = code;
+            walk(String(h.id), code);
+        });
+    };
+    walk('root', '');
+    return codigos[elemento.id] || '';
 }
 
         // ============================================
@@ -692,12 +781,12 @@ function obtenerCodigoElemento(elemento, elementos) {
                 console.log(" No se encuentra el contenedor raciContent");
                 return;
             }
-            
+
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
                 container.innerHTML = '<div class="info-card"> No hay stakeholders registrados. Agrega stakeholders primero en el panel de Stakeholders.</div>';
                 return;
             }
-            
+
             const actividades = getActividadesRACI();
             if (!proyecto.raci) proyecto.raci = [];
             const actKeys = {};
@@ -711,14 +800,14 @@ function obtenerCodigoElemento(elemento, elementos) {
                 container.innerHTML = '<div class="info-card"> No hay actividades en el cronograma. Añade actividades o entregables desde el panel Cronograma para empezar a asignar roles RACI.</div>';
                 return;
             }
-            
+
             let html = '<div class="raci-table u-overflow-x-auto"><table class="data-table" style="min-width: 500px;"><thead><tr><th>Actividad</th>';
-            
+
             proyecto.stakeholders.forEach(s => {
                 html += `<th class="u-fs-11">${escapeHtml(s.nombre.substring(0, 12))}</th>`;
             });
             html += '</tr></thead><tbody>';
-            
+
             let grupoActual = null;
             actividades.forEach(act => {
                 if (act.grupo !== grupoActual) {
@@ -731,7 +820,7 @@ function obtenerCodigoElemento(elemento, elementos) {
                     const raciItem = proyecto.raci.find(r => r.stakeholderId === s.id && ((r.actividadKey && r.actividadKey === act.key) || r.actividad === act.nombre));
                     const valor = raciItem ? raciItem.rol : '';
                     html += `<td class="u-text-center">
-                        <select class="raci-select" style="width: 55px; padding: 4px; font-size: 11px;" onchange="guardarRACI('${escAttr(act.key)}', '${escAttr(act.nombre)}', ${s.id}, this.value)">
+                        <select class="raci-select" aria-label="Rol RACI de ${escAttr(s.nombre || s.email || ('stakeholder ' + s.id))} en ${escAttr(act.nombre)}" style="width: 55px; padding: 4px; font-size: 11px;" onchange="guardarRACI('${escAttr(act.key)}', '${escAttr(act.nombre)}', ${s.id}, this.value)">
                             <option value="">-</option>
                             <option value="R" ${valor === 'R' ? 'selected' : ''}>R</option>
                             <option value="A" ${valor === 'A' ? 'selected' : ''}>A</option>
@@ -742,7 +831,7 @@ function obtenerCodigoElemento(elemento, elementos) {
                 });
                 html += '</tr>';
             });
-            
+
             html += `</tbody></table>
             <div class="info-card u-mt-16 raci-legend">
                 <span class="raci-badge raci-badge-r">R</span><span class="raci-legend-text">Responsable (quien ejecuta)</span>
@@ -750,28 +839,23 @@ function obtenerCodigoElemento(elemento, elementos) {
                 <span class="raci-badge raci-badge-c">C</span><span class="raci-legend-text">Consultado</span>
                 <span class="raci-badge raci-badge-i">I</span><span class="raci-legend-text">Informado</span>
             </div></div>`;
-            
+
             container.innerHTML = html;
             console.log(" Matriz RACI renderizada correctamente");
         }
-        
+
         function guardarRACI(key, actividad, stakeholderId, rol) {
-            if (!proyecto.raci) proyecto.raci = [];
-            const idx = proyecto.raci.findIndex(r => r.stakeholderId === stakeholderId && ((r.actividadKey && r.actividadKey === key) || r.actividad === actividad));
-            
-            if (rol === '') {
-                if (idx >= 0) proyecto.raci.splice(idx, 1);
-            } else {
-                if (idx >= 0) {
-                    proyecto.raci[idx].rol = rol;
-                    proyecto.raci[idx].actividad = actividad;
-                    proyecto.raci[idx].actividadKey = key;
-                } else {
-                    proyecto.raci.push({ actividad, actividadKey: key, stakeholderId, rol });
-                }
-            }
+            const antes = (proyecto.raci || []).find(r => r.stakeholderId === stakeholderId && r.actividadKey === key) || null;
+            asignarRolRACI(proyecto, key, actividad, stakeholderId, rol);
+            if (typeof registrarBitacora === 'function') registrarBitacora('raci', stakeholderId, 'actualizar', antes, proyecto.raci.find(r => r.stakeholderId === stakeholderId && r.actividadKey === key) || null);
             guardarProyecto();
-            mostrarToast(` Rol ${rol} asignado para "${actividad}"`, 'success');
+            if (typeof renderizarRACI === 'function') renderizarRACI();
+            const problemas = validarRACI(proyecto, typeof getActividadesRACI === 'function' ? getActividadesRACI() : []);
+            if (problemas.length) {
+                mostrarToast(`Rol ${rol} asignado · ${problemas.length} fila(s) sin responsable único`, 'error');
+            } else {
+                mostrarToast(` Rol ${rol} asignado para "${actividad}"`, 'success');
+            }
         }
 function actualizarFechasProyectoDesdeActa() {
     if (proyecto.acta && proyecto.acta.fechaInicio) {
@@ -802,11 +886,13 @@ function mostrarModalPerfil() {
     document.getElementById('perfilPasswordNueva2').value = '';
     document.getElementById('perfilError').style.display = 'none';
     modal.classList.remove('u-hidden');
+    modal.style.display = 'flex';
+    if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(modal);
 }
 
 function cerrarModalPerfil() {
     var modal = document.getElementById('modalPerfil');
-    if (modal) modal.classList.add('u-hidden');
+    if (modal) { modal.classList.add('u-hidden'); modal.style.display = 'none'; }
 }
 
 function mostrarErrorPerfil(msg) {
@@ -946,12 +1032,14 @@ function mostrarPanelNotificaciones() {
     var modal = document.getElementById('modalNotificaciones');
     if (!modal) return;
     modal.classList.remove('u-hidden');
+    modal.style.display = 'flex';
+    if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(modal);
     recargarNotificaciones();
 }
 
 function cerrarModalNotificaciones() {
     var modal = document.getElementById('modalNotificaciones');
-    if (modal) modal.classList.add('u-hidden');
+    if (modal) { modal.classList.add('u-hidden'); modal.style.display = 'none'; }
 }
 
 function escaparHtmlNotif(str) {
@@ -1119,12 +1207,12 @@ function iniciarIndicadorSync() {
         if (time) time.textContent = formatearTiempoSync(DataService.getLastSyncTime());
     }, 10000);
 }
- async function init() { 
-    initNavegacion(); 
-    setActiveProceso('Inicio', { navegar: false }); 
-    await cargarProyecto(); 
-    cargarTemaGuardado(); 
-    cargarIdiomaApp(); 
+ async function init() {
+    initNavegacion();
+    setActiveProceso('Inicio', { navegar: false });
+    await cargarProyecto();
+    cargarTemaGuardado();
+    cargarIdiomaApp();
     cargarUsuarioSesion();
     // Iniciar auto-sync si hay token de API
     if (typeof DataService !== 'undefined' && DataService.getToken()) {
@@ -1170,11 +1258,11 @@ function mapAuthUser(authUser) {
 function actualizarUIUsuario() {
     const nombreDisplay = document.getElementById('userNameDisplay');
     const rolDisplay = document.getElementById('userRoleDisplay');
-    
+
     if (usuarioActual) {
-        if (nombreDisplay) nombreDisplay.innerHTML = usuarioActual.nombre;
+        if (nombreDisplay) nombreDisplay.innerHTML = escapeHtml(usuarioActual.nombre || '');
         if (rolDisplay) rolDisplay.innerHTML = usuarioActual.rol;
-        
+
         // Asignar usuario al proyecto si no tiene PM asignado
         if (proyecto && !proyecto.projectManager?.nombre) {
             proyecto.projectManager = {
@@ -1228,22 +1316,21 @@ function cargarUsuarioSesion() {
 function cerrarSesion() {
     if (confirm(tApp('confirmar_cerrar_sesion_seguro'))) {
         if (typeof DataService !== 'undefined') DataService.stopAutoSync();
-        AuthSystem.logout();
         usuarioActual = null;
-        window.location.href = 'index.html';
+        Promise.resolve(AuthSystem.signOut()).finally(() => { window.location.href = 'index.html'; });
     }
 }
 
          // ============================================
         // FUNCIONES DE TEMA CLARO/OSCURO
         // ============================================
-        
+
 function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
     const btn = document.getElementById('themeToggleBtn');
     const themeIcon = document.getElementById('themeIcon');
-    
+
     if (currentTheme === 'light') {
         html.setAttribute('data-theme', 'dark');
         localStorage.setItem('pmi_theme', 'dark');
@@ -1259,7 +1346,7 @@ function toggleTheme() {
         }
         mostrarToast(" Tema claro activado", 'info');
     }
-    
+
     //  RECALCULAR GRÁFICOS CON NUEVOS COLORES
     if (cashflowChart) {
         cashflowChart.destroy();
@@ -1276,12 +1363,12 @@ function toggleTheme() {
         setTimeout(actualizarPanelSalud, 100);
     }
 }
-        
+
         function cargarTemaGuardado() {
             const temaGuardado = localStorage.getItem('pmi_theme');
             const html = document.documentElement;
             const themeIcon = document.getElementById('themeIcon');
-            
+
             if (temaGuardado === 'light') {
                 html.setAttribute('data-theme', 'light');
                 if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
@@ -1295,12 +1382,12 @@ function toggleTheme() {
                 // ============================================
         // TEMA CLARO/OSCURO
         // ============================================
-        
+
          window.toggleTheme = function() {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme');
             const themeIcon = document.getElementById('themeIcon');
-            
+
             if (current === 'light') {
                 html.setAttribute('data-theme', 'dark');
                 localStorage.setItem('pmi_theme', 'dark');
@@ -1313,13 +1400,13 @@ function toggleTheme() {
                 if (typeof mostrarToast === 'function') mostrarToast(" Tema claro", 'info');
             }
         };
-        
+
         // Inicializar tema al cargar
         (function initTheme() {
             const temaGuardado = localStorage.getItem('pmi_theme');
             const html = document.documentElement;
             const themeIcon = document.getElementById('themeIcon');
-            
+
             if (temaGuardado === 'light') {
                 html.setAttribute('data-theme', 'light');
                 if (themeIcon) themeIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';

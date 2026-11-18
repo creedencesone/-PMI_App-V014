@@ -28,6 +28,7 @@ const items = [
     'logo.png',
     'logo.svg',
     'css',           // estilos adicionales si existen
+    'design-system', // tokens publicados tal cual para el HTML desplegable
     'icons',         // iconos de la PWA
     'img',           // imágenes (capturas del manual de usuario, etc.)
     'manifest.json',

@@ -7,7 +7,13 @@
                 const clave = ((s.nombre || '').trim().toLowerCase() + '|' + (s.email || '').trim().toLowerCase());
                 if (clave in vistos) {
                     huboCambios = true;
-                    if (proyecto.raci) proyecto.raci.forEach(r => { if (r.stakeholderId === s.id) r.stakeholderId = vistos[clave]; });
+                    // Conservar los datos del duplicado que no estén vacíos en el canónico.
+                    const canonico = limpios.find(x => x.id === vistos[clave]);
+                    if (canonico) Object.keys(s).forEach(k => {
+                        if (s[k] !== '' && s[k] !== null && s[k] !== undefined &&
+                            (canonico[k] === '' || canonico[k] === null || canonico[k] === undefined)) canonico[k] = s[k];
+                    });
+                    if (proyecto.raci) proyecto.raci.forEach(r => { if (String(r.stakeholderId) === String(s.id)) r.stakeholderId = vistos[clave]; });
                     if (proyecto.organigrama) { proyecto.organigrama = organigramaRemapearStakeholder(proyecto.organigrama, s.id, vistos[clave]); }
                     return;
                 }
@@ -37,12 +43,12 @@
                 if (s.telefono === undefined) s.telefono = '';
                 if (s.pais === undefined) s.pais = '';
             });
-            
+
             const altaPoderAltoInteres = proyecto.stakeholders.filter(s => s.poder >= 3 && s.interes >= 3);
             const altaPoderBajoInteres = proyecto.stakeholders.filter(s => s.poder >= 3 && s.interes < 3);
             const bajoPoderAltoInteres = proyecto.stakeholders.filter(s => s.poder < 3 && s.interes >= 3);
             const bajoPoderBajoInteres = proyecto.stakeholders.filter(s => s.poder < 3 && s.interes < 3);
-            
+
             function pmDerivarTipo(s) {
                 if (s.tipo === 'interno' || s.tipo === 'externo') return s.tipo;
                 var p = (s.pais || '').toLowerCase();
@@ -246,7 +252,7 @@
                 });
             });
         }
-        
+
         function abrirModalStakeholder() {
     // Crear modal con inputs editables y forzar z-index/focus
     const modalHtml = `
@@ -395,8 +401,8 @@ function guardarStakeholder() {
     cerrarModalGeneric();
     mostrarToast(` Interesado "${nombre}" añadido`, 'success');
 }
-        
-        
+
+
         function editarStakeholder(id) {
             let s = proyecto.stakeholders.find(s => s.id === id);
             if (!s) return;
@@ -422,18 +428,26 @@ function guardarStakeholder() {
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function actualizarStakeholder() {
             let id = parseInt(document.getElementById('stakeId').value);
             let idx = proyecto.stakeholders.findIndex(s => s.id === id);
             if (idx >= 0) {
+                const nombre = (document.getElementById('stakeNombre')?.value || '').trim();
+                const email = (document.getElementById('stakeEmail')?.value || '').trim().toLowerCase();
+                if (!nombre) { mostrarToast(' El nombre es obligatorio', 'error'); return; }
+                const duplicado = proyecto.stakeholders.some((s, i) => i !== idx &&
+                    String((s.nombre || '').trim().toLowerCase() + '|' + (s.email || '').trim().toLowerCase()) ===
+                    String(nombre.toLowerCase() + '|' + email));
+                if (duplicado) { mostrarToast(' Ya existe un interesado con ese nombre y email', 'error'); return; }
+                const antes = JSON.parse(JSON.stringify(proyecto.stakeholders[idx]));
                 proyecto.stakeholders[idx] = {
                     id: id,
-                    nombre: document.getElementById('stakeNombre').value,
+                    nombre,
                     empresa: document.getElementById('stakeEmpresa').value,
                     puesto: document.getElementById('stakePuesto').value,
                     rol: document.getElementById('stakeRol').value,
-                    email: document.getElementById('stakeEmail').value,
+                    email,
                     telefono: document.getElementById('stakeTelefono').value,
                     pais: document.getElementById('stakePais').value,
                     tipo: document.getElementById('stakeTipo')?.value || 'interno',
@@ -441,6 +455,7 @@ function guardarStakeholder() {
                     interes: parseInt(document.getElementById('stakeInteres').value),
                     expectativas: document.getElementById('stakeExpectativas').value
                 };
+                if (typeof registrarBitacora === 'function') registrarBitacora('stakeholder', id, 'editar', antes, proyecto.stakeholders[idx]);
                 guardarProyecto();
                 renderizarStakeholders();
                 renderizarRACI();
@@ -461,58 +476,34 @@ function guardarStakeholder() {
                 mostrarToast(` Interesado "${s?.nombre}" eliminado`, 'success');
             }
         }
-        
-       
-        
+
+
+
         // ============================================
         // MATRIZ RACI
         // ============================================
-        function renderizarRACI() {
-            const container = document.getElementById('raciContent');
-            if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
-                container.innerHTML = '<div class="info-card">No hay interesados registrados. Agrega interesados primero.</div>';
-                return;
-            }
-            
-            const actividades = ['Acta Constitución', 'Planificación', 'Ejecución', 'Monitoreo', 'Cierre', 'Aprobaciones', 'Comunicaciones', 'Riesgos'];
-            if (!proyecto.raci) proyecto.raci = [];
-            
-            let html = '<div class="raci-table"><table class="data-table"><thead><tr><th>Actividad</th>';
-            proyecto.stakeholders.forEach(s => html += `<th>${escapeHtml(s.nombre.substring(0,15))}</th>`);
-            html += '</tr></thead><tbody>';
-            
-            actividades.forEach(act => {
-                html += `<tr><td><strong>${act}</strong></td>`;
-                proyecto.stakeholders.forEach(s => {
-                    let valor = (proyecto.raci || []).find(r => r.actividad === act && r.stakeholderId === s.id)?.rol || '';
-                    html += `<td><select class="raci-select" onchange="guardarRACI('${act}', ${s.id}, this.value)"><option value="">-</option><option value="R" ${valor === 'R' ? 'selected' : ''}>R</option><option value="A" ${valor === 'A' ? 'selected' : ''}>A</option><option value="C" ${valor === 'C' ? 'selected' : ''}>C</option><option value="I" ${valor === 'I' ? 'selected' : ''}>I</option></select></td>`;
-                });
-                html += '</tr>';
-            });
-            html += '</tbody></table><div class="info-card u-mt-16"><small>R=Responsable, A=Accountable, C=Consultado, I=Informado</small></div></div>';
-            container.innerHTML = html;
-        }
+        // renderizarRACI y guardarRACI viven en navegacion-auth.js (versión dinámica desde el Gantt).
 
         // ============================================
         // INFORME INTELIGENTE DE MATRIZ RACI
         // ============================================
-        
+
         function generarInformeRACI() {
             const informeContainer = document.getElementById('raciInforme');
             if (!informeContainer) return;
-            
+
             if (!proyecto.stakeholders || proyecto.stakeholders.length === 0) {
                 mostrarToast(" No hay interesados registrados. Agrega interesados primero.", 'error');
                 return;
             }
-            
+
             // Recopilar datos de la matriz RACI
             const raciData = proyecto.raci || [];
             const stakeholders = proyecto.stakeholders;
-            
+
             // Actividades: fijas + tareas del cronograma + entregables
             const actividades = (typeof getActividadesRACI === 'function') ? getActividadesRACI() : ['Acta Constitución', 'Planificación', 'Ejecución', 'Monitoreo', 'Cierre', 'Aprobaciones', 'Comunicaciones', 'Riesgos'].map((nombre, i) => ({ key: 'fija:' + i, nombre }));
-            
+
             // 1. DETECTAR BRECHAS (tareas sin R o sin A)
             const brechas = [];
             actividades.forEach(act => {
@@ -522,13 +513,13 @@ function guardarStakeholder() {
                 if (!tieneR) brechas.push({ actividad: act.nombre, tipo: 'R', mensaje: 'No hay nadie responsable (R) de esta actividad' });
                 if (!tieneA) brechas.push({ actividad: act.nombre, tipo: 'A', mensaje: 'No hay nadie accountable (A) para esta actividad' });
             });
-            
+
             // 2. DETECTAR SOBRECARGA (personas con muchas R)
             const cargaPorStakeholder = {};
             stakeholders.forEach(s => {
                 cargaPorStakeholder[s.id] = { nombre: s.nombre, rol: s.rol || 'Interesado', countR: 0, countA: 0, actividadesR: [], actividadesA: [] };
             });
-            
+
             raciData.forEach(r => {
                 if (cargaPorStakeholder[r.stakeholderId]) {
                     if (r.rol === 'R') {
@@ -540,16 +531,16 @@ function guardarStakeholder() {
                     }
                 }
             });
-            
+
             const sobrecargados = Object.values(cargaPorStakeholder).filter(s => s.countR > 3);
             const sinActividades = Object.values(cargaPorStakeholder).filter(s => s.countR === 0 && s.countA === 0);
-            
+
             // 3. ANÁLISIS POR ROL (quién hace qué, quién decide)
             const responsables = [];
             const accountable = [];
             const consultados = [];
             const informados = [];
-            
+
             raciData.forEach(r => {
                 const stakeholder = stakeholders.find(s => s.id === r.stakeholderId);
                 const nombre = stakeholder ? stakeholder.nombre : 'Desconocido';
@@ -558,18 +549,18 @@ function guardarStakeholder() {
                 if (r.rol === 'C') consultados.push({ nombre, actividad: r.actividad });
                 if (r.rol === 'I') informados.push({ nombre, actividad: r.actividad });
             });
-            
+
             // Generar el informe HTML
             const saludGeneral = brechas.length === 0 ? (sobrecargados.length === 0 ? 'excelente' : 'buena') : (brechas.length > 2 ? 'critica' : 'regular');
             const saludColor = saludGeneral === 'excelente' ? '#00A859' : (saludGeneral === 'buena' ? '#FF8C00' : '#FF3B30');
             const saludTexto = saludGeneral === 'excelente' ? 'Excelente' : (saludGeneral === 'buena' ? 'Buena (requiere atención)' : 'Crítica (acción inmediata)');
-            
+
             let html = `
                 <div class="raci-report-title">
                     <span></span> INFORME INTELIGENTE DE MATRIZ RACI
                     <span style="font-size: 12px; color: rgba(255,255,255,0.5);">${new Date().toLocaleString('es-ES')}</span>
                 </div>
-                
+
                 <!-- ¿PARA QUÉ SIRVE LA MATRIZ RACI? -->
                 <div class="raci-report-section raci-info">
                     <h4> ¿PARA QUÉ SIRVE LA MATRIZ RACI?</h4>
@@ -592,7 +583,7 @@ function guardarStakeholder() {
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- SIGNIFICADO DE LOS ROLES RACI -->
                 <div class="raci-report-section">
                     <h4> SIGNIFICADO DE CADA ROL</h4>
@@ -603,7 +594,7 @@ function guardarStakeholder() {
                         <div><span class="raci-badge raci-badge-i">I</span> <strong>Informed</strong><br><span class="u-fs-11">Quien debe ser informado</span></div>
                     </div>
                 </div>
-                
+
                 <!-- SALUD GENERAL DE LA MATRIZ -->
                 <div class="raci-report-section" style="border-left: 4px solid ${saludColor};">
                     <h4> SALUD GENERAL DE LA MATRIZ RACI</h4>
@@ -615,7 +606,7 @@ function guardarStakeholder() {
                     </div>
                 </div>
             `;
-            
+
             // SECCIÓN 1: DETECTAR BRECHAS
             if (brechas.length > 0) {
                 html += `
@@ -641,7 +632,7 @@ function guardarStakeholder() {
                     </div>
                 `;
             }
-            
+
             // SECCIÓN 2: SOBRECARGA DE TRABAJO
             if (sobrecargados.length > 0) {
                 html += `
@@ -669,7 +660,7 @@ function guardarStakeholder() {
                     </div>
                 `;
             }
-            
+
             // SECCIÓN 3: INTERESADOS SIN PARTICIPACIÓN
             if (sinActividades.length > 0) {
                 html += `
@@ -685,7 +676,7 @@ function guardarStakeholder() {
                     </div>
                 `;
             }
-            
+
             // SECCIÓN 4: ANÁLISIS POR ROL
             html += `
                 <div class="raci-report-section">
@@ -726,7 +717,7 @@ function guardarStakeholder() {
                     </div>
                 </div>
             `;
-            
+
             // SECCIÓN 5: RESUMEN EJECUTIVO
             html += `
                 <div class="raci-report-section raci-info">
@@ -752,28 +743,16 @@ function guardarStakeholder() {
                     </div>
                 </div>
             `;
-            
+
             informeContainer.innerHTML = html;
             informeContainer.style.display = 'block';
-            
+
             // Hacer scroll al informe
             informeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
+
             mostrarToast(" Informe RACI generado exitosamente", 'success');
         }
-        
-        function guardarRACI(actividad, stakeholderId, rol) {
-            if (!proyecto.raci) proyecto.raci = [];
-            let idx = proyecto.raci.findIndex(r => r.actividad === actividad && r.stakeholderId === stakeholderId);
-            if (rol === '') {
-                if (idx >= 0) proyecto.raci.splice(idx, 1);
-            } else {
-                if (idx >= 0) proyecto.raci[idx].rol = rol;
-                else proyecto.raci.push({ actividad, stakeholderId, rol });
-            }
-            guardarProyecto();
-            mostrarToast(` Rol ${rol} asignado`, 'success');
-        }
+
 // ============================================
 // MÓDULO DE RESUMEN DE GASTOS
 // ============================================

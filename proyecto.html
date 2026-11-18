@@ -8,27 +8,35 @@
     <meta name="apple-mobile-web-app-title" content="PMI Mind">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
     <title>PMI Mind - Gestión de Proyecto</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-<!-- THREE.JS - CDN UNIFICADA (funciona siempre) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-    // Fallback si el CDN principal falla
-    if (typeof THREE === 'undefined') {
-        document.write('<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/scr' + 'ipt>');
-    }
-</script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/DragControls.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="js/vendor/feather.min.js"></script>
-<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <!-- Librerías vendorizadas localmente: no dependen de CDN -->
+    <script src="js/vendor/chart.umd.min.js?v=20261117a"></script>
+    <script src="js/vendor/chart-fallback.js?v=20261117a"></script>
+    <script defer src="js/vendor/html2canvas.min.js?v=20261117a"></script>
 
-<link rel="stylesheet" href="styles.css">
-<script src="auth.js"></script>
+    <!-- Three.js + controles -->
+    <script defer src="js/vendor/three/three.min.js?v=20261117a"></script>
+    <script defer src="js/vendor/three/OrbitControls.js?v=20261117a"></script>
+    <script defer src="js/vendor/three/DragControls.js?v=20261117a"></script>
+
+    <!-- PDF.js y EmailJS -->
+    <script defer src="js/vendor/pdfjs/pdf.min.js?v=20261117a"></script>
+    <script defer src="js/vendor/email.min.js?v=20261117a"></script>
+    <script src="js/vendor/feather.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof pdfjsLib !== 'undefined') {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdfjs/pdf.worker.min.js';
+            }
+        });
+    </script>
+
+<link rel="stylesheet" href="design-system/tokens-shared.css?v=20261120e">
+<link rel="stylesheet" href="design-system/tokens.css?v=20261120e">
+<link rel="stylesheet" href="styles.css?v=20261120e">
+<script src="js/vendor/pbkdf2.js?v=20261120e"></script>
+<script src="auth.js?v=20261120e"></script>
 </head>
 <body>
     <div class="app-container">
@@ -38,11 +46,13 @@
             </div>
 <!-- VISOR DE USUARIO EN SIDEBAR -->
 <div class="sidebar-user" style="padding:16px 20px; border-bottom:0.5px solid var(--border-color);">
-    <div id="userInfoDisplay" style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="mostrarModalPerfil()" title="Haz clic para editar tu perfil">
-        <div id="userAvatar" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#007AFF,#00A859); display:flex; align-items:center; justify-content:center; font-size:18px; color:white; font-weight:bold;">P</div>
+    <div id="userInfoDisplay" style="display:flex; align-items:center; gap:12px;">
+        <div id="userPerfilTrigger" role="button" tabindex="0" aria-labelledby="userAvatar userNameDisplay userRoleDisplay" style="display:flex; align-items:center; gap:12px; flex:1; min-width:0; cursor:pointer;" onclick="mostrarModalPerfil()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();mostrarModalPerfil();}" title="Haz clic para editar tu perfil">
+        <div id="userAvatar" aria-hidden="true" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#007AFF,#00A859); display:flex; align-items:center; justify-content:center; font-size:18px; color:white; font-weight:bold;">P</div>
         <div style="flex:1; min-width:0;">
             <div id="userNameDisplay" style="font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Usuario</div>
             <div id="userRoleDisplay" style="font-size:11px; color:var(--text-muted);">Team Member</div>
+        </div>
         </div>
         <div style="position:relative; display:flex; align-items:center; gap:10px;">
             <span style="font-size:16px; cursor:pointer; display:inline-flex;" onclick="event.stopPropagation(); mostrarPanelNotificaciones()" title="Notificaciones"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
@@ -99,10 +109,11 @@
                     <div class="submenu-item" data-panel="logistica">Logística</div>
                     <div class="submenu-item" data-panel="viajes">Viajes</div>
                     <div class="submenu-item" data-panel="organigrama">Organigrama</div>
+                    <div class="submenu-item" data-panel="cargaTrabajo">Carga de trabajo</div>
                 </div>
             </div>
             <div class="nav-section"><div class="nav-header has-submenu" data-submenu="finanzas"><span class="nav-icon"><i data-feather="dollar-sign" class="nav-feather"></i></span><span class="nav-title">Finanzas</span><span class="nav-arrow"><i data-feather="play-circle" class="nav-feather"></i></span></div>
-            
+
              <div class="submenu" data-submenu="finanzas">
                     <div class="submenu-item" data-panel="monedas">Monedas</div>
                     <div class="submenu-item" data-panel="venta">Venta y Hitos</div>
@@ -131,6 +142,7 @@
                 <div class="submenu" data-submenu="scrum">
                     <div class="submenu-item" data-panel="sprintBacklog"> Sprint Backlog</div>
                     <div class="submenu-item" data-panel="sprintBurndown"> Sprint Burndown</div>
+                    <div class="submenu-item" data-panel="daily"> Daily Scrum</div>
                     <div class="submenu-item" data-panel="velocityTracking"> Velocity Tracking</div>
                     <div class="submenu-item" data-panel="retrospectives"> Retrospectives</div>
                     <div class="submenu-item" data-panel="agileMetrics"> Agile Metrics</div>
@@ -173,7 +185,7 @@
             </div>
                 </div>
             </div>
-        </div> 
+        </div>
 
 
         <div class="main-content">
@@ -214,141 +226,244 @@
         </div>
     </div>
 
-    <!-- Semáforo de salud general -->
-    <div class="info-card info-card-center">
-        <h4><i data-feather="thumbs-up" class="nav-feather"></i> SALUD GENERAL DEL PROYECTO</h4>
-        <div id="saludSemaforo" class="salud-semaforo-display">--</div>
-        <div id="saludMensaje" class="u-fs-14">Analizando datos...</div>
+    <!-- ============================================================
+         ANALÍTICA EVM — valor ganado
+    ============================================================ -->
+    <section class="evm" aria-labelledby="evmTitle">
+        <header class="evm-head">
+            <div class="evm-head__main">
+                <p class="evm-eyebrow"><span class="evm-dot" aria-hidden="true"></span>Earned Value Management</p>
+                <h3 class="evm-title" id="evmTitle">Analítica de valor ganado</h3>
+                <p class="evm-sub">Coste planificado, valor ganado y coste real acumulados a la fecha de corte.</p>
+            </div>
+            <div class="evm-verdict" id="evmVerdict" data-tone="neutral">
+                <span class="evm-verdict__label">Salud general</span>
+                <strong class="evm-verdict__value" id="saludGeneralPMBOK">0%</strong>
+                <span class="evm-verdict__pill" id="saludSemaforo">--</span>
+            </div>
+        </header>
+        <p class="evm-note" id="saludMensaje">Analizando datos...</p>
+
+        <div class="evm-triad">
+            <article class="evm-metric" data-series="pv">
+                <header class="evm-metric__head">
+                    <span class="evm-metric__key">PV</span>
+                    <span class="evm-metric__name">Valor planificado</span>
+                </header>
+                <strong class="evm-metric__value" id="evmPV">—</strong>
+                <div class="evm-meter" id="evmPVMeter" role="img" aria-label="Valor planificado sobre el presupuesto">
+                    <span class="evm-meter__fill" id="evmPVBar"></span>
+                </div>
+                <footer class="evm-metric__foot"><span id="evmPVPct">0%</span> del BAC</footer>
+            </article>
+            <article class="evm-metric" data-series="ev">
+                <header class="evm-metric__head">
+                    <span class="evm-metric__key">EV</span>
+                    <span class="evm-metric__name">Valor ganado</span>
+                </header>
+                <strong class="evm-metric__value" id="evmEV">—</strong>
+                <div class="evm-meter" id="evmEVMeter" role="img" aria-label="Valor ganado sobre el presupuesto">
+                    <span class="evm-meter__fill" id="evmEVBar"></span>
+                </div>
+                <footer class="evm-metric__foot"><span id="evmEVPct">0%</span> del BAC</footer>
+            </article>
+            <article class="evm-metric" data-series="ac">
+                <header class="evm-metric__head">
+                    <span class="evm-metric__key">AC</span>
+                    <span class="evm-metric__name" id="evmACNombre">Coste estimado</span>
+                </header>
+                <strong class="evm-metric__value" id="evmAC">—</strong>
+                <div class="evm-meter" id="evmACMeter" role="img" aria-label="Coste real sobre el presupuesto">
+                    <span class="evm-meter__fill" id="evmACBar"></span>
+                </div>
+                <footer class="evm-metric__foot"><span id="evmACPct">0%</span> del BAC · <span id="evmACFuente">Estimación temporal</span></footer>
+            </article>
+        </div>
+
+        <div class="evm-lower">
+            <div class="evm-indices">
+                <article class="evm-index" id="evmCPICard" data-tone="neutral">
+                    <header><span class="evm-index__key">CPI</span><span class="evm-chip" id="cpiEstado">—</span></header>
+                    <strong class="evm-index__value" id="cpiValor">0.00</strong>
+                    <p class="evm-index__desc">Rendimiento del coste</p>
+                </article>
+                <article class="evm-index" id="evmSPICard" data-tone="neutral">
+                    <header><span class="evm-index__key">SPI</span><span class="evm-chip" id="spiEstado">—</span></header>
+                    <strong class="evm-index__value" id="spiValor">0.00</strong>
+                    <p class="evm-index__desc">Rendimiento del cronograma</p>
+                </article>
+                <article class="evm-index" id="evmROICard" data-tone="neutral">
+                    <header><span class="evm-index__key">ROI</span><span class="evm-chip" id="roiEstado">—</span></header>
+                    <strong class="evm-index__value" id="roiValor">0%</strong>
+                    <p class="evm-index__desc">Retorno proyectado</p>
+                </article>
+                <article class="evm-index evm-index--bac" id="evmBACCard">
+                    <header><span class="evm-index__key">BAC</span><span class="evm-chip">Presupuesto</span></header>
+                    <strong class="evm-index__value" id="evmBAC">—</strong>
+                    <p class="evm-index__desc">Base de coste aprobada</p>
+                </article>
+            </div>
+
+            <figure class="evm-chart">
+                <figcaption class="evm-chart__head">
+                    <div>
+                        <h4>Curva S acumulada</h4>
+                        <p id="evmChartRange">—</p>
+                    </div>
+                    <ul class="evm-legend">
+                        <li data-series="pv"><i aria-hidden="true"></i>PV</li>
+                        <li data-series="ev"><i aria-hidden="true"></i>EV</li>
+                        <li data-series="ac"><i aria-hidden="true"></i>AC</li>
+                        <li data-series="eac"><i aria-hidden="true"></i>EAC</li>
+                    </ul>
+                </figcaption>
+                <div class="evm-chart__canvas">
+                    <canvas id="evmSChart" role="img" aria-label="Curva S de valor planificado, valor ganado y coste real acumulados"></canvas>
+                    <p class="evm-chart__empty" id="evmChartEmpty" hidden>El cronograma no tiene costes asignados: añade importes a las actividades para dibujar la curva.</p>
+                </div>
+            </figure>
+        </div>
+
+        <div class="evm-forecast">
+            <div class="evm-fc"><span class="evm-fc__label">EAC</span><strong class="evm-fc__value" id="evmEAC">—</strong><small>Estimación a la finalización</small></div>
+            <div class="evm-fc"><span class="evm-fc__label">ETC</span><strong class="evm-fc__value" id="evmETC">—</strong><small>Trabajo restante</small></div>
+            <div class="evm-fc"><span class="evm-fc__label">VAC</span><strong class="evm-fc__value" id="evmVAC">—</strong><small>Variación a la finalización</small></div>
+            <div class="evm-fc"><span class="evm-fc__label">TCPI</span><strong class="evm-fc__value" id="evmTCPI">—</strong><small>Rendimiento requerido</small></div>
+        </div>
+
+        <details class="evm-escenarios">
+            <summary>Escenarios EAC y TCPI-EAC</summary>
+            <table class="data-table">
+                <caption class="sr-only">Comparativa de escenarios de estimación a la finalización</caption>
+                <thead><tr><th scope="col">Escenario</th><th scope="col">Fórmula</th><th scope="col">Importe</th></tr></thead>
+                <tbody id="evmEscenariosBody"><tr><td colspan="3">Sin base de pronóstico</td></tr></tbody>
+            </table>
+            <p id="evmTcpiEac" class="evm-escenarios__tcpi">TCPI-EAC: —</p>
+        </details>
+    </section>
+
+    <!-- ============================================================
+         RESULTADO ECONÓMICO
+    ============================================================ -->
+    <div class="evm-section-head">
+        <h4>Resultado económico</h4>
+        <span>Ingresos, coste y margen</span>
+    </div>
+    <div class="cards-grid u-mb-24 cards-grid-5">
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="tag" class="nav-feather"></i>Precio de venta</span>
+            <strong class="metric-card__value" id="saludPrecioVenta">0</strong>
+            <span class="metric-card__meta">Ingreso contratado</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="dollar-sign" class="nav-feather"></i>Coste total</span>
+            <strong class="metric-card__value" id="saludCosteTotal">0</strong>
+            <span class="metric-card__meta">BAC del proyecto</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="check-circle" class="nav-feather"></i>Beneficio</span>
+            <strong class="metric-card__value" id="saludBeneficio">0</strong>
+            <span class="metric-card__meta" id="saludBeneficioMeta">Margen —</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="trending-up" class="nav-feather"></i>Beneficio proyectado</span>
+            <strong class="metric-card__value" id="beneficioProyectado">0</strong>
+            <span class="metric-card__meta" id="margenProyectado">Margen: 0%</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="credit-card" class="nav-feather"></i>Financiación</span>
+            <strong class="metric-card__value" id="saludCobrosPlanificados">0</strong>
+            <span class="metric-card__meta" id="saludCobrosPlanificadosMeta">Cobros planificados</span>
+        </article>
     </div>
 
-    <!-- Resumen económico del proyecto -->
-    <div class="cards-grid u-mb-24 cards-grid-4">
-        <div class="value-card" id="cardPrecioVenta">
-            <div class="small"><i data-feather="tag" class="nav-feather"></i> Precio de Venta</div>
-            <div class="big" id="saludPrecioVenta">0</div>
-        </div>
-        <div class="value-card" id="cardSaludCosteTotal">
-            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Coste Total</div>
-            <div class="big" id="saludCosteTotal">0</div>
-        </div>
-        <div class="value-card" id="cardSaludBeneficio">
-            <div class="small"><i data-feather="check-circle" class="nav-feather"></i> Beneficio</div>
-            <div class="big" id="saludBeneficio">0</div>
-        </div>
-        <div class="value-card" id="cardSaludFinanciacion">
-            <div class="small"><i data-feather="credit-card" class="nav-feather"></i> Financiación</div>
-            <div class="big" id="saludFinanciacion">0</div>
-        </div>
+    <!-- ============================================================
+         OPERACIÓN
+    ============================================================ -->
+    <div class="evm-section-head">
+        <h4>Operación</h4>
+        <span>Avance, riesgo y desviación</span>
     </div>
-
-    <!-- Tarjetas de métricas principales -->
     <div class="cards-grid u-mb-24 cards-grid-4">
-        <div class="value-card" id="cardProgreso">
-            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Progreso General</div>
-            <div class="big" id="progresoGeneral">0%</div>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="activity" class="nav-feather"></i>Progreso general</span>
+            <strong class="metric-card__value" id="progresoGeneral">0%</strong>
             <div class="progress-bar-container">
                 <div class="progress-fill" id="progresoBarra"></div>
             </div>
-        </div>
-        <div class="value-card" id="cardRiesgos">
-            <div class="small"><i data-feather="alert-triangle" class="nav-feather"></i> Riesgos</div>
-            <div class="big" id="riesgosScore">0</div>
-            <div class="small" id="riesgosNivel">Sin riesgos</div>
-        </div>
-        <div class="value-card" id="cardFinanzas">
-            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Salud Financiera</div>
-            <div class="big" id="saludFinanciera">0%</div>
-            <div class="small" id="finanzasDetalle">Beneficio: 0</div>
-        </div>
-        <div class="value-card" id="cardCronograma">
-            <div class="small"><i data-feather="fast-forward" class="nav-feather"></i> Desviación</div>
-            <div class="big" id="desviacionCronograma">0</div>
-            <div class="small" id="cronoDetalle">días de retraso</div>
-        </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="alert-triangle" class="nav-feather"></i>Riesgos</span>
+            <strong class="metric-card__value" id="riesgosScore">0</strong>
+            <span class="metric-card__meta" id="riesgosNivel">Sin riesgos</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="pie-chart" class="nav-feather"></i>Salud financiera</span>
+            <strong class="metric-card__value" id="saludFinanciera">0%</strong>
+            <span class="metric-card__meta" id="finanzasDetalle">Beneficio: 0</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="clock" class="nav-feather"></i>Desviación</span>
+            <strong class="metric-card__value" id="desviacionCronograma">0</strong>
+            <span class="metric-card__meta" id="cronoDetalle">días de retraso</span>
+        </article>
     </div>
 
-    <!-- Segunda fila de tarjetas -->
+    <!-- ============================================================
+         CALIDAD Y EQUIPO
+    ============================================================ -->
+    <div class="evm-section-head">
+        <h4>Calidad y equipo</h4>
+        <span>Defectos, velocidad y satisfacción</span>
+    </div>
     <div class="cards-grid u-mb-24 cards-grid-4">
-        <div class="value-card" id="cardCPI">
-            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> CPI (Costos)</div>
-            <div class="big" id="cpiValor">0.00</div>
-            <div class="small" id="cpiEstado">--</div>
-        </div>
-        <div class="value-card" id="cardSPI">
-            <div class="small"><i data-feather="trending-up" class="nav-feather"></i> SPI (Cronograma)</div>
-            <div class="big" id="spiValor">0.00</div>
-            <div class="small" id="spiEstado">--</div>
-        </div>
-        <div class="value-card" id="cardROI">
-            <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> ROI Proyectado</div>
-            <div class="big" id="roiValor">0%</div>
-            <div class="small" id="roiEstado">--</div>
-        </div>
-        <div class="value-card" id="cardEAC">
-            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> EAC (Pronóstico)</div>
-            <div class="big" id="eacValor">0</div>
-            <div class="small">Costo total estimado</div>
-        </div>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="shield" class="nav-feather"></i>Índice de defectos</span>
+            <strong class="metric-card__value" id="defectosValor">0</strong>
+            <span class="metric-card__meta" id="defectosEstado">defectos/entregable</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="zap" class="nav-feather"></i>Velocidad del equipo</span>
+            <strong class="metric-card__value" id="velocidadValor">0</strong>
+            <span class="metric-card__meta" id="velocidadEstado">pts/sprint</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="star" class="nav-feather"></i>Satisfacción</span>
+            <strong class="metric-card__value" id="satisfaccionValor">0.0</strong>
+            <span class="metric-card__meta" id="satisfaccionEstado">/ 5.0</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-card__label"><i data-feather="leaf" class="nav-feather"></i>Huella de carbono</span>
+            <strong class="metric-card__value" id="huellaValor">0</strong>
+            <span class="metric-card__meta" id="huellaEstado">kg CO₂ / entregable</span>
+        </article>
     </div>
 
-    <!-- Tercera fila: Defectos, Velocidad, Satisfacción, Huella -->
-    <div class="cards-grid u-mb-24 cards-grid-4">
-        <div class="value-card" id="cardDefectos">
-            <div class="small"><i data-feather="alert-triangle" class="nav-feather"></i> Índice de Defectos</div>
-            <div class="big" id="defectosValor">0</div>
-            <div class="small" id="defectosEstado">defectos/entregable</div>
-        </div>
-        <div class="value-card" id="cardVelocidad">
-            <div class="small"><i data-feather="help-circle" class="nav-feather"></i> Velocidad del Equipo</div>
-            <div class="big" id="velocidadValor">0</div>
-            <div class="small" id="velocidadEstado">pts/sprint</div>
-        </div>
-        <div class="value-card" id="cardSatisfaccion">
-            <div class="small"><i data-feather="zap-off" class="nav-feather"></i> Satisfacción Stakeholder</div>
-            <div class="big" id="satisfaccionValor">0.0</div>
-            <div class="small" id="satisfaccionEstado">/ 5.0</div>
-        </div>
-        <div class="value-card" id="cardHuella">
-            <div class="small"><i data-feather="external-link" class="nav-feather"></i> Huella de Carbono</div>
-            <div class="big" id="huellaValor">0</div>
-            <div class="small" id="huellaEstado">kg CO₂ / entregable</div>
-        </div>
+    <!-- ============================================================
+         INDICADORES CLAVE
+    ============================================================ -->
+    <div class="evm-section-head">
+        <h4>Indicadores clave</h4>
+        <span>Umbrales de referencia PMBOK</span>
     </div>
-
-    <!-- Cuarta fila: Salud General -->
-    <div class="cards-grid u-mb-24 cards-grid-2">
-        <div class="value-card" id="cardSaludGeneral">
-            <div class="small"><i data-feather="map-pin" class="nav-feather"></i> Salud General</div>
-            <div class="big" id="saludGeneralPMBOK">0%</div>
-            <div class="small" id="saludGeneralEstado">Basado en 8 métricas</div>
-        </div>
-        <div class="value-card" id="cardProyectado">
-            <div class="small"><i data-feather="trending-up" class="nav-feather"></i> Beneficio Proyectado</div>
-            <div class="big" id="beneficioProyectado">0</div>
-            <div class="small" id="margenProyectado">Margen: 0%</div>
-        </div>
-    </div>
-
-    <!-- Tabla de indicadores clave -->
-    <div class="info-card">
-        <h4><i data-feather="help-circle" class="nav-feather"></i> INDICADORES CLAVE (KPIs)</h4>
-        <table class="data-table" id="tablaKPIs">
+    <div class="metric-table-wrap">
+        <table class="data-table kpi-table" id="tablaKPIs">
+            <caption>Indicadores clave del proyecto</caption>
             <thead>
                 <tr>
-                    <th>Indicador</th>
-                    <th>Valor</th>
-                    <th>Estado</th>
-                    <th>Meta</th>
+                    <th scope="col">Indicador</th>
+                    <th scope="col">Valor</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Referencia</th>
                 </tr>
             </thead>
             <tbody id="kpisBody">
                 <tr><td colspan="4" class="u-text-center">Actualizando datos...</td></tr>
             </tbody>
         </table>
-
     </div>
-</div>
-              
+            </div>
+
             <div id="panelMonedas" class="panel hidden">
                 <div class="panel-title">
                     <span><i data-feather="external-link" class="nav-feather"></i> Monedas y Tipos de Cambio</span>
@@ -363,13 +478,13 @@
                     <span class="monedas-chip">Fuente: <span id="statFuenteActiva">--</span></span>
                     <span class="monedas-chip">Actualizado: <span id="statUltimaAct">--</span></span>
                     <span class="monedas-chip">Base:
-                        <select id="monedaBase" onchange="cambiarMonedaBaseYActualizar()"></select>
+                        <select id="monedaBase" aria-label="Moneda base del proyecto" onchange="cambiarMonedaBaseYActualizar()"></select>
                     </span>
                 </div>
 
                 <div class="monedas-toolbar">
-                    <input type="text" id="searchMoneda" placeholder="Buscar moneda..." oninput="filtrarMonedas(this.value)">
-                    <select id="filterRegion" onchange="filtrarPorRegion(this.value)">
+                    <input type="text" id="searchMoneda" aria-label="Buscar moneda" placeholder="Buscar moneda..." oninput="filtrarMonedas(this.value)">
+                    <select id="filterRegion" aria-label="Filtrar por región" onchange="filtrarPorRegion(this.value)">
                         <option value="">Todas las regiones</option>
                         <option value="europe">🇪🇺 Europa</option>
                         <option value="americas"><i data-feather="external-link" class="nav-feather"></i> Américas</option>
@@ -429,7 +544,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Precio Venta</label>
-                                <input type="number" id="precioVenta" onchange="actualizarVenta()" step="0.01" min="0">
+                                <input type="number" id="precioVenta" aria-label="Precio de venta" onchange="actualizarVenta()" step="0.01" min="0">
                             </div>
                             <div class="form-group">
                                 <label>Moneda Venta</label>
@@ -438,7 +553,7 @@
                         </div>
                         <div class="form-group">
                             <label>Condiciones de pago</label>
-                            <textarea rows="3" id="condicionesPago" placeholder="Ej: 30% anticipo, 40% hito intermedio, 30% entrega final"></textarea>
+                            <textarea rows="3" id="condicionesPago" aria-label="Condiciones de pago" placeholder="Ej: 30% anticipo, 40% hito intermedio, 30% entrega final"></textarea>
                         </div>
                     </div>
 
@@ -485,8 +600,26 @@
 
             <div id="panelCashflow" class="panel hidden">
                 <div class="panel-title"><span><i data-feather="help-circle" class="nav-feather"></i> Cashflow (<span id="monedaDisplay">EUR</span>)</span></div>
+                <div class="cards-grid cards-grid-4 u-mb-24">
+                    <div class="value-card vc-blue">
+                        <div class="small"><i data-feather="trending-down" class="nav-feather"></i> Coste total</div>
+                        <div class="big" id="totalCoste">0</div>
+                    </div>
+                    <div class="value-card vc-green">
+                        <div class="small"><i data-feather="trending-up" class="nav-feather"></i> Ingreso total</div>
+                        <div class="big" id="totalIngreso">0</div>
+                    </div>
+                    <div class="value-card vc-purple">
+                        <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Beneficio</div>
+                        <div class="big" id="totalBeneficio">0</div>
+                    </div>
+                    <div class="value-card vc-orange">
+                        <div class="small"><i data-feather="alert-circle" class="nav-feather"></i> Necesidad de financiación</div>
+                        <div class="big" id="necesidadFinanciacion">0</div>
+                    </div>
+                </div>
                 <div class="chart-container"><canvas id="cashflowChart"></canvas></div>
-                <table class="data-table"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Neto</th><th>Acumulado</th></tr></thead><tbody id="cashflowBody"></tbody><tfoot><tr class="total-row"><td><strong>TOTAL</strong></th><td id="totalIngresosFoot">0</th><td id="totalGastosFoot">0</th><td id="totalNetoFoot">0</th><td></th></tr></tfoot></table>
+                <table class="data-table"><thead><tr><th scope="col">Mes</th><th scope="col">Ingresos</th><th scope="col">Gastos</th><th scope="col">Neto</th><th scope="col">Acumulado</th></tr></thead><tbody id="cashflowBody"></tbody><tfoot><tr class="total-row"><th scope="row"><strong>TOTAL</strong></th><td id="totalIngresosFoot">0</td><td id="totalGastosFoot">0</td><td id="totalNetoFoot">0</td><td></td></tr></tfoot></table>
             </div>
                         <!-- PANEL RESUMEN DE GASTOS -->
             <div id="panelResumenGastos" class="panel hidden">
@@ -628,12 +761,12 @@
                         <h3><i data-feather="shield-off" class="nav-feather"></i> Configurar Garantía</h3>
                         <span class="close-modal" onclick="cerrarModalGarantia()">&times;</span>
                     </div>
-                    
+
                     <div class="form-group">
                         <label><i data-feather="shopping-bag" class="nav-feather"></i> Equipo / Producto en garantía *</label>
                         <input type="text" id="garantiaEquipo" placeholder="Ej: Servidor Dell PowerEdge, Sistema ERP, etc.">
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label><i data-feather="fast-forward" class="nav-feather"></i> Duración de la garantía (años)</label>
@@ -644,25 +777,25 @@
                             <input type="date" id="garantiaFechaInicio" aria-label="Fecha de inicio de la garantía">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label><i data-feather="help-circle" class="nav-feather"></i> Cobertura incluida</label>
                         <textarea rows="2" id="garantiaCobertura" placeholder="Ej: Reparación de hardware, soporte técnico, piezas de repuesto..."></textarea>
                     </div>
-                    
+
                     <div class="form-group">
                         <label><i data-feather="help-circle" class="nav-feather"></i> Exclusiones / Limitaciones</label>
                         <textarea rows="2" id="garantiaExclusiones" placeholder="Ej: Daños por mal uso, desgaste normal..."></textarea>
                     </div>
-                    
+
                     <hr class="u-hr u-hr-sm">
                     <h4 class="u-section-title"><i data-feather="dollar-sign" class="nav-feather"></i> RELACIÓN CON HITOS DE PAGO</h4>
-                    
+
                     <div class="form-group">
                         <label><input type="checkbox" id="garantiaAfectaHitoFinal"> <i data-feather="check-circle" class="nav-feather"></i> El último hito se paga al final de la garantía</label>
                         <p class="u-p-xs">Marca esta opción si el cliente no paga el último hito hasta que finalice el período de garantía.</p>
                     </div>
-                    
+
                     <div class="form-group u-hidden" id="garantiaHitoFinalSelect">
                         <label><i data-feather="zap-off" class="nav-feather"></i> Seleccionar el hito final</label>
                         <select id="garantiaHitoFinalId" aria-label="Hito final de garantía">
@@ -670,11 +803,11 @@
                         </select>
                         <p class="u-p-xs">Este hito se moverá al final del período de garantía.</p>
                     </div>
-                    
+
                     <div class="info-card-modal u-mt-16">
                         <p><i data-feather="help-circle" class="nav-feather"></i> Si activas la opción, el hito seleccionado se pagará al finalizar la garantía, no en la fecha original.</p>
                     </div>
-                    
+
                     <button class="btn btn-primary u-mt-16" onclick="guardarGarantia()"><i data-feather="download-cloud" class="nav-feather"></i> Guardar Garantía</button>
                 </div>
             </div>
@@ -687,7 +820,7 @@
                         <button class="btn btn-secondary btn-small" onclick="calcularTodosLosCostesFinancieros()">⟳ Recalcular</button>
                     </div>
                 </div>
-                
+
                 <div class="cards-grid u-mb-24">
                     <div class="value-card vc-dark">
                         <div class="small"><i data-feather="dollar-sign" class="nav-feather"></i> Coste Total Materiales</div>
@@ -714,6 +847,7 @@
                     <button class="btn-tab" onclick="mostrarSubpanelAnalisis('aranceles', this)"><i data-feather="external-link" class="nav-feather"></i> Aranceles</button>
                     <button class="btn-tab" onclick="mostrarSubpanelAnalisis('tasas', this)"><i data-feather="map-pin" class="nav-feather"></i> Tasas</button>
                     <button class="btn-tab" onclick="mostrarSubpanelAnalisis('financieros', this)"><i data-feather="dollar-sign" class="nav-feather"></i> Financieros</button>
+                    <button class="btn-tab" onclick="mostrarSubpanelAnalisis('importaciones', this)"><i data-feather="truck" class="nav-feather"></i> Importaciones</button>
                 </div>
 
                 <div id="subpanelMateriales" class="subpanel-analisis">
@@ -736,26 +870,71 @@
 
                 <div class="subpanel-analisis u-hidden" id="subpanelAranceles">
                     <div class="panel-title"><span><i data-feather="external-link" class="nav-feather"></i> Aranceles por País</span><button class="btn btn-primary btn-small" onclick="abrirModalConfigArancel()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button><button class="btn btn-success btn-small u-mt-ml-8" onclick="actualizarArancelesTodos()"><i data-feather="external-link" class="nav-feather"></i> Actualizar</button></div>
-                    <table class="data-table"><thead><tr><th>País</th><th>Categoría</th><th>% Arancel</th><th>Código</th><th>Acciones</th></tr></thead><tbody id="configArancelesBody"></tbody></table>
+                    <table class="data-table"><caption class="sr-only">Aranceles por origen, destino y código HS</caption><thead><tr><th scope="col">Origen</th><th scope="col">Destino</th><th scope="col">Categoría</th><th scope="col">% Arancel</th><th scope="col">Código HS</th><th scope="col">Acciones</th></tr></thead><tbody id="configArancelesBody"></tbody></table>
                 </div>
 
                 <div class="subpanel-analisis u-hidden" id="subpanelTasas">
                     <div class="panel-title"><span><i data-feather="file-text" class="nav-feather"></i> Tasas Aduaneras</span><button class="btn btn-primary btn-small" onclick="abrirModalTasaAduaneraFija()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
-                    <table class="data-table"><thead><tr><th>Concepto</th><th>Tipo</th><th>Valor</th><th>Moneda</th><th>Acciones</th></tr></thead><tbody id="tasasFijasBody"></tbody><tr>
+                    <table class="data-table"><caption class="sr-only">Tasas aduaneras fijas y porcentuales</caption><thead><tr><th scope="col">Concepto</th><th scope="col">Tipo</th><th scope="col">Valor</th><th scope="col">Moneda</th><th scope="col">Acciones</th></tr></thead><tbody id="tasasFijasBody"></tbody></table>
                 </div>
 
                 <div class="subpanel-analisis u-hidden" id="subpanelFinancieros">
                     <div class="panel-title"><span><i data-feather="dollar-sign" class="nav-feather"></i> Costes Financieros</span><button class="btn btn-primary btn-small" onclick="abrirModalCosteFinancieroExtra()"><i data-feather="help-circle" class="nav-feather"></i> Añadir</button></div>
                     <table class="data-table"><thead><tr><th>Concepto</th><th>Tipo</th><th>Base</th><th>Tasa</th><th>Moneda</th><th>Total</th><th>Periodicidad</th><th>Acciones</th></tr></thead><tbody id="costesFinancierosExtraBody"></tbody><tfoot id="costesFinancierosExtraFoot"></tfoot></table>
                 </div>
+
+                <div class="subpanel-analisis u-hidden" id="subpanelImportaciones">
+                    <div class="info-card u-mb-16"><h4>Proveedores, contratos, órdenes y pagos</h4><p class="u-p-sm">Trazabilidad de la cadena de importación. Los importes se convierten a la moneda base.</p></div>
+                    <div class="cards-grid cards-grid-2 u-mb-16">
+                        <form class="info-card" onsubmit="event.preventDefault(); agregarEntidadImportacion('proveedores');">
+                            <h4>Proveedor</h4>
+                            <label>Nombre<input id="impProvNombre" required maxlength="120"></label>
+                            <label>País<input id="impProvPais" maxlength="80"></label>
+                            <button class="btn btn-primary btn-small u-mt-12" type="submit">Añadir proveedor</button>
+                        </form>
+                        <form class="info-card" onsubmit="event.preventDefault(); agregarEntidadImportacion('contratos');">
+                            <h4>Contrato</h4>
+                            <label>Proveedor<input id="impContratoProveedor" required maxlength="120"></label>
+                            <label>Importe<input id="impContratoImporte" type="number" min="0" step="0.01" value="0"></label>
+                            <button class="btn btn-primary btn-small u-mt-12" type="submit">Añadir contrato</button>
+                        </form>
+                        <form class="info-card" onsubmit="event.preventDefault(); agregarEntidadImportacion('ordenesCompra');">
+                            <h4>Orden de compra</h4>
+                            <label>Número<input id="impOcNumero" required maxlength="40"></label>
+                            <label>Importe<input id="impOcImporte" type="number" min="0" step="0.01" value="0"></label>
+                            <label>Fecha compromiso<input id="impOcCompromiso" type="date"></label>
+                            <label>Fecha recepción<input id="impOcRecepcion" type="date"></label>
+                            <button class="btn btn-primary btn-small u-mt-12" type="submit">Añadir orden</button>
+                        </form>
+                        <form class="info-card" onsubmit="event.preventDefault(); agregarEntidadImportacion('pagosRealizados');">
+                            <h4>Pago realizado</h4>
+                            <label>Orden de compra<input id="impPagoOrden" required maxlength="40"></label>
+                            <label>Importe<input id="impPagoImporte" type="number" min="0" step="0.01" value="0"></label>
+                            <button class="btn btn-primary btn-small u-mt-12" type="submit">Registrar pago</button>
+                        </form>
+                    </div>
+                    <div class="info-card u-mb-16">
+                        <h4>Packing list comercial</h4>
+                        <p class="u-p-sm">Importa un CSV con columnas <code>nombre,cantidad,costeUnitario,moneda,paisOrigen,paisDestino,hsCode</code>. Se crean materiales y una orden de compra trazable.</p>
+                        <input type="file" id="packingListFile" accept=".csv,text/csv" onchange="importarPackingList(this)" aria-label="Importar packing list CSV">
+                    </div>
+                    <table class="data-table"><caption class="sr-only">Proveedores registrados</caption><thead><tr><th scope="col">Nombre</th><th scope="col">País</th><th scope="col">Acciones</th></tr></thead><tbody id="proveedoresBody"></tbody></table>
+                    <table class="data-table u-mt-16"><caption class="sr-only">Contratos registrados</caption><thead><tr><th scope="col">Proveedor</th><th scope="col">Importe</th><th scope="col">Acciones</th></tr></thead><tbody id="contratosBody"></tbody></table>
+                    <table class="data-table u-mt-16"><caption class="sr-only">Órdenes de compra registradas</caption><thead><tr><th scope="col">Número</th><th scope="col">Importe</th><th scope="col">Compromiso</th><th scope="col">Recepción</th><th scope="col">SLA</th><th scope="col">Acciones</th></tr></thead><tbody id="ordenesCompraBody"></tbody></table>
+                    <table class="data-table u-mt-16"><caption class="sr-only">Pagos realizados registrados</caption><thead><tr><th scope="col">Orden</th><th scope="col">Importe</th><th scope="col">Acciones</th></tr></thead><tbody id="pagosRealizadosBody"></tbody></table>
+                </div>
             </div>
 
             <div id="panelCronograma" class="panel hidden">
-                <div class="panel-title">
-                    <span><i data-feather="fast-forward" class="nav-feather"></i> Cronograma — WBS + Timeline</span>
-                    <span id="cronoFechasProyecto" style="font-size:12px;color:#666;margin-left:12px;font-weight:400"></span>
+                <div class="panel-title crono-panel-title">
+                    <div class="crono-title-block">
+                        <span class="crono-eyebrow">Planificación</span>
+                        <h2 class="crono-heading"><i data-feather="fast-forward" class="nav-feather"></i> Cronograma <span class="crono-heading-sub">WBS + Timeline</span></h2>
+                        <span class="crono-date-range" id="cronoFechasProyecto"></span>
+                    </div>
                     <div class="panel-title-actions">
-                        <button class="panel-add-btn" onclick="abrirModalNuevoElementoGantt()" title="Nuevo elemento" aria-label="Nuevo elemento">+</button>
+                        <button class="btn-icon btn-icon--label" onclick="abrirModalCalendarioLaboral()" title="Calendario laboral: festivos y días no laborables" aria-label="Calendario laboral"><i data-feather="calendar" class="nav-feather"></i><span class="btn-label">Calendario</span></button>
+                        <button class="panel-add-btn" onclick="abrirModalNuevoElementoGantt()" title="Nuevo elemento" aria-label="Nuevo elemento"><i data-feather="plus" class="nav-feather"></i></button>
                         <button class="panel-add-btn" onclick="exportarGantt()" title="Exportar" aria-label="Exportar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
                         <button class="panel-add-btn" onclick="importarXML()" title="Importar XML" aria-label="Importar XML"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
                         <button class="panel-add-btn" onclick="abrirModalLineaBase()" title="Línea base: guardar el cronograma actual para comparar desvíos" aria-label="Línea base"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a2 2 0 0 1 2-2h9l5 5v15"/><path d="M11 6h6"/><path d="M11 10h6"/><path d="M11 14h3"/><path d="M7 6h1"/><path d="M7 10h1"/><path d="M7 14h1"/></svg></button>
@@ -764,34 +943,42 @@
                 </div>
 
                 <!-- Toolbar -->
-                <div class="crono-toolbar">
+                <div class="crono-toolbar" role="toolbar" aria-label="Controles del cronograma">
                     <div class="crono-toolbar-left">
-                        <button class="btn-icon" id="btnToggleVista" onclick="toggleVistaCronograma()" title="Cambiar vista"><i data-feather="help-circle" class="nav-feather"></i> Tarjetas</button>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="zoomGantt('out')" title="Alejar"><i data-feather="help-circle" class="nav-feather"></i>−</button>
-                        <span class="crono-zoom-label" id="cronoZoomLabel">100%</span>
-                        <button class="btn-icon" onclick="zoomGantt('in')" title="Acercar"><i data-feather="help-circle" class="nav-feather"></i>+</button>
-                        <span class="crono-separator"></span>
-                        <span class="crono-scale-label"><i data-feather="help-circle" class="nav-feather"></i></span>
-                        <select class="crono-scale-select" id="cronoScaleSelect" onchange="cambiarEscala(this.value)">
-                            <option value="día" selected>Día</option>
-                            <option value="semana">Semana</option>
-                            <option value="mes">Mes</option>
-                            <option value="año">Año</option>
-                        </select>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="colapsarTodos()" title="Colapsar todo"><i data-feather="help-circle" class="nav-feather"></i></button>
-                        <button class="btn-icon" onclick="expandirTodos()" title="Expandir todo"><i data-feather="help-circle" class="nav-feather"></i></button>
-                        <span class="crono-separator"></span>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="mostrarConfigEmailJS()" title="Notificaciones email"><i data-feather="help-circle" class="nav-feather"></i></button>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="mostrarListadoOrdenado()" title="Listado ordenado de actividades"><i data-feather="help-circle" class="nav-feather"></i> Listado</button>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="abrirMonteCarlo()" title="Simulación Monte Carlo"><i data-feather="divide-square" class="nav-feather"></i> Monte Carlo</button>
+                        <div class="crono-toolbar-group">
+                            <button class="btn-icon btn-icon--label" id="btnToggleVista" onclick="toggleVistaCronograma()" title="Cambiar entre Gantt y tarjetas" aria-label="Cambiar a vista de tarjetas" aria-pressed="false">
+                                <i data-feather="layout" class="nav-feather"></i><span class="btn-label">Tarjetas</span>
+                            </button>
+                        </div>
+                        <div class="crono-toolbar-group" role="group" aria-label="Zoom">
+                            <button class="btn-icon" onclick="zoomGantt('out')" title="Alejar" aria-label="Alejar"><i data-feather="minus" class="nav-feather"></i></button>
+                            <span class="crono-zoom-label" id="cronoZoomLabel">100%</span>
+                            <button class="btn-icon" onclick="zoomGantt('in')" title="Acercar" aria-label="Acercar"><i data-feather="plus" class="nav-feather"></i></button>
+                        </div>
+                        <div class="crono-toolbar-group">
+                            <i data-feather="calendar" class="crono-toolbar-icon" aria-hidden="true"></i>
+                            <select class="crono-scale-select" id="cronoScaleSelect" onchange="cambiarEscala(this.value)" aria-label="Escala temporal">
+                                <option value="día" selected>Día</option>
+                                <option value="semana">Semana</option>
+                                <option value="mes">Mes</option>
+                                <option value="año">Año</option>
+                            </select>
+                        </div>
+                        <div class="crono-toolbar-group" role="group" aria-label="Jerarquía">
+                            <button class="btn-icon" onclick="colapsarTodos()" title="Colapsar todo" aria-label="Colapsar todo"><i data-feather="chevrons-up" class="nav-feather"></i></button>
+                            <button class="btn-icon" onclick="expandirTodos()" title="Expandir todo" aria-label="Expandir todo"><i data-feather="chevrons-down" class="nav-feather"></i></button>
+                        </div>
+                        <div class="crono-toolbar-group" role="group" aria-label="Herramientas">
+                            <button class="btn-icon" onclick="mostrarConfigEmailJS()" title="Notificaciones por email" aria-label="Notificaciones por email"><i data-feather="mail" class="nav-feather"></i></button>
+                            <button class="btn-icon btn-icon--label" onclick="mostrarListadoOrdenado()" title="Listado ordenado de actividades" aria-label="Abrir listado ordenado"><i data-feather="list" class="nav-feather"></i><span class="btn-label">Listado</span></button>
+                            <button class="btn-icon btn-icon--label" onclick="abrirMonteCarlo()" title="Simulación Monte Carlo" aria-label="Abrir simulación Monte Carlo"><i data-feather="activity" class="nav-feather"></i><span class="btn-label">Monte Carlo</span></button>
+                        </div>
                     </div>
                     <div class="crono-toolbar-right">
-                        <input type="text" class="crono-search" id="buscarGantt" placeholder="Buscar..." onkeyup="buscarCronogramaDebounced()">
+                        <label class="crono-search-wrap">
+                            <i data-feather="search" class="crono-search-icon" aria-hidden="true"></i>
+                            <input type="text" class="crono-search" id="buscarGantt" placeholder="Buscar actividad…" onkeyup="buscarCronogramaDebounced()" aria-label="Buscar actividad en el cronograma">
+                        </label>
                     </div>
                 </div>
 
@@ -801,44 +988,57 @@
                 <!-- Contenedor principal: WBS árbol + Timeline SVG -->
                 <div class="crono-main" id="cronogramaContainer">
                     <div class="crono-wbs-panel" id="wbsTree"></div>
-                    <div class="crono-timeline-panel" id="timelinePanel">
+                    <div class="crono-timeline-panel" id="timelinePanel" tabindex="0" role="region" aria-label="Línea de tiempo del cronograma">
                         <svg id="timelineSvg" class="crono-svg"></svg>
                     </div>
                 </div>
             </div>
 
             <div id="panelEjecucionCronograma" class="panel hidden">
-                <div class="panel-title">
-                    <span><i data-feather="play-circle" class="nav-feather"></i> Cronograma en Ejecución — WBS + Timeline</span>
-                    <span id="cronoFechasProyectoEjecucion" style="font-size:12px;color:#666;margin-left:12px;font-weight:400"></span>
+                <div class="panel-title crono-panel-title">
+                    <div class="crono-title-block">
+                        <span class="crono-eyebrow">Ejecución</span>
+                        <h2 class="crono-heading"><i data-feather="play-circle" class="nav-feather"></i> Cronograma <span class="crono-heading-sub">WBS + Timeline</span></h2>
+                        <span class="crono-date-range" id="cronoFechasProyectoEjecucion"></span>
+                    </div>
                     <div class="panel-title-actions">
-                        <button class="panel-add-btn" onclick="abrirModalNuevoElementoGantt()" title="Nuevo elemento" aria-label="Nuevo elemento">+</button>
+                        <button class="panel-add-btn" onclick="abrirModalNuevoElementoGantt()" title="Nuevo elemento" aria-label="Nuevo elemento"><i data-feather="plus" class="nav-feather"></i></button>
                         <button class="panel-add-btn" onclick="abrirModalLineaBase()" title="Línea base: guardar el cronograma actual para comparar desvíos" aria-label="Línea base"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a2 2 0 0 1 2-2h9l5 5v15"/><path d="M11 6h6"/><path d="M11 10h6"/><path d="M11 14h3"/><path d="M7 6h1"/><path d="M7 10h1"/><path d="M7 14h1"/></svg></button>
                     </div>
                 </div>
 
                 <!-- Toolbar -->
-                <div class="crono-toolbar">
+                <div class="crono-toolbar" role="toolbar" aria-label="Controles del cronograma en ejecución">
                     <div class="crono-toolbar-left">
-                        <button class="btn-icon" id="btnToggleVistaEjecucion" onclick="toggleVistaCronograma()" title="Cambiar vista"><i data-feather="help-circle" class="nav-feather"></i> Tarjetas</button>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="zoomGantt('out')" title="Alejar"><i data-feather="help-circle" class="nav-feather"></i>−</button>
-                        <span class="crono-zoom-label" id="cronoZoomLabelEjecucion">100%</span>
-                        <button class="btn-icon" onclick="zoomGantt('in')" title="Acercar"><i data-feather="help-circle" class="nav-feather"></i>+</button>
-                        <span class="crono-separator"></span>
-                        <span class="crono-scale-label"><i data-feather="help-circle" class="nav-feather"></i></span>
-                        <select class="crono-scale-select" id="cronoScaleSelectEjecucion" onchange="cambiarEscala(this.value)">
-                            <option value="día" selected>Día</option>
-                            <option value="semana">Semana</option>
-                            <option value="mes">Mes</option>
-                            <option value="año">Año</option>
-                        </select>
-                        <span class="crono-separator"></span>
-                        <button class="btn-icon" onclick="colapsarTodos()" title="Colapsar todo"><i data-feather="help-circle" class="nav-feather"></i></button>
-                        <button class="btn-icon" onclick="expandirTodos()" title="Expandir todo"><i data-feather="help-circle" class="nav-feather"></i></button>
+                        <div class="crono-toolbar-group">
+                            <button class="btn-icon btn-icon--label" id="btnToggleVistaEjecucion" onclick="toggleVistaCronograma()" title="Cambiar entre Gantt y tarjetas" aria-label="Cambiar a vista de tarjetas" aria-pressed="false">
+                                <i data-feather="layout" class="nav-feather"></i><span class="btn-label">Tarjetas</span>
+                            </button>
+                        </div>
+                        <div class="crono-toolbar-group" role="group" aria-label="Zoom">
+                            <button class="btn-icon" onclick="zoomGantt('out')" title="Alejar" aria-label="Alejar"><i data-feather="minus" class="nav-feather"></i></button>
+                            <span class="crono-zoom-label" id="cronoZoomLabelEjecucion">100%</span>
+                            <button class="btn-icon" onclick="zoomGantt('in')" title="Acercar" aria-label="Acercar"><i data-feather="plus" class="nav-feather"></i></button>
+                        </div>
+                        <div class="crono-toolbar-group">
+                            <i data-feather="calendar" class="crono-toolbar-icon" aria-hidden="true"></i>
+                            <select class="crono-scale-select" id="cronoScaleSelectEjecucion" onchange="cambiarEscala(this.value)" aria-label="Escala temporal">
+                                <option value="día" selected>Día</option>
+                                <option value="semana">Semana</option>
+                                <option value="mes">Mes</option>
+                                <option value="año">Año</option>
+                            </select>
+                        </div>
+                        <div class="crono-toolbar-group" role="group" aria-label="Jerarquía">
+                            <button class="btn-icon" onclick="colapsarTodos()" title="Colapsar todo" aria-label="Colapsar todo"><i data-feather="chevrons-up" class="nav-feather"></i></button>
+                            <button class="btn-icon" onclick="expandirTodos()" title="Expandir todo" aria-label="Expandir todo"><i data-feather="chevrons-down" class="nav-feather"></i></button>
+                        </div>
                     </div>
                     <div class="crono-toolbar-right">
-                        <input type="text" class="crono-search" id="buscarGanttEjecucion" placeholder="Buscar..." onkeyup="buscarCronogramaDebounced()">
+                        <label class="crono-search-wrap">
+                            <i data-feather="search" class="crono-search-icon" aria-hidden="true"></i>
+                            <input type="text" class="crono-search" id="buscarGanttEjecucion" placeholder="Buscar actividad…" onkeyup="buscarCronogramaDebounced()" aria-label="Buscar actividad en el cronograma">
+                        </label>
                     </div>
                 </div>
 
@@ -848,7 +1048,7 @@
                 <!-- Contenedor principal: WBS árbol + Timeline SVG -->
                 <div class="crono-main" id="ejecucionCronogramaContainer">
                     <div class="crono-wbs-panel" id="wbsTreeEjecucion"></div>
-                    <div class="crono-timeline-panel" id="timelinePanelEjecucion">
+                    <div class="crono-timeline-panel" id="timelinePanelEjecucion" tabindex="0" role="region" aria-label="Línea de tiempo de ejecución">
                         <svg id="timelineSvgEjecucion" class="crono-svg"></svg>
                     </div>
                 </div>
@@ -885,10 +1085,11 @@
                     </div>
                 </div>
                 <div class="panel-title u-mt-8">
-                    <span><i data-feather="help-circle" class="nav-feather"></i> Matriz de Riesgos por Nivel</span>
+                    <span><i data-feather="help-circle" class="nav-feather"></i> Matriz de Riesgos 5×5 (Probabilidad × Impacto)</span>
                     <div>
                         <button class="btn btn-secondary btn-small" onclick="mostrarMatrizRiesgos()">Mostrar Matriz</button>
                         <button class="btn btn-secondary btn-small" onclick="ocultarMatrizRiesgos()">Ocultar</button>
+                        <button class="btn btn-secondary btn-small" onclick="ordenarRiesgos()" title="Ordenar por score P×I" aria-label="Ordenar por score">Ordenar por score</button>
                     </div>
                 </div>
                 <div id="matrizRiesgosContainer" class="u-hidden">
@@ -898,7 +1099,8 @@
                     <span><i data-feather="help-circle" class="nav-feather"></i> Lista de Riesgos Identificados</span>
                 </div>
                 <table class="data-table" id="tablaRiesgos">
-                    <thead><tr><th>ID</th><th>Riesgo</th><th>Categoría</th><th>Probabilidad</th><th>Impacto</th><th>Score</th><th>Nivel</th><th>Respuesta</th><th>Estado</th><th>Plan de acción</th><th>Acciones</th></tr></thead>
+                    <caption class="sr-only">Registro de riesgos: probabilidad, impacto, respuesta y monitoreo</caption>
+                    <thead><tr><th scope="col">ID</th><th scope="col">Riesgo</th><th scope="col">Tipo</th><th scope="col">Categoría</th><th scope="col">Probabilidad</th><th scope="col">Impacto</th><th scope="col">Score</th><th scope="col">Nivel</th><th scope="col">Causa / Trigger</th><th scope="col">Owner</th><th scope="col">Respuesta</th><th scope="col">Estado</th><th scope="col">Plan de acción</th><th scope="col">Monitoreo</th><th scope="col">Acciones</th></tr></thead>
                     <tbody id="riesgosBody"></tbody>
                 </table>
                 <div class="panel-title u-mt-24">
@@ -907,7 +1109,7 @@
                 </div>
                 <div class="info-card u-mb-16">
                     <div class="form-row">
-                        <div class="form-group"><label>Valor del Proyecto (en moneda base)</label><input type="number" id="valorProyectoRiesgos" onchange="calcularValorEsperado()" aria-label="Valor del proyecto para análisis de riesgos"></div>
+                        <div class="form-group"><label for="valorProyectoRiesgos">Valor del Proyecto (en moneda de venta)</label><input type="number" id="valorProyectoRiesgos" onchange="calcularValorEsperado()" aria-label="Valor del proyecto para análisis de riesgos"></div>
                         <div class="form-group"><label>Reserva de Contingencia Estimada</label><input type="text" id="reservaContingencia" readonly class="u-input-highlight" aria-label="Reserva de contingencia estimada"></div>
                     </div>
                 </div>
@@ -916,7 +1118,8 @@
                     <button class="panel-add-btn" onclick="abrirModalNuevaAccionMitigacion()" title="Nueva Acción" aria-label="Nueva acción">+</button>
                 </div>
                 <table class="data-table" id="tablaAccionesMitigacion">
-                    <thead><tr><th>Riesgo asociado</th><th>Fecha</th><th>Acción tomada</th><th>Responsable</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <caption class="sr-only">Acciones de mitigación registradas</caption>
+                    <thead><tr><th scope="col">Riesgo asociado</th><th scope="col">Fecha</th><th scope="col">Acción tomada</th><th scope="col">Responsable</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
                     <tbody id="accionesMitigacionBody"></tbody>
                 </table>
             </div>
@@ -960,7 +1163,7 @@
 
                         <div id="panelMateriales" class="panel hidden">
                 <div class="panel-title"><span><i data-feather="shopping-bag" class="nav-feather"></i> Materiales</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalMaterial()" title="Añadir material" aria-label="Añadir material">+</button><button class="panel-add-btn" onclick="importarCatalogoMaterial()" title="Catálogo de materiales" aria-label="Catálogo de materiales"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button><button class="panel-add-btn" onclick="actualizarArancelesMateriales()" title="Actualizar aranceles" aria-label="Actualizar aranceles"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button></div></div>
-                <div class="u-overflow-x-auto">
+                <div class="u-overflow-x-auto" tabindex="0" role="region" aria-label="Tabla de materiales, desplazable horizontalmente">
                     <table class="data-table data-table--wide">
                         <thead>
                             <tr>
@@ -1033,6 +1236,23 @@
                 <div id="organigramaContent"></div>
             </div>
 
+            <div id="panelCargaTrabajo" class="panel hidden">
+                <div class="panel-title"><span><i data-feather="bar-chart-2" class="nav-feather"></i> Carga de trabajo</span></div>
+                <p class="u-text-muted" id="cargaTrabajoResumen" role="status" aria-live="polite">Sin datos de carga</p>
+                <div style="overflow:auto">
+                    <table class="data-table">
+                        <caption class="sr-only">Capacidad, horas asignadas y pico diario por recurso</caption>
+                        <thead><tr><th scope="col">Recurso</th><th scope="col">Capacidad</th><th scope="col">Horas asignadas</th><th scope="col">Pico diario</th><th scope="col">Días sobreasignados</th></tr></thead>
+                        <tbody id="cargaTrabajoBody"></tbody>
+                    </table>
+                </div>
+                <figure class="u-mt-24">
+                    <figcaption class="u-text-muted">Distribución diaria de horas por recurso</figcaption>
+                    <div class="evm-chart__canvas"><canvas id="cargaTrabajoChart" role="img" aria-label="Histograma apilado de horas asignadas por día y recurso"></canvas></div>
+                    <p id="cargaTrabajoVacio" class="evm-chart__empty" hidden>El cronograma aún no tiene recursos asignados.</p>
+                </figure>
+            </div>
+
             <!-- MODAL PARA NUEVO/EDITAR VIAJE -->
             <div class="modal u-hidden" id="modalViaje">
                 <div class="modal-content modal-md">
@@ -1041,7 +1261,7 @@
                         <span class="close-modal" onclick="cerrarModalViaje()">&times;</span>
                     </div>
                     <input type="hidden" id="viajeId">
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label><i data-feather="help-circle" class="nav-feather"></i> Nombre del viajero *</label>
@@ -1052,7 +1272,7 @@
                             <input type="text" id="viajeRol" placeholder="Ej: Project Manager">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label><i data-feather="map-pin" class="nav-feather"></i> Origen</label>
@@ -1063,7 +1283,7 @@
                             <input type="text" id="viajeDestino" placeholder="Ej: Luanda, Angola">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label><i data-feather="fast-forward" class="nav-feather"></i> Fecha salida</label>
@@ -1074,15 +1294,15 @@
                             <input type="date" id="viajeFechaRegreso" aria-label="Fecha de regreso del viaje">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label><i data-feather="help-circle" class="nav-feather"></i> Motivo del viaje</label>
                         <textarea rows="2" id="viajeMotivo" placeholder="Ej: Reunión con cliente, capacitación..."></textarea>
                     </div>
-                    
+
                     <hr class="u-hr u-hr-sm">
                     <h4 class="u-section-title"><i data-feather="dollar-sign" class="nav-feather"></i> COSTES DEL VIAJE</h4>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label><i data-feather="external-link" class="nav-feather"></i> Vuelos (ida/vuelta)</label>
@@ -1121,10 +1341,10 @@
                             <input type="number" id="viajeMes" value="1" min="1" max="36" aria-label="Mes del gasto del viaje">
                         </div>
                     </div>
-                    
+
                     <hr class="u-hr u-hr-sm">
                     <h4 class="u-section-title"><i data-feather="help-circle" class="nav-feather"></i> CHECKLIST DE DOCUMENTACIÓN</h4>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label><input type="checkbox" id="viajeDocPasaporte"> <i data-feather="help-circle" class="nav-feather"></i> Pasaporte (vigente)</label>
@@ -1153,7 +1373,7 @@
                         <label><input type="checkbox" id="viajeDocOtros"> <i data-feather="help-circle" class="nav-feather"></i> Otros documentos</label>
                         <input type="text" id="viajeDocOtrosTexto" placeholder="Especificar otros documentos..." class="u-mt-8">
                     </div>
-                    
+
                     <hr class="u-hr u-hr-sm">
                     <h4 class="u-section-title"><i data-feather="help-circle" class="nav-feather"></i> ARCHIVOS ADJUNTOS</h4>
                     <div style="margin-bottom:8px">
@@ -1165,7 +1385,7 @@
                     </div>
                     <div id="viajeFilesList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
                     <small style="opacity:0.6"><i data-feather="map-pin" class="nav-feather"></i> Los archivos se almacenan en local (máx ~5MB por archivo).</small>
-                    
+
                     <button class="btn btn-primary u-mt-16" onclick="guardarViaje()"><i data-feather="download-cloud" class="nav-feather"></i> Guardar Viaje</button>
                 </div>
             </div>
@@ -1187,18 +1407,18 @@
 
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="logistica-container" style="display: flex; gap: 20px; min-height: 600px; height: auto;">
-        
+
         <!-- ============================================================ -->
         <!-- PANEL IZQUIERDO -->
         <!-- ============================================================ -->
         <div class="logistica-panel-izquierdo" style="flex: 1; min-width: 350px; max-width: 500px; overflow-y: auto; max-height: 700px; padding-right: 10px;">
-            
+
             <!-- 1. ENTORNO Y TRANSPORTE -->
             <div class="logistica-box" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-                <h4 style="margin-bottom: 12px; color: #007AFF;">1. Entorno y Transporte</h4>
+                <h4 style="margin-bottom: 12px; color: var(--log-accent-blue);">1. Entorno y Transporte</h4>
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Modalidad de Envío:</label>
-                    <select id="logModalidad" class="u-select-glass" onchange="window.appLogistica?.cambiarModalidad()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <select id="logModalidad" aria-label="Modalidad de transporte" class="u-select-glass" onchange="window.appLogistica?.cambiarModalidad()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         <option value="AEREO"> Aéreo (Equipos ULD)</option>
                         <option value="MARITIMO"> Marítimo (Contenedores)</option>
                         <option value="SIN_CONTENEDOR"> Suelo / Almacén</option>
@@ -1206,29 +1426,29 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Capacidad / Unidad:</label>
-                    <select id="logTipoUnidad" class="u-select-glass" onchange="window.appLogistica?.actualizarUnidadActiva()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
+                    <select id="logTipoUnidad" aria-label="Tipo de unidad de transporte" class="u-select-glass" onchange="window.appLogistica?.actualizarUnidadActiva()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
                 </div>
                 <button class="btn btn-primary btn-small" style="width: 100%;" onclick="window.appLogistica?.agregarContenedor()"><i data-feather="help-circle" class="nav-feather"></i> Añadir Otra Unidad</button>
             </div>
 
             <!-- 2. COMERCIO EXTERIOR -->
             <div class="logistica-box logistica-box-highlight" style="background: rgba(0,122,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(0,122,255,0.2);">
-                <h4 style="margin-bottom: 12px; color: #007AFF;">2. Comercio Exterior</h4>
-                
+                <h4 style="margin-bottom: 12px; color: var(--log-accent-blue);">2. Comercio Exterior</h4>
+
                 <div class="logistica-inline-inputs" style="display: flex; gap: 12px; margin-bottom: 12px;">
                     <div class="form-group" style="flex: 1;">
                         <label style="font-size: 12px; color: #888;">País Origen:</label>
-                        <select id="logPaisOrigen" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
+                        <select id="logPaisOrigen" aria-label="País de origen" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label style="font-size: 12px; color: #888;">País Destino:</label>
-                        <select id="logPaisDestino" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
+                        <select id="logPaisDestino" aria-label="País de destino" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;"></select>
                     </div>
                 </div>
-                
+
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Incoterm:</label>
-                    <select id="logIncoterm" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <select id="logIncoterm" aria-label="Incoterm" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         <option value="EXW">EXW - En Fábrica</option>
                         <option value="FOB">FOB - Franco a Bordo</option>
                         <option value="CFR">CFR - Costo y Flete</option>
@@ -1236,18 +1456,18 @@
                         <option value="DDP">DDP - Entregado Derechos Pagados</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Valor Mercancía ($):</label>
                     <input type="number" id="logValorMercancia" value="15000" class="u-select-glass" onchange="window.appLogistica?.actualizarCostos()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                     <small style="font-size: 10px; color: #666;"><i data-feather="help-circle" class="nav-feather"></i> Se actualiza automáticamente con los materiales asignados</small>
                 </div>
-                
+
                 <!-- RESUMEN DE VALOR DE MERCANCÍA -->
                 <div style="background: rgba(0,168,89,0.08); padding: 12px; border-radius: 8px; margin-top: 8px; border: 1px solid rgba(0,168,89,0.15);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 12px; color: var(--text-muted);"><i data-feather="dollar-sign" class="nav-feather"></i> Valor total de la mercancía:</span>
-                        <span id="valorMercanciaResumen" style="font-size: 16px; font-weight: bold; color: #00A859;">$0.00</span>
+                        <span id="valorMercanciaResumen" style="font-size: 16px; font-weight: bold; color: var(--log-accent-success);">$0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
                         <span id="resumenMaterialesCarga">0 materiales | 0 kg</span>
@@ -1258,11 +1478,11 @@
 
             <!-- 3. CARGA PERSONALIZADA -->
             <div class="logistica-box logistica-box-highlight" style="background: rgba(255,140,0,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(255,140,0,0.2);">
-                <h4 style="margin-bottom: 12px; color: #FF8C00;">3. Carga Personalizada</h4>
-                
+                <h4 style="margin-bottom: 12px; color: var(--log-accent-orange);">3. Carga Personalizada</h4>
+
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Tipo de Carga:</label>
-                    <select id="logTipoCarga" class="u-select-glass" onchange="window.appLogistica?.cargarTipoPredefinido()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <select id="logTipoCarga" aria-label="Tipo de carga predefinida" class="u-select-glass" onchange="window.appLogistica?.cargarTipoPredefinido()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         <option value="caja"> Caja / Bulto</option>
                         <option value="pallet_europeo"> Pallet Europeo</option>
                         <option value="pallet_americano"> Pallet Americano</option>
@@ -1277,15 +1497,15 @@
                     <div class="logistica-inline-inputs-3" style="display: flex; gap: 12px; margin-bottom: 12px;">
                         <div class="form-group" style="flex: 1;">
                             <label style="font-size: 12px; color: #888;">Largo (m):</label>
-                            <input type="number" id="logCargaLargo" value="1.20" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                            <input type="number" id="logCargaLargo" aria-label="Largo de la carga en metros" value="1.20" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label style="font-size: 12px; color: #888;">Ancho (m):</label>
-                            <input type="number" id="logCargaAncho" value="0.80" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                            <input type="number" id="logCargaAncho" aria-label="Ancho de la carga en metros" value="0.80" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label style="font-size: 12px; color: #888;">Altura (m):</label>
-                            <input type="number" id="logCargaAlto" value="1.00" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                            <input type="number" id="logCargaAlto" aria-label="Alto de la carga en metros" value="1.00" step="0.01" class="u-select-glass" onchange="window.appLogistica?.actualizarPreviewDimension()" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         </div>
                     </div>
                 </div>
@@ -1296,20 +1516,20 @@
 
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Referencia / Nombre:</label>
-                    <input type="text" id="logCargaTag" value="Mercancía" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <input type="text" id="logCargaTag" aria-label="Etiqueta de la carga" value="Mercancía" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                 </div>
 
                 <div class="logistica-inline-inputs" style="display: flex; gap: 12px; margin-bottom: 12px;">
                     <div class="form-group" style="flex: 1;">
                         <label style="font-size: 12px; color: #888;">Orientación:</label>
-                        <select id="logCargaOrientacion" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <select id="logCargaOrientacion" aria-label="Orientación de la carga" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                             <option value="0"><i data-feather="help-circle" class="nav-feather"></i> Base estándar</option>
                             <option value="90"><i data-feather="refresh-cw" class="nav-feather"></i> Girar 90°</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label style="font-size: 12px; color: #888;">Cantidad:</label>
-                        <input type="number" id="logCargaCantidad" value="1" min="1" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        <input type="number" id="logCargaCantidad" aria-label="Cantidad de bultos" value="1" min="1" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                     </div>
                 </div>
 
@@ -1319,11 +1539,11 @@
 
             <!-- 4. MATERIALES -->
             <div class="logistica-box logistica-box-selected" id="logSeccionMateriales" style="background: rgba(0,168,89,0.08); border-radius: 12px; padding: 16px; border: 1px solid rgba(0,168,89,0.2); opacity: 0.5; pointer-events: none; transition: all 0.3s;">
-                <h4 id="logTituloMateriales" style="margin-bottom: 12px; color: #00A859;">4. Materiales de: Ninguno Seleccionado</h4>
-                
+                <h4 id="logTituloMateriales" style="margin-bottom: 12px; color: var(--log-accent-success);">4. Materiales de: Ninguno Seleccionado</h4>
+
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;"><i data-feather="shopping-bag" class="nav-feather"></i> Seleccionar material del proyecto:</label>
-                    <select id="logMatSelector" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <select id="logMatSelector" aria-label="Material a asignar" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                         <option value="">-- Seleccionar material --</option>
                     </select>
                     <small style="font-size: 10px; color: #666;"><i data-feather="help-circle" class="nav-feather"></i> Los materiales se toman del panel de materiales del proyecto</small>
@@ -1331,15 +1551,15 @@
 
                 <div class="form-group" style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #888;">Cantidad a asignar:</label>
-                    <input type="number" id="logMatCant" value="1" min="1" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                    <input type="number" id="logMatCant" aria-label="Cantidad de material" value="1" min="1" class="u-select-glass" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
                 </div>
 
-                <div class="logistica-material-feedback" id="logMaterialFeedback" style="display: none; padding: 8px; background: rgba(255,140,0,0.15); border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #FF8C00;"></div>
-                
+                <div class="logistica-material-feedback" id="logMaterialFeedback" style="display: none; padding: 8px; background: rgba(255,140,0,0.15); border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: var(--log-accent-orange);"></div>
+
                 <button class="btn btn-primary btn-small" style="width: 100%;" id="logBtnGuardarMaterial" onclick="window.appLogistica?.guardarMaterial()">
                     + Asignar Material al Bulto
                 </button>
-                
+
                 <div style="margin-top: 12px;">
                     <div id="logListaMateriales" class="log-lista-materiales" style="max-height: 150px; overflow-y: auto;">
                         <span style="color: var(--text-muted); font-size: 0.8rem;">Vacío. Selecciona materiales del desplegable.</span>
@@ -1354,7 +1574,7 @@
         <!-- PANEL DERECHO - VISOR 3D -->
         <!-- ============================================================ -->
         <div class="logistica-panel-derecho" style="flex: 2; min-width: 400px; display: flex; flex-direction: column;">
-            
+
             <!-- Controles de cámara -->
             <div class="logistica-camara-controls" style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
                 <button class="btn btn-secondary btn-small" onclick="window.appLogistica?.cambiarVista('perspectiva')"><i data-feather="help-circle" class="nav-feather"></i> Isométrica</button>
@@ -1366,10 +1586,10 @@
             </div>
             <div class="logistica-mover-controls" style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items:center;">
                 <span style="font-size:11px;color:#888;margin-right:4px;"><i data-feather="map-pin" class="nav-feather"></i> Mover selección:</span>
-                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('izquierda')"><i data-feather="chevron-left" class="nav-feather"></i></button>
-                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('derecha')"><i data-feather="chevron-right" class="nav-feather"></i></button>
-                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('adelante')"><i data-feather="chevron-up" class="nav-feather"></i></button>
-                <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('atras')"><i data-feather="chevron-down" class="nav-feather"></i></button>
+                <button aria-label="Mover a la izquierda" class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('izquierda')"><i data-feather="chevron-left" class="nav-feather"></i></button>
+                <button aria-label="Mover a la derecha" class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('derecha')"><i data-feather="chevron-right" class="nav-feather"></i></button>
+                <button aria-label="Mover hacia delante" class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('adelante')"><i data-feather="chevron-up" class="nav-feather"></i></button>
+                <button aria-label="Mover hacia atrás" class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('atras')"><i data-feather="chevron-down" class="nav-feather"></i></button>
                 <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('subir')"><i data-feather="chevron-up" class="nav-feather"></i><i data-feather="chevron-up" class="nav-feather"></i> Subir</button>
                 <button class="btn btn-secondary btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('bajar')"><i data-feather="chevron-down" class="nav-feather"></i><i data-feather="chevron-down" class="nav-feather"></i> Bajar</button>
                 <button class="btn btn-danger btn-small" style="font-size:10px;padding:2px 8px;" onclick="window.appLogistica?.moverSeleccion('suelo')"><i data-feather="chevron-down" class="nav-feather"></i> Al suelo</button>
@@ -1383,7 +1603,7 @@
                     • <span style="color: #f1c40f;">Click</span> para seleccionar carga<br>
                     • <span style="color: #3498db;">Arrastrar</span> para mover carga<br>
                     • Tecla <strong style="color: #e74c3c;">R</strong> para rotar carga<br>
-                    • <span style="color: #00A859;"><i data-feather="zap-off" class="nav-feather"></i> Auto-ordenar</span> coloca todo sin solapes
+                    • <span style="color: var(--log-accent-success);"><i data-feather="zap-off" class="nav-feather"></i> Auto-ordenar</span> coloca todo sin solapes
                 </div>
                 <div class="logistica-alerta" id="logBannerAlerta" style="display: none; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.3); color: white; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 20; border: 2px solid #FF3B30;">
                     <i data-feather="alert-triangle" class="nav-feather"></i> Alerta
@@ -1394,11 +1614,11 @@
             <!-- Métricas -->
             <div class="logistica-metricas" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px;">
                 <div class="logistica-metrica" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; text-align: center;">
-                    <div class="valor" id="logMBultos" style="font-size: 20px; font-weight: bold; color: #007AFF;">0</div>
+                    <div class="valor" id="logMBultos" style="font-size: 20px; font-weight: bold; color: var(--log-accent-blue);">0</div>
                     <div class="etiqueta" style="font-size: 10px; color: #888;">Cargas</div>
                 </div>
                 <div class="logistica-metrica" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; text-align: center;">
-                    <div class="valor" id="logMVol" style="font-size: 20px; font-weight: bold; color: #27ae60;">0.000 m³</div>
+                    <div class="valor" id="logMVol" style="font-size: 20px; font-weight: bold; color: var(--log-accent-green);">0.000 m³</div>
                     <div class="etiqueta" style="font-size: 10px; color: #888;">Volumen Total</div>
                 </div>
                 <div class="logistica-metrica" style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; text-align: center;">
@@ -1406,7 +1626,7 @@
                     <div class="etiqueta" style="font-size: 10px; color: #888;">Peso / Máx</div>
                 </div>
                 <div class="logistica-metrica logistica-metrica--highlight" style="background: rgba(255,140,0,0.15); padding: 8px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,140,0,0.3);">
-                    <div class="valor" id="logMCostos" style="font-size: 20px; font-weight: bold; color: #FF8C00;">$0.00 USD</div>
+                    <div class="valor" id="logMCostos" style="font-size: 20px; font-weight: bold; color: var(--log-accent-orange);">$0.00 USD</div>
                     <div class="etiqueta" style="font-size: 10px; color: #888;">Costo Logístico</div>
                     <div class="u-fs-10 u-color-muted" id="logMDesglose" style="font-size: 9px; color: #666;">Sin datos</div>
                 </div>
@@ -1416,7 +1636,7 @@
 
     <!-- 5. PACKING LIST -->
     <div class="logistica-box" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; margin-top: 20px;">
-        <h4 style="margin-bottom: 12px; color: #AF52DE;">5. Packing List y Responsabilidades de Gastos</h4>
+        <h4 style="margin-bottom: 12px; color: var(--log-accent-purple);">5. Packing List y Responsabilidades de Gastos</h4>
         <div class="packing-btn-row" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
             <button class="btn btn-success btn-small" onclick="window.appLogistica?.exportarCSV()"><i data-feather="help-circle" class="nav-feather"></i> Exportar CSV</button>
             <button class="btn btn-pdf btn-small" onclick="window.appLogistica?.exportarPDF()"><i data-feather="file-text" class="nav-feather"></i> Exportar PDF</button>
@@ -1447,68 +1667,6 @@
     </div>
 </div>
 
-<!-- MODAL PARA CREAR BULTO -->
-<div class="modal u-hidden" id="modalCrearBulto">
-    <div class="modal-content modal-500">
-        <div class="modal-header">
-            <h3><i data-feather="shopping-bag" class="nav-feather"></i> Nuevo Bulto / Pallet</h3>
-            <span class="close-modal" onclick="cerrarModalCrearBulto()">&times;</span>
-        </div>
-        <div class="form-group">
-            <label>Nombre del bulto</label>
-            <input type="text" id="bultoNombre" placeholder="Ej: Pallet 1, Caja 1, etc.">
-        </div>
-        <div class="form-group">
-            <label>Tipo</label>
-            <select id="bultoTipo" onchange="actualizarMedidasPorTipo()" aria-label="Tipo de bulto">
-                <option value="pallet">Pallet estándar (1200x1000x150 mm)</option>
-                <option value="europallet">Europallet (1200x800x144 mm)</option>
-                <option value="caja">Caja de cartón</option>
-                <option value="bidon">Bidón / Tambor</option>
-                <option value="otro">Otro (medidas personalizadas)</option>
-            </select>
-        </div>
-        <div class="form-row">
-            <div class="form-group"><label>Largo (mm)</label><input type="number" id="bultoLargo" value="1200" aria-label="Largo del bulto en mm"></div>
-            <div class="form-group"><label>Ancho (mm)</label><input type="number" id="bultoAncho" value="1000" aria-label="Ancho del bulto en mm"></div>
-            <div class="form-group"><label>Alto (mm)</label><input type="number" id="bultoAlto" value="150" aria-label="Alto del bulto en mm"></div>
-        </div>
-        <div class="form-group">
-            <label>Tara (peso vacío en kg)</label>
-            <input type="number" id="bultoTara" value="25" aria-label="Tara del bulto en kg">
-        </div>
-        <button class="btn btn-primary" onclick="guardarNuevoBulto()"><i data-feather="check-circle" class="nav-feather"></i> Crear Bulto</button>
-    </div>
-</div>
-
-<!-- MODAL PARA ASIGNAR MATERIAL A BULTO -->
-<div class="modal u-hidden" id="modalAsignarMaterialBulto">
-    <div class="modal-content modal-500">
-        <div class="modal-header">
-            <h3><i data-feather="help-circle" class="nav-feather"></i> Asignar Material a Bulto</h3>
-            <span class="close-modal" onclick="cerrarModalAsignarMaterialBulto()">&times;</span>
-        </div>
-        <input type="hidden" id="asignarBultoId">
-        <div class="form-group">
-            <label>Material</label>
-            <select id="asignarMaterialId" class="u-select-glass" aria-label="Material a asignar"></select>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Cantidad a asignar</label>
-                <input type="number" id="asignarCantidad" value="1" min="1" aria-label="Cantidad a asignar">
-            </div>
-            <div class="form-group">
-                <label>HS Code (opcional)</label>
-                <input type="text" id="asignarHsCode" placeholder="Ej: 8471.30.00">
-            </div>
-        </div>
-        <div id="infoMaterialDisponible" class="u-fs-11 u-color-muted u-mb-12"></div>
-        <button class="btn btn-primary" onclick="confirmarAsignarMaterialABulto()"><i data-feather="check-circle" class="nav-feather"></i> Asignar Material</button>
-    </div>
-</div>
-        
-        
                         <!-- PANEL AVALES -->
             <div id="panelAvales" class="panel hidden">
                 <div class="panel-title"><span><i data-feather="shield-off" class="nav-feather"></i> Avales y Garantías Bancarias</span><div class="panel-title-actions"><button class="panel-add-btn" onclick="abrirModalAval()" title="Añadir aval" aria-label="Añadir aval">+</button></div></div>
@@ -1529,7 +1687,7 @@
             <button class="panel-add-btn" onclick="exportarBeneficios()" title="Exportar beneficios" aria-label="Exportar beneficios"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
-    
+
 
     <!-- Tarjetas de resumen -->
     <div class="cards-grid u-mb-24 cards-grid-4">
@@ -1577,6 +1735,7 @@
         <span><i data-feather="pen-tool" class="nav-feather"></i> Gestión de Solicitudes de Cambio</span>
         <div class="panel-title-actions">
             <button class="panel-add-btn" onclick="abrirModalNuevoCambio()" title="Nueva solicitud" aria-label="Nueva solicitud">+</button>
+            <button class="btn btn-secondary" onclick="mostrarBitacora()" title="Ver bitácora de cambios">Bitácora</button>
         </div>
     </div>
 
@@ -1622,7 +1781,7 @@
             <div class="big" id="totalRecomendaciones">0</div>
         </div>
     </div>
-    
+
 
 
     <!-- Lista de lecciones -->
@@ -1897,6 +2056,30 @@
     </div>
 </div>
 
+<!-- PANEL: DAILY SCRUM -->
+<div id="panelDaily" class="panel hidden">
+    <div class="panel-title"><span><i data-feather="users" class="nav-feather"></i> Daily Scrum</span></div>
+    <div class="info-card">
+        <h4>Registro de dailies</h4>
+        <form onsubmit="event.preventDefault(); registrarDaily();" class="u-grid u-grid-2 u-gap-16">
+            <label>Fecha<input type="date" id="dailyFecha" required></label>
+            <label>Equipo<input type="text" id="dailyEquipo" placeholder="Asistentes" maxlength="120"></label>
+            <label>¿Qué hice ayer?<input type="text" id="dailyAyer" maxlength="240"></label>
+            <label>¿Qué haré hoy?<input type="text" id="dailyHoy" maxlength="240"></label>
+            <label style="grid-column:1 / -1">Impedimentos<input type="text" id="dailyImpedimentos" maxlength="240"></label>
+            <div style="grid-column:1 / -1"><button type="submit" class="btn btn-primary">Registrar Daily</button></div>
+        </form>
+    </div>
+    <div class="info-card u-mt-20">
+        <h4>Historial de dailies</h4>
+        <table class="data-table">
+            <caption class="sr-only">Historial de reuniones diarias Scrum</caption>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Equipo</th><th scope="col">Ayer</th><th scope="col">Hoy</th><th scope="col">Impedimentos</th></tr></thead>
+            <tbody id="dailyBody"></tbody>
+        </table>
+    </div>
+</div>
+
 <!-- PANEL: VELOCITY TRACKING -->
 <div id="panelVelocityTracking" class="panel hidden">
     <div class="panel-title">
@@ -2028,7 +2211,7 @@
             <button class="panel-add-btn" onclick="exportarCostesAgile()" title="Exportar costes" aria-label="Exportar costes"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         </div>
     </div>
-    
+
     <!-- Tarjetas resumen -->
     <div class="cards-grid u-mb-24 cards-grid-4">
         <div class="value-card vc-blue">
@@ -2109,13 +2292,14 @@
             <button class="panel-add-btn" onclick="abrirModalNuevaReunion()" title="Nueva Reunión" aria-label="Nueva Reunión"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
         </div>
     </div>
-    
+
     <!-- Pestañas -->
     <div class="u-tab-bar" style="margin: 16px 0;">
         <button class="btn-tab btn-tab-active" onclick="mostrarSubpanelComunicaciones('comunicaciones', this)"><i data-feather="message-circle" class="nav-feather"></i> Comunicaciones</button>
         <button class="btn-tab" onclick="mostrarSubpanelComunicaciones('reuniones', this)"><i data-feather="help-circle" class="nav-feather"></i> Minutas de Reuniones</button>
+        <button class="btn-tab" onclick="mostrarSubpanelComunicaciones('planComunicaciones', this)"><i data-feather="map" class="nav-feather"></i> Plan de comunicaciones</button>
     </div>
-    
+
     <!-- Subpanel: Comunicaciones -->
     <div id="subpanelComunicaciones" class="subpanel-comunicaciones">
         <table class="data-table">
@@ -2135,7 +2319,32 @@
             </tbody>
         </table>
     </div>
-    
+
+    <!-- Subpanel: Plan de comunicaciones (PMI 10.2) -->
+    <div id="subpanelPlanComunicaciones" class="subpanel-comunicaciones u-hidden">
+        <div class="info-card u-mb-16">
+            <h4>Plan de comunicaciones</h4>
+            <p class="u-p-sm">Define audiencia, mensaje, canal, frecuencia y responsable de cada comunicación del proyecto.</p>
+            <form onsubmit="event.preventDefault(); agregarPlanComunicaciones();">
+                <div class="form-row">
+                    <div class="form-group"><label>Audiencia</label><input id="planComAudiencia" required maxlength="120" placeholder="Equipo, sponsor, cliente..."></div>
+                    <div class="form-group"><label>Canal</label><input id="planComCanal" required maxlength="80" placeholder="Email, reunión, portal..."></div>
+                    <div class="form-group"><label>Frecuencia</label><input id="planComFrecuencia" required maxlength="60" placeholder="Semanal, mensual, por hito..."></div>
+                </div>
+                <div class="form-group"><label>Mensaje clave</label><input id="planComMensaje" required maxlength="240"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Responsable</label><input id="planComResponsable" required maxlength="120"></div>
+                    <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-small" type="submit">Añadir al plan</button></div>
+                </div>
+            </form>
+        </div>
+        <table class="data-table">
+            <caption class="sr-only">Matriz del plan de comunicaciones por audiencia</caption>
+            <thead><tr><th scope="col">Audiencia</th><th scope="col">Mensaje</th><th scope="col">Canal</th><th scope="col">Frecuencia</th><th scope="col">Responsable</th><th scope="col">Acciones</th></tr></thead>
+            <tbody id="planComunicacionesBody"></tbody>
+        </table>
+    </div>
+
     <!-- Subpanel: Reuniones -->
     <div id="subpanelReuniones" class="subpanel-comunicaciones u-hidden">
         <div id="listaReuniones" class="cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));"></div>
@@ -2187,7 +2396,7 @@
         </div>
     </div>
 
-    <table class="data-table" id="tablaSprints">
+    <table class="data-table" id="tablaSprints" tabindex="0" aria-label="Listado de sprints">
         <thead>
             <tr>
                 <th>ID</th>
@@ -2397,47 +2606,54 @@
         </div>
     </div>
 
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Módulos base -->
     <script src="js/config-global.js?v=20260917a"></script>
     <script src="js/i18n.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/core/collections.js"></script>
-    <script src="js/services/DataService.js"></script>
+    <script src="js/services/DataService.js?v=20261120e"></script>
 
     <!-- Core modules (ES6, compatibles con scripts legacy via window.*) -->
     <script src="js/core/dates.js"></script>
-    <script src="js/core/evm.js"></script>
+    <script src="js/core/csv.js"></script>
+    <script src="js/core/whatif.js"></script>
+    <script src="js/core/evm.js?v=20261120e"></script>
     <script src="js/core/finance.js"></script>
     <script src="js/core/ui.js"></script>
+    <script src="js/core/wbs.js?v=20261120e"></script>
+    <script src="js/core/audit.js?v=20261120e"></script>
+    <script src="js/core/linea-base.js?v=20261120e"></script>
+    <script src="js/core/raci.js?v=20261120e"></script>
 
     <!-- Paneles de la aplicación -->
     <script src="js/panels/acta-roles.js?v=20260918b"></script>
     <script src="js/panels/equipo-servicios.js"></script>
     <script src="js/panels/comunicaciones.js"></script>
-    <script src="js/panels/gantt.js?v=20260916i"></script>
-    <script src="js/panels/edt-panel.js?v=20260916h"></script>
+    <script src="js/panels/gantt.js?v=20261120e"></script>
+    <script src="js/panels/carga-trabajo.js?v=20261120e"></script>
+    <script src="js/panels/edt-panel.js?v=20261120e"></script>
     <script src="js/panels/materiales.js"></script>
     <script src="js/panels/financiero-monedas.js"></script>
     <script src="js/panels/grafico-monedas.js"></script>
-    <script src="js/panels/venta-cashflow.js?v=20260917a"></script>
+    <script src="js/panels/venta-cashflow.js?v=20261120e"></script>
     <script src="js/panels/stakeholders.js"></script>
     <script src="js/panels/organigrama.js"></script>
-    <script src="js/panels/resumen-procesos.js?v=20260917a"></script>
-    <script src="js/panels/riesgos.js?v=20260918a"></script>
+    <script src="js/panels/resumen-procesos.js?v=20261120e"></script>
+    <script src="js/panels/riesgos.js?v=20261120e"></script>
     <script src="js/panels/garantia-viajes-avales.js?v=20260917a"></script>
     <script src="js/panels/import-export.js"></script>
     <script src="js/panels/ia-analisis.js"></script>
-    <script src="js/panels/panel-salud.js?v=20260917a"></script>
+    <script src="js/panels/panel-salud.js?v=20261120e"></script>
     <script src="js/panels/panel-informe.js?v=20260917a"></script>
-    <script src="js/panels/compartir.js"></script>
-    <script src="js/panels/beneficios-cambios-lecciones.js?v=20260918e"></script>
-    <script src="js/panels/scrum.js?v=20260925a"></script>
-    <script src="js/panels/logistica-3d.js"></script>
-    <script src="js/panels/agenda.js?v=20260925b"></script>
-    <script src="js/panels/navegacion-auth.js?v=20260916h"></script>
-    <script src="js/panels/montecarlo.js"></script>
+    <script src="js/panels/compartir.js?v=20261117a"></script>
+    <script src="js/panels/beneficios-cambios-lecciones.js?v=20261120e"></script>
+    <script src="js/panels/scrum.js?v=20261120e"></script>
+    <script src="js/panels/logistica-3d.js?v=20261120e"></script>
+    <script src="js/panels/agenda.js?v=20261120e"></script>
+    <script src="js/panels/navegacion-auth.js?v=20261120e"></script>
+    <script src="js/panels/montecarlo.js?v=20261120e"></script>
     <script src="js/panels/manual.js?v=4"></script>
 
     <!-- Entry point (Vite bundle for production) -->
@@ -2683,6 +2899,8 @@ if (_user && _user.nombre) {
 }
 if (typeof feather !== 'undefined') { feather.replace(); }
 </script>
+    <script src="js/core/modal-a11y.js?v=20261120e"></script>
+    <script src="js/core/keyboard-a11y.js?v=20261120e"></script>
 </body>
 </html>
 

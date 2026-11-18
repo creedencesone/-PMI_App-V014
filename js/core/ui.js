@@ -4,7 +4,7 @@
 
 function escapeHtml(str) {
     if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function mostrarToast(mensaje, tipo = 'info') {
@@ -45,3 +45,27 @@ window.escapeHtml = escapeHtml;
 window.mostrarToast = mostrarToast;
 window.isDarkTheme = isDarkTheme;
 window.themeText = themeText;
+
+/** Hace enfocables las regiones con desplazamiento real sin ocultar su semántica. */
+function hacerScrollAccesible() {
+    if (typeof document === 'undefined' || !document.querySelectorAll) return;
+    const candidatos = document.querySelectorAll('.panel, .panel *');
+    for (const el of candidatos) {
+        if (!el || el.tabIndex >= 0) continue;
+        const estilo = getComputedStyle(el);
+        const desbordaX = /(auto|scroll)/.test(estilo.overflowX) && el.scrollWidth > el.clientWidth + 1;
+        const desbordaY = /(auto|scroll)/.test(estilo.overflowY) && el.scrollHeight > el.clientHeight + 1;
+        if (!desbordaX && !desbordaY) continue;
+        el.setAttribute('tabindex', '0');
+        if (el.tagName !== 'TABLE' && !el.hasAttribute('role')) el.setAttribute('role', 'region');
+        if (!el.hasAttribute('aria-label')) {
+            const nombre = String(el.id || el.className || 'contenido').split(/\s+/)[0];
+            el.setAttribute('aria-label', 'Contenido desplazable: ' + nombre);
+        }
+    }
+}
+
+window.hacerScrollAccesible = hacerScrollAccesible;
+if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(hacerScrollAccesible, 0); });
+}

@@ -13,28 +13,48 @@ const TASAS_POR_DEFECTO = {
     ZMW:22.2952, BWP:16.3762, MUR:54.3755
 };
 
-function convertirMoneda(valor, monedaOrigen) {
-    if (!valor || isNaN(valor)) return 0;
+function _tasaMoneda(moneda) {
+    const tasas = (typeof tiposCambio !== 'undefined' && tiposCambio) || TASAS_POR_DEFECTO;
+    let tasa = tasas[moneda];
+    if (!tasa || !isFinite(tasa) || tasa <= 0) {
+        tasa = TASAS_POR_DEFECTO[moneda];
+        if (typeof tiposCambio !== 'undefined' && tasa) tiposCambio[moneda] = tasa;
+    }
+    return tasa;
+}
+
+/** Convierte cualquier moneda a la moneda base proyectual: valor / tasa[origen] × tasa[base]. */
+function aBase(valor, monedaOrigen, monedaBase) {
+    const numero = Number(valor);
+    if (!isFinite(numero)) return 0;
+    const base = monedaBase || (typeof proyecto !== 'undefined' && proyecto?.monedaBase) || 'EUR';
+    const origen = monedaOrigen || base;
+    if (origen === base) return numero;
+    const tasaOrigen = _tasaMoneda(origen);
+    const tasaBase = _tasaMoneda(base);
+    if (!tasaOrigen || !tasaBase) {
+        console.warn(` aBase: sin tasa para ${origen} → ${base}; se devuelve el valor sin convertir`);
+        return numero;
+    }
+    return numero / tasaOrigen * tasaBase;
+}
+
+function convertirMoneda(valor, monedaOrigen, monedaBase) {
+    const numero = Number(valor);
+    if (!isFinite(numero)) return 0;
     if (!monedaOrigen) {
         console.warn(' convertirMoneda: monedaOrigen undefined, devolviendo valor sin convertir');
-        return valor;
+        return numero;
     }
-    const monedaBase = (typeof proyecto !== 'undefined' && proyecto?.monedaBase) || 'EUR';
-    if (monedaOrigen === monedaBase) return valor;
+    return aBase(numero, monedaOrigen, monedaBase);
+}
 
-    const tasas = (typeof tiposCambio !== 'undefined' && tiposCambio) || TASAS_POR_DEFECTO;
-    let tasa = tasas[monedaOrigen];
-    if (!tasa || tasa === 0) {
-        tasa = TASAS_POR_DEFECTO[monedaOrigen];
-        if (!tasa) {
-            console.error(` No hay tasa para ${monedaOrigen}`);
-            return valor;
-        }
-        if (typeof tiposCambio !== 'undefined') {
-            tiposCambio[monedaOrigen] = tasa;
-        }
-    }
-    return valor / tasa;
+/** Ingreso/precio de venta expresado siempre en moneda base. */
+function precioVentaEnBase(proyectoParam) {
+    const p = proyectoParam || (typeof proyecto !== 'undefined' ? proyecto : null);
+    if (!p) return 0;
+    const monedaImporte = p.monedaVenta || p.monedaBase || 'EUR';
+    return aBase(Number(p.precioVenta) || 0, monedaImporte, p.monedaBase || 'EUR');
 }
 
 const SIMBOLOS_MONEDA = {
@@ -97,22 +117,24 @@ function distribuirCostePorMeses(coste, mesInicio, duracionMeses) {
 }
 
 function convertirEntreMonedas(valor, monedaOrigen, monedaDestino) {
-    if (valor === undefined || valor === null || isNaN(valor)) return 0;
+    const numero = Number(valor);
+    if (!isFinite(numero)) return 0;
     const base = (typeof proyecto !== 'undefined' && proyecto?.monedaBase) || 'EUR';
     const origen = monedaOrigen || base;
     const destino = monedaDestino || base;
-    if (origen === destino) return valor;
-    const enBase = convertirMoneda(valor, origen);
+    if (origen === destino) return numero;
+    const enBase = aBase(numero, origen, base);
     if (destino === base) return enBase;
-    const tasas = (typeof tiposCambio !== 'undefined' && tiposCambio) || TASAS_POR_DEFECTO;
-    const tasa = tasas[destino] || TASAS_POR_DEFECTO[destino];
-    if (!tasa) return enBase;
-    return enBase * tasa;
+    const tasaDestino = _tasaMoneda(destino);
+    const tasaBase = _tasaMoneda(base);
+    return tasaBase && tasaDestino ? enBase * tasaDestino / tasaBase : enBase;
 }
 
 // Asignar al window para compatibilidad legacy
+window.aBase = aBase;
 window.convertirMoneda = convertirMoneda;
 window.convertirEntreMonedas = convertirEntreMonedas;
+window.precioVentaEnBase = precioVentaEnBase;
 window.formatearMoneda = formatearMoneda;
 window.getMonedaSimbolo = getMonedaSimbolo;
 window.calcularROI2 = calcularROI;

@@ -57,12 +57,15 @@
             if (id) { let idx = proyecto.equipo.findIndex(m => m.id === parseInt(id)); if (idx >= 0) {
                 const previo = proyecto.equipo[idx];
                 const cambiaPrecio = previo.costeHora !== miembro.costeHora || previo.moneda !== miembro.moneda;
+                const cambiaCapacidad = previo.horasMes !== miembro.horasMes;
                 proyecto.equipo[idx] = miembro;
-                if (cambiaPrecio) {
+                if (cambiaPrecio || cambiaCapacidad) {
                     (proyecto.elementosGantt || []).forEach(e => {
                         if (e.recursoAsignado && e.recursoAsignado.id === miembro.id) {
                             e.recursoAsignado.costeHora = miembro.costeHora;
                             e.recursoAsignado.moneda = miembro.moneda;
+                            e.recursoAsignado.horasMes = miembro.horasMes;
+                            e.horasMes = miembro.horasMes;
                             if (e.tipo && e.tipo !== 'edt' && e.tipo !== 'hito') {
                                 const hTot = e.tipoDuracion === 'horas' ? (e.duracionHoras || e.duracion * (e.horasDia || 8)) : e.duracion * (e.horasDia || 8);
                                 e.costeEstimado = hTot * miembro.costeHora;
@@ -73,6 +76,7 @@
                         if (h.recursoAsignado && h.recursoAsignado.id === miembro.id) {
                             h.recursoAsignado.costeHora = miembro.costeHora;
                             h.recursoAsignado.moneda = miembro.moneda;
+                            h.recursoAsignado.horasMes = miembro.horasMes;
                             h.costeEstimado = (h.diasEstimados || 5) * (h.horasPorDia || 8) * miembro.costeHora;
                         }
                     });
@@ -114,11 +118,11 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function eliminarEquipo(id) {
             if (confirm(tApp('confirmar_eliminar_miembro'))) { proyecto.equipo = proyecto.equipo.filter(m => m.id !== id); guardarProyecto(); renderizarEquipo(); mostrarToast(tApp('toast_eliminado'), 'success'); }
         }
-        
+
         // ============================================
         // SERVICIOS
         // ============================================
@@ -132,7 +136,7 @@
             }).join('');
             calcularCashflow();
         }
-        
+
         function abrirModalServicio() {
             const modalHtml = `<div class="modal-content"><div class="modal-header"><h3> Nuevo Servicio</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
                 <input type="hidden" id="serId"><div class="form-group"><label>Nombre</label><input type="text" id="serNombre"></div>
@@ -147,7 +151,7 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function guardarServicio() {
             let nombre = document.getElementById('serNombre').value.trim();
             if (!nombre) { mostrarToast(tApp('toast_nombre_obligatorio'), 'error'); return; }
@@ -162,7 +166,7 @@
             else { if (!proyecto.servicios) proyecto.servicios = []; proyecto.servicios.push(servicio); }
             guardarProyecto(); renderizarServicios(); cerrarModalGeneric(); mostrarToast(` Servicio guardado`, 'success');
         }
-        
+
         function editarServicio(id) {
             let s = proyecto.servicios.find(s => s.id === id);
             if (!s) return;
@@ -179,11 +183,11 @@
             document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${modalHtml}</div>`;
             document.getElementById('genericModal').onclick = (e) => { if (e.target === e.currentTarget) cerrarModalGeneric(); };
         }
-        
+
         function eliminarServicio(id) {
             if (confirm(tApp('confirmar_eliminar_servicio'))) { proyecto.servicios = proyecto.servicios.filter(s => s.id !== id); guardarProyecto(); renderizarServicios(); mostrarToast(tApp('toast_eliminado'), 'success'); }
         }
-        
+
         // ============================================
         // COMUNICACIONES Y REUNIONES
         // ============================================
