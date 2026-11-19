@@ -12,7 +12,10 @@ import path from 'node:path';
  * (tokens + bundle), en lugar de 4.
  */
 const ROOT = process.cwd();
-const VERSION = '20261121i';
+// La versión se deriva de index.html (fuente de verdad del cache-bust) para
+// que un bump no deje enlaces de tokens con una versión anterior.
+const INDEX = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+const VERSION = (INDEX.match(/\?v=(20\d{6}[a-z])/) || [])[1] || '20261121j';
 const LINKS = `<link rel="stylesheet" href="/design-system/tokens.css?v=${VERSION}">`;
 
 for (const nombre of ['dashboard.html', 'proyecto.html']) {
