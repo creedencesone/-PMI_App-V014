@@ -591,7 +591,7 @@ function setActiveProceso(fase, opts) {
         actualizarVisibilidadGrupos();
     }
     const FASE_PANEL_INICIAL = {
-        'Inicio': 'Acta',
+        'Inicio': 'Salud',
         'Planificación': 'Cronograma',
         'Ejecución': (typeof proyecto !== 'undefined' && proyecto?.metodologia?.tipo === 'agile') ? 'SprintBacklog' : 'EjecucionCronograma',
         'Monitoreo y Control': 'Salud',
@@ -1209,7 +1209,7 @@ function iniciarIndicadorSync() {
 }
  async function init() {
     initNavegacion();
-    setActiveProceso('Inicio', { navegar: false });
+    setActiveProceso('Inicio');
     await cargarProyecto();
     cargarTemaGuardado();
     cargarIdiomaApp();

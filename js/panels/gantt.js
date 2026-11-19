@@ -1713,7 +1713,7 @@ function renderizarVistaTarjetas(elementos, ctx) {
                     ${esCritico ? '<span class="tv-badge-crit">CP</span>' : ''}
                     <span class="tv-card-id">${escapeHtml(codigoDe(elem))}</span>
                 </div>
-                <h4 class="tv-card-name">${escapeHtml(nombreVisible)}</h4>
+                <h3 class="tv-card-name">${escapeHtml(nombreVisible)}</h3>
                 <div class="tv-card-dates">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                     <span>${fechas}</span>

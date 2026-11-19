@@ -262,6 +262,65 @@
 
   /* Motion Reduce */
   --motion-reduce: 0ms;
+
+  /* ------------------------------------------------------------
+     COMPATIBILIDAD: antiguos tokens de tokens-shared.css
+     Fuente única de verdad. Valores idénticos a los que antes se
+     definían en design-system/tokens-shared.css (tema oscuro).
+     ------------------------------------------------------------ */
+  --bg-card: #2D2D2D;
+  --bg-card-hover: #353535;
+  --bg-modal: #2D2D2D;
+  --bg-sidebar: #222222;
+  --color-danger-text: #FF6B6B;
+  --color-primary: #007AFF;
+  --color-primary-text: #4DA3FF;
+  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.6);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --text-muted: #9CA3AF;
+  --text-primary: #E0E0E0;
+  --text-secondary: #B0B0B0;
+
+  /* Defaults de tokens referenciados sin definición (evita caídas
+     a "unset" cuando el JS todavía no ha pintado el componente). */
+  --card-bg: #2D2D2D;
+  --card-bg-hover: #353535;
+  --crono-header: #2D2D2D;
+  --crono-rows: #262626;
+  --celda: #94A3B8;
+
+  /* ------------------------------------------------------------
+     IDENTIDAD DE MARCA — paleta semántica con voz propia
+     Colores directos (hex) para evitar cadenas var() anidadas.
+     ------------------------------------------------------------ */
+  --color-success-brand: #059669;
+  --color-warning-brand: #D97706;
+  --color-danger-brand: #DC2626;
+  --color-accent-secondary: #7C3AED;
+  --color-success-brand-soft: rgba(5, 150, 105, 0.14);
+  --color-warning-brand-soft: rgba(217, 119, 6, 0.14);
+  --color-danger-brand-soft: rgba(220, 38, 38, 0.14);
+  --color-accent-secondary-soft: rgba(124, 58, 237, 0.16);
+
+  /* Escala modular CERRADA (ratio 1.25, Major Third).
+     Los tamaños son los únicos permitidos para tipografía. */
+  --step--1: 0.8rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.563rem;
+  --step-3: 1.953rem;
+  --step-4: 2.441rem;
+  --step-5: 3.052rem;
+
+  /* Radios y sombras canónicos del sistema */
+  --radius-card: 12px;
+  --radius-pill: 9999px;
+  --shadow-soft-1: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-soft-2: 0 12px 28px -8px rgba(0, 0, 0, 0.55);
+
+  /* Curva física compartida por todas las micro-interacciones */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ============================================
@@ -355,6 +414,32 @@
   --shadow-glow-warning: 0 0 24px rgba(184, 92, 0, 0.15);
   --shadow-glow-danger: 0 0 24px rgba(217, 45, 32, 0.15);
   --shadow-inner: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+
+  /* Compatibilidad: mismos tokens que el tema oscuro, con los
+     valores de tema claro que antes vivían en tokens-shared.css. */
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F9FA;
+  --bg-modal: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --color-danger-text: #B42318;
+  --color-primary: #2563EB;
+  --color-primary-text: #175CD3;
+  --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --text-muted: #6B7280;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+
+  --card-bg: #FFFFFF;
+  --card-bg-hover: #F8F9FA;
+  --crono-header: #F8F9FA;
+  --crono-rows: #FFFFFF;
+  --celda: #475569;
+
+  /* Sombras suaves adaptadas al tema claro */
+  --shadow-soft-1: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-soft-2: 0 12px 28px -8px rgba(15, 23, 42, 0.18);
 }
 
 /* ============================================

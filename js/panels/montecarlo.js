@@ -331,10 +331,11 @@ function mostrarResultados(dias, costes, elementos, resultadosHitos) {
     const duracionPlan = Math.round(cpmMakespan);
     const dentroPlan = dias.filter(d => d <= duracionPlan).length / n * 100;
 
-    document.getElementById('mcP50').textContent = p50d + ' días';
-    document.getElementById('mcP80').textContent = p80d + ' días';
-    document.getElementById('mcP95').textContent = p95d + ' días';
-    document.getElementById('mcProbPlan').textContent = dentroPlan.toFixed(1) + '%';
+    const escribir = (id, valor) => { const el = document.getElementById(id); if (el) el.textContent = valor; };
+    escribir('mcP50', p50d + ' días');
+    escribir('mcP80', p80d + ' días');
+    escribir('mcP95', p95d + ' días');
+    escribir('mcProbPlan', dentroPlan.toFixed(1) + '%');
 
     const hitosBody = document.getElementById('mcHitosBody');
     if (hitosBody) {

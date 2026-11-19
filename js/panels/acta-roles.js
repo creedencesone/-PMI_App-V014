@@ -449,7 +449,7 @@ function toggleMetodologiaCampos() {
 
             document.getElementById('rolesContent').innerHTML = `
                 <div class="info-card">
-                    <h4> Project Manager</h4>
+                    <h3> Project Manager</h3>
                     <div class="name">${pm.nombre || 'No definido'}</div>
                     <div class="details">${pm.cargo || ''}</div>
                     <div class="details"> ${pm.email || '-'}</div>

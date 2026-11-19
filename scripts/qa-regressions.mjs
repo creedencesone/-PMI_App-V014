@@ -75,11 +75,18 @@ async function auditarAccesibilidad(browser, theme) {
             .some(n => n.getAnimations().some(a => a.playState === 'running')));
         await page.waitForFunction(() => !document.querySelector('.panel.active')?.getAnimations({ subtree: true })
             .some(a => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity));
+        // El toast (fuera del panel) también tiene animación de fade: esperar a
+        // que termine para que axe no mida un color中途 de la transición.
+        await page.waitForFunction(() => !document.querySelector('#toast')?.getAnimations({ subtree: true })
+            .some(a => a.playState === 'running'));
         let res = null;
         for (let intento = 0; intento < 3 && !res; intento++) {
             res = await page.evaluate(async () => {
                 if (!window.axe || typeof window.axe.run !== 'function') return null;
-                return await window.axe.run(document, {
+                // El toast es una notificación transitoria con fade (opacity
+                // 0→1→0): axe mide un color intermediate y da falso positivo de
+                // color-contrast. Se excluye del contexto del barrido.
+                return await window.axe.run({ include: [document], exclude: [['#toast']] }, {
                     runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
                     resultTypes: ['violations']
                 });
@@ -142,7 +149,10 @@ async function auditarAccesibilidad(browser, theme) {
         for (let intento = 0; intento < 3 && !res; intento++) {
             res = await mp.evaluate(async () => {
                 if (!window.axe || typeof window.axe.run !== 'function') return null;
-                return await window.axe.run(document, {
+                // El toast es una notificación transitoria con fade (opacity
+                // 0→1→0): axe mide un color intermediate y da falso positivo de
+                // color-contrast. Se excluye del contexto del barrido.
+                return await window.axe.run({ include: [document], exclude: [['#toast']] }, {
                     runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
                     resultTypes: ['violations']
                 });

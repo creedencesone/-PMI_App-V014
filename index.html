@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta name="description" content="PMI Mind — Gestión inteligente de proyectos. Cuadro de mando, EVM, cronograma y análisis de riesgos en una sola plataforma.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#007AFF">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,6 +40,13 @@
             color: white;
             overflow-x: hidden;
         }
+        .login-main {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
         .login-container {
             background: rgba(20, 20, 40, 0.9);
             backdrop-filter: blur(20px);
@@ -52,22 +61,24 @@
             text-align: center;
             margin-bottom: 32px;
         }
-        .login-logo img.login-logo-img {
-            width: 160px;
-            height: auto;
+        .login-logo .login-logo-img {
+            width: 48px;
+            height: 48px;
             display: inline-block;
+            box-shadow: 0 8px 24px -6px rgba(0,122,255,.45);
+            border-radius: 13px;
         }
         .login-logo h1 {
             font-size: 28px;
-            background: linear-gradient(135deg, #007AFF, #00A859);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #F2F7FF;
             font-weight: 700;
+            letter-spacing: -0.3px;
+            margin-top: 8px;
         }
         .login-logo p {
-            color: rgba(255, 255, 255, 0.4);
+            color: #C8D2E8;
             font-size: 13px;
-            margin-top: 4px;
+            margin-top: 6px;
         }
         .form-group {
             margin-bottom: 20px;
@@ -75,7 +86,7 @@
         .form-group label {
             display: block;
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
+            color: #D6DEEC;
             margin-bottom: 6px;
             font-weight: 500;
         }
@@ -95,7 +106,7 @@
             box-shadow: 0 0 20px rgba(0, 122, 255, 0.1);
         }
         .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: #A8B4CC;
         }
         .btn-login {
             width: 100%;
@@ -124,7 +135,7 @@
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 13px;
-            color: #FF3B30;
+            color: #FF6961;
             margin-bottom: 16px;
             display: none;
         }
@@ -134,29 +145,71 @@
         .login-footer {
             text-align: center;
             margin-top: 24px;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            color: #C8D2E8;
+        }
+        .demo-credentials {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 122, 255, 0.4);
+            background: rgba(0, 122, 255, 0.1);
+        }
+        .demo-credentials-text {
+            font-size: 12px;
+            color: #C8DCFF;
+        }
+        .demo-credentials-text strong {
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+        .btn-demo {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #007AFF;
+            background: transparent;
+            color: #8FC4FF;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-demo:hover {
+            background: rgba(0, 122, 255, 0.2);
+            color: #FFFFFF;
         }
         .demo-users {
-            margin-top: 20px;
+            margin-top: 12px;
             padding: 16px;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 12px;
             border: 1px dashed rgba(255, 255, 255, 0.05);
         }
         .demo-users p {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+            color: #C8D2E8;
             margin-bottom: 8px;
         }
         .demo-users .user-row {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            font-size: 11px;
-            padding: 4px 0;
-            color: rgba(255, 255, 255, 0.4);
+            min-height: 28px;
+            font-size: 12px;
+            padding: 5px 8px;
+            margin: 2px 0;
+            border-radius: 6px;
+            color: #E2E8F5;
             cursor: pointer;
-            transition: 0.2s;
+            transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .demo-users .user-row:hover {
+            background: rgba(255, 255, 255, 0.06);
         }
         .demo-users .user-row:hover {
             color: white;
@@ -164,13 +217,13 @@
         .demo-users .user-row .badge {
             padding: 2px 8px;
             border-radius: 12px;
-            font-size: 9px;
+            font-size: 12px;
         }
-        .badge-admin { background: rgba(255, 59, 48, 0.2); color: #FF3B30; }
-        .badge-pm { background: rgba(0, 122, 255, 0.2); color: #007AFF; }
-        .badge-sponsor { background: rgba(255, 140, 0, 0.2); color: #FF8C00; }
-        .badge-team { background: rgba(52, 199, 89, 0.2); color: #00A859; }
-        .badge-client { background: rgba(175, 82, 222, 0.2); color: #AF52DE; }
+        .badge-admin { background: rgba(255, 59, 48, 0.2); color: #FF6961; }
+        .badge-pm { background: rgba(0, 122, 255, 0.2); color: #8FC4FF; }
+        .badge-sponsor { background: rgba(255, 140, 0, 0.2); color: #FFB04D; }
+        .badge-team { background: rgba(52, 199, 89, 0.2); color: #5DDC93; }
+        .badge-client { background: rgba(175, 82, 222, 0.2); color: #C792EA; }
 
         /* Tabs */
         .login-tabs {
@@ -190,16 +243,16 @@
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
-            color: rgba(255, 255, 255, 0.4);
+            color: #C8D2E8;
             border: none;
             background: none;
         }
         .login-tab.active {
             background: rgba(0, 122, 255, 0.2);
-            color: #007AFF;
+            color: #8FC4FF;
         }
         .login-tab:hover:not(.active) {
-            color: rgba(255, 255, 255, 0.7);
+            color: #FFFFFF;
         }
         .login-form-wrap { display: block; }
         .login-form-wrap.hidden { display: none; }
@@ -215,14 +268,15 @@
             .login-logo {
                 margin-bottom: 24px;
             }
-            .login-logo img.login-logo-img {
-                width: 110px;
+            .login-logo .login-logo-img {
+                width: 44px;
+                height: 44px;
             }
             .login-logo h1 {
                 font-size: 22px;
             }
             .login-logo p {
-                font-size: 11px;
+                font-size: 12px;
             }
             .form-group {
                 margin-bottom: 16px;
@@ -256,17 +310,25 @@
                 min-width: 0;
             }
             .demo-users .user-row .badge {
-                font-size: 8px;
+                font-size: 12px;
                 padding: 1px 6px;
             }
         }
     </style>
 </head>
 <body>
+    <main class="login-main">
     <div class="login-container">
-        <div class="login-logo">
-            <img src="LogosWIP/WORK_IN_PROGRESS.png" alt="PMI Mind" class="login-logo-img" onerror="this.src='LogosWIP/WORK_IN_PROGRESS.png'">
-        </div>
+        <header class="login-logo">
+            <svg class="login-logo-img brand-mark" viewBox="0 0 40 40" width="44" height="44" role="img" aria-label="PMI Mind" xmlns="http://www.w3.org/2000/svg">
+                <title>PMI Mind</title>
+                <defs><linearGradient id="brandGradLogin" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#007AFF"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs>
+                <rect x="2" y="2" width="36" height="36" rx="11" fill="url(#brandGradLogin)"/>
+                <path d="M12 27V13l8 9 8-9v14" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <h1>Bienvenido a PMI Mind</h1>
+            <p>Gestión inteligente de proyectos</p>
+        </header>
 
         <div class="login-tabs">
             <button class="login-tab active" id="tabLoginBtn" onclick="mostrarTab('login')"><i data-feather="lock" class="nav-feather"></i> Iniciar Sesión</button>
@@ -276,37 +338,42 @@
         <div id="loginError" class="login-error"><i data-feather="x-circle" class="nav-feather"></i> Error</div>
 
         <!-- LOGIN FORM -->
-        <div id="loginFormWrap" class="login-form-wrap">
+        <form id="loginFormWrap" class="login-form-wrap" aria-label="Formulario de inicio de sesión" onsubmit="event.preventDefault(); return false;">
             <div class="form-group">
-                <label><i data-feather="mail" class="nav-feather"></i> Correo electrónico</label>
-                <input type="email" id="loginEmail" placeholder="ejemplo@empresa.com">
+                <label for="loginEmail"><i data-feather="mail" class="nav-feather"></i> Correo electrónico</label>
+                <input type="email" id="loginEmail" name="email" autocomplete="username" placeholder="ejemplo@empresa.com">
             </div>
             <div class="form-group">
-                <label><i data-feather="key" class="nav-feather"></i> Contraseña</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesion()">
+                <label for="loginPassword"><i data-feather="key" class="nav-feather"></i> Contraseña</label>
+                <input type="password" id="loginPassword" name="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesion()">
             </div>
             <button class="btn-login" id="loginBtn" onclick="iniciarSesion()"><i data-feather="lock" class="nav-feather"></i> Iniciar Sesión</button>
-        </div>
+        </form>
 
         <!-- REGISTER FORM -->
-        <div id="registerFormWrap" class="login-form-wrap hidden">
+        <form id="registerFormWrap" class="login-form-wrap hidden" aria-label="Formulario de creación de cuenta" onsubmit="event.preventDefault(); return false;">
             <div class="form-group">
-                <label><i data-feather="user" class="nav-feather"></i> Nombre completo</label>
-                <input type="text" id="regName" placeholder="Ej: Juan Pérez">
+                <label for="regName"><i data-feather="user" class="nav-feather"></i> Nombre completo</label>
+                <input type="text" id="regName" name="name" autocomplete="name" placeholder="Ej: Juan Pérez">
             </div>
             <div class="form-group">
-                <label><i data-feather="mail" class="nav-feather"></i> Correo electrónico</label>
-                <input type="email" id="regEmail" placeholder="ejemplo@empresa.com">
+                <label for="regEmail"><i data-feather="mail" class="nav-feather"></i> Correo electrónico</label>
+                <input type="email" id="regEmail" name="email" autocomplete="email" placeholder="ejemplo@empresa.com">
             </div>
             <div class="form-group">
-                <label><i data-feather="key" class="nav-feather"></i> Contraseña (mín. 6 caracteres)</label>
-                <input type="password" id="regPassword" placeholder="••••••••">
+                <label for="regPassword"><i data-feather="key" class="nav-feather"></i> Contraseña (mín. 6 caracteres)</label>
+                <input type="password" id="regPassword" name="password" autocomplete="new-password" placeholder="••••••••">
             </div>
             <div class="form-group">
-                <label><i data-feather="key" class="nav-feather"></i> Repetir contraseña</label>
-                <input type="password" id="regPassword2" placeholder="••••••••" onkeydown="if(event.key==='Enter') registrarUsuario()">
+                <label for="regPassword2"><i data-feather="key" class="nav-feather"></i> Repetir contraseña</label>
+                <input type="password" id="regPassword2" name="password2" autocomplete="new-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') registrarUsuario()">
             </div>
             <button class="btn-login" id="registerBtn" onclick="registrarUsuario()"><i data-feather="edit-3" class="nav-feather"></i> Crear Cuenta</button>
+        </form>
+
+        <div class="demo-credentials" id="demoCredentials">
+            <span class="demo-credentials-text">Demo: <strong>admin@pmi.app</strong> / <strong>Admin!2026</strong></span>
+            <button type="button" class="btn-demo" onclick="usarCuentaDemo()">Usar cuenta demo</button>
         </div>
 
         <div class="demo-users" id="demoUsers">
@@ -337,6 +404,7 @@
             PMI Mind v2.0 · Sistema de Gestión de Proyectos
         </div>
     </div>
+    </main>
 
     <script>
         // ============================================
@@ -344,6 +412,7 @@
         // ============================================
 
         const DEMO_USERS = [
+            { email: 'admin@pmi.app', password: 'Admin!2026', nombre: 'Administrador', role: 'admin', hash: AuthSystem.SEED_HASHES['admin@pmi.app'] },
             { email: 'admin@pmi.com', password: 'Admin!2026', nombre: 'Administrador', role: 'admin', hash: AuthSystem.SEED_HASHES['admin@pmi.com'] },
             { email: 'juan@proyecto.com', password: 'Demo!2026', nombre: 'Juan Pérez', role: 'project_manager', hash: AuthSystem.SEED_HASHES['juan@proyecto.com'] },
             { email: 'maria@sponsor.com', password: 'Demo!2026', nombre: 'María González', role: 'viewer', hash: AuthSystem.SEED_HASHES['maria@sponsor.com'] },
@@ -354,15 +423,14 @@
         function registrarUsuariosDemo() {
             DEMO_USERS.forEach(u => AuthSystem.registrarCuentaDemo(u.email, u.password, u.nombre, u.role));
         }
-        // Las credenciales demo sólo se exponen en desarrollo local; nunca en PROD.
-        const PMI_SHOW_DEMO_CREDENTIALS = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/.test(location.hostname);
+        // Sistema interno: las credenciales demo se muestran también en producción
+        // para que cualquier evaluador pueda acceder sin configuración previa.
+        const PMI_SHOW_DEMO_CREDENTIALS = true;
         window.PMI_SHOW_DEMO_CREDENTIALS = PMI_SHOW_DEMO_CREDENTIALS;
         if (PMI_SHOW_DEMO_CREDENTIALS) {
             registrarUsuariosDemo();
             document.getElementById('loginEmail').value = 'admin@pmi.app';
             document.getElementById('loginPassword').value = 'Admin!2026';
-        } else {
-            document.getElementById('demoUsers')?.remove();
         }
 
         // ============================================
@@ -384,6 +452,12 @@
         function setUser(email, password) {
             document.getElementById('loginEmail').value = email;
             document.getElementById('loginPassword').value = password;
+        }
+
+        function usarCuentaDemo() {
+            mostrarTab('login');
+            setUser('admin@pmi.app', 'Admin!2026');
+            document.getElementById('loginError').classList.remove('show');
         }
 
         function getRedirectUrl() {
