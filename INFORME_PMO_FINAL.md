@@ -19,7 +19,7 @@ El plan PMO se ha ejecutado íntegramente en cinco bloques (Fase 0, requisitos, 
 | Build y deploy | Vite + Vercel estables, commits limpios | `npm run build` OK; 85 recursos en precache; deploy `READY`; `main` sincronizado con `origin/main` | Cerrado |
 | Accesibilidad | WCAG AA real en 390/768/1024/1440/1920, claro/oscuro y `prefers-reduced-motion` | axe 0 violaciones en 42 paneles × 2 temas; Lighthouse Accesibilidad 100 en producción | Cerrado |
 | Calidad | 0 violaciones axe, Lighthouse 100, 0 defectos AA abiertos | 0 auditorías fallidas; auditoría final 9,3/10 PREMIABLE | Cerrado |
-| Trazabilidad | `requisitos[]`, matriz, bitácora y B.2 basado en evidencia | Panel, CRUD, filtros y `requisitosIds` en Gantt; migración SQL preparada | Cerrado (R1) |
+| Trazabilidad | `requisitos[]`, matriz, bitácora y B.2 basado en evidencia | Panel, CRUD, filtros y `requisitosIds` en Gantt; migración `0008` aplicada y verificada | Cerrado |
 | Gobierno | Permisos, calidad, alertas, cartera, backup y nivelación | Fase 2 desplegada y verificada en producción | Cerrado |
 | IA local/LAN | Local y LAN simultáneos, modelo configurable, sin secretos, fallback | Fase 3 desplegada con 5 agentes y heurística por agente | Cerrado (R2) |
 | Higiene y seguridad | Sin API keys en `localStorage`; artefactos protegidos intactos | `.env` solo con clave publishable; 10 artefactos untracked sin modificar | Cerrado |
@@ -88,13 +88,20 @@ Ejecutada sobre el HEAD final `c9c0963`, con deploy congelado antes de la re-aud
 
 ## 5. Riesgos y seguimiento externo
 
-No hay defectos abiertos en la aplicación. Quedan tres seguimientos de carácter externo que no bloquean el despliegue ni la conformidad AA.
+No hay defectos abiertos en la aplicación. El seguimiento R1 quedó resuelto el 20-nov; permanecen dos seguimientos de carácter externo que no bloquean el despliegue ni la conformidad AA.
 
-| ID | Seguimiento | Impacto | Mitigación aplicada | Acción pendiente |
-|---|---|---|---|---|
-| R1 | Migración `supabase/migrations/0008_requisitos_domain.sql` sin aplicar | Persistencia remota del dominio de requisitos | La app funciona con `localStorage` y la migración está lista en el repo | Aplicar SQL con service role o desde SQL Editor; verificar lectura/escritura de `project_requisitos` |
-| R2 | Ollama `0.40.16` vs cliente `0.30.11`, 0 modelos descargados y CORS `403` desde el dominio de producción | Inferencia real con modelos locales/LAN | Perfiles `local`/`lan`/`bionico`, descubrimiento en runtime y fallback heurístico por agente | Descargar modelo, alinear versiones y configurar `OLLAMA_ORIGINS='https://pmi-mind.vercel.app,http://localhost:5173'` |
-| R3 | Login Supabase `admin@pmi.app` / `Admin!2026` → `400 Invalid login credentials` | Pruebas E2E con cuenta real | QA usa sesión local fixture con hash semilla válido | Crear/rotar el usuario de QA en Supabase y repetir el flujo autenticado real |
+### 5.1 R1 — resuelto: migración `0008`
+
+- **Acción:** `supabase/migrations/0008_requisitos_domain.sql` aplicada al proyecto `zkovoehqwrzapsszrhlz` mediante la Management API de Supabase, con un PAT temporal usado solo en memoria (`scripts/apply-sql-via-mgmt.mjs`); el token no se guardó en el repo ni en variables de entorno persistentes. Debe ser revocado por el propietario.
+- **Resultado de la ejecución:** HTTP 200, sin errores.
+- **Verificación estructural:** 6 columnas (`id`, `organization_id`, `project_id`, `data`, `created_at`, `updated_at`), RLS activo, 4 políticas (`SELECT`/`INSERT`/`UPDATE`/`DELETE`) restringidas a `authenticated` con `is_org_member(organization_id)` y 1 índice único parcial `ux_project_requisitos_project_data_id (project_id, (data->>'id'))`.
+- **Verificación de acceso:** antes `GET /rest/v1/project_requisitos` devolvía `PGRST205` (tabla ausente); después responde HTTP 200 con `[]` usando solo la clave publishable. El contrato coincide con `DOMAIN_TABLES` y `_writeDomains()` de `DataService.js`.
+- **Pendiente ligado a R3:** la prueba de lectura/escritura con un usuario `authenticated` real queda cubierta por la resolución del usuario de QA; RLS ya está verificado en definición.
+
+| ID | Seguimiento | Impacto | Mitigación aplicada | Acción pendiente | Estado |
+|---|---|---|---|---|---|
+| R2 | Ollama `0.40.16` vs cliente `0.30.11`, 0 modelos descargados y CORS `403` desde el dominio de producción | Inferencia real con modelos locales/LAN | Perfiles `local`/`lan`/`bionico`, descubrimiento en runtime y fallback heurístico por agente | Descargar modelo, alinear versiones y configurar `OLLAMA_ORIGINS='https://pmi-mind.vercel.app,http://localhost:5173'` | Abierto |
+| R3 | Login Supabase `admin@pmi.app` / `Admin!2026` → `400 Invalid login credentials` | Pruebas E2E con cuenta real y verificación RLS autenticada | QA usa sesión local fixture con hash semilla válido | Crear/rotar el usuario de QA en Supabase, repetir el flujo autenticado real y validar lectura/escritura de `project_requisitos` | Abierto |
 
 Si alguno de estos seguimientos llega a modificar UI visible, repetir axe y Lighthouse antes de cerrarlo, según el estándar del PMO.
 
@@ -104,7 +111,7 @@ Si alguno de estos seguimientos llega a modificar UI visible, repetir axe y Ligh
 
 Con la evidencia de las secciones 2 y 3, el informe PMO se declara **cerrado para el alcance planificado**: las cinco fases están desplegadas, la auditoría final es 9,3/10 PREMIABLE y no existen defectos abiertos de accesibilidad ni de build.
 
-Los seguimientos R1–R3 quedan registrados como trabajo externo con responsable de infraestructura/credenciales. Su resolución no requiere reabrir el informe: sólo una verificación focalizada (lectura/escritura Supabase, CORS y modelo activo; axe/Lighthouse si hay cambio de UI).
+Los seguimientos R2–R3 quedan registrados como trabajo externo con responsable de infraestructura/credenciales. Su resolución no requiere reabrir el informe: sólo una verificación focalizada (CORS y modelo activo; flujo autenticado y lectura/escritura Supabase; axe/Lighthouse si hay cambio de UI).
 
 **Firmado:** PMO · 2026-11-20 · `main@c9c0963`
 
