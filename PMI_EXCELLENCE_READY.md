@@ -48,3 +48,5 @@ Se cumplen ambos criterios. Se emite el certificado **PMI Excellence Ready**.
 ---
 
 **PMI Excellence Ready** · Emitido tras auditoría → refactorización → re-auditoría → QA/build/offline.
+
+> Las cifras de verificación de este certificado corresponden a la instantánea del 18-nov. El cierre consolidado del plan PMO (Fases 0–3), con la evidencia final de 20-nov, está en [`INFORME_PMO_FINAL.md`](INFORME_PMO_FINAL.md).
