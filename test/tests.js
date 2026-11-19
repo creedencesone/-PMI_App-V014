@@ -5,11 +5,21 @@
 if (typeof window === "undefined") {
     global.window = global;
     global.document = { addEventListener: function() {} };
+    // localStorage mínimo para módulos que leen configuración al cargarse.
+    if (typeof global.localStorage === "undefined") {
+        const almacen = new Map();
+        global.localStorage = {
+            getItem: k => almacen.has(k) ? almacen.get(k) : null,
+            setItem: (k, v) => almacen.set(k, String(v)),
+            removeItem: k => almacen.delete(k),
+            clear: () => almacen.clear()
+        };
+    }
     const fs = process.getBuiltinModule("fs");
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -1060,4 +1070,72 @@ QUnit.test('la bitácora conserva la instantánea aunque se mute el objeto origi
     elem.progreso = 100; // simula la mutación del render CPM
     assert.true(verificarBitacora(), 'la entrada conserva su copia y el hash sigue siendo válido');
     delete global.proyecto;
+});
+
+// ============================================================
+// IA local — adaptador modelo-agnóstico
+// ============================================================
+QUnit.module('IA local');
+
+QUnit.test('normaliza modelos de Ollama y de API compatible con OpenAI', assert => {
+    const ollama = LocalAIService._normalizarModelos({
+        models: [{ name: 'qwen2.5:7b-instruct', size: 4700000000 }, { name: 'llama3.2:3b', size: 2000000000 }]
+    });
+    const openai = LocalAIService._normalizarModelos({ data: [{ id: 'mistral-nemo' }] });
+
+    assert.deepEqual(ollama.map(m => m.id), ['qwen2.5:7b-instruct', 'llama3.2:3b'], 'lee /api/tags');
+    assert.strictEqual(ollama[0].gb, 4.7, 'convierte bytes a GB');
+    assert.deepEqual(openai.map(m => m.id), ['mistral-nemo'], 'lee /v1/models');
+    assert.deepEqual(LocalAIService._normalizarModelos({ otro: [] }), [], 'payload desconocido -> vacío');
+});
+
+QUnit.test('guarda el entorno y el modelo elegido sin secretos', assert => {
+    localStorage.removeItem(LocalAIService.STORAGE_KEY);
+    LocalAIService.limpiarCredencialesLegacy();
+    LocalAIService.configurar({ perfil: 'lan', modelos: { lan: 'qwen2.5:14b-instruct' } });
+
+    assert.strictEqual(LocalAIService.leerConfig().perfil, 'lan', 'persiste el entorno');
+    assert.strictEqual(LocalAIService.modeloActivo('lan'), 'qwen2.5:14b-instruct', 'persiste el modelo');
+    assert.strictEqual(localStorage.getItem('openai_api_key'), null, 'no queda API key legacy');
+
+    LocalAIService.configurar({ modelos: { local: 'llama3.2:3b' } });
+    assert.strictEqual(LocalAIService.modeloActivo('lan'), 'qwen2.5:14b-instruct', 'cambiar un perfil no borra otro');
+});
+
+QUnit.test('ask sin modelo lanza error tipado antes de llamar a la red', async assert => {
+    localStorage.removeItem(LocalAIService.STORAGE_KEY);
+    const fetchOriginal = global.fetch;
+    global.fetch = () => { throw new Error('no debería llamarse'); };
+    let codigo = null;
+    try {
+        await LocalAIService.ask([{ role: 'user', content: 'hola' }]);
+    } catch (e) {
+        codigo = e.codigo;
+    } finally {
+        global.fetch = fetchOriginal;
+    }
+    assert.strictEqual(codigo, 'sin_modelo', 'error tipado sin red');
+});
+
+QUnit.test('ask envía el modelo activo al endpoint del proveedor', async assert => {
+    localStorage.removeItem(LocalAIService.STORAGE_KEY);
+    LocalAIService.configurar({ perfil: 'local', modelos: { local: 'qwen2.5:7b-instruct' } });
+    const fetchOriginal = global.fetch;
+    let peticion = null;
+    global.fetch = async (url, opts) => {
+        peticion = { url, body: JSON.parse(opts.body) };
+        return {
+            ok: true,
+            json: async () => ({ choices: [{ message: { content: ' Respuesta de prueba ' } }] })
+        };
+    };
+    try {
+        const texto = await LocalAIService.ask([{ role: 'user', content: 'hola' }]);
+        assert.strictEqual(texto, 'Respuesta de prueba', 'recorta whitespace');
+        assert.strictEqual(peticion.url, 'http://127.0.0.1:11434/v1/chat/completions', 'endpoint OpenAI-compatible de Ollama');
+        assert.strictEqual(peticion.body.model, 'qwen2.5:7b-instruct', 'usa el modelo configurado, no uno hardcodeado');
+        assert.false(peticion.body.stream, 'respuesta no streaming');
+    } finally {
+        global.fetch = fetchOriginal;
+    }
 });

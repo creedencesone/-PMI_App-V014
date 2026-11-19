@@ -1066,8 +1066,6 @@ function guardarAval() {
         
         // ============================================
         // SISTEMA DE IA PREDICTIVA
+        // La inferencia la gestiona LocalAIService (modelo local/LAN).
         // ============================================
-        
-        let OPENAI_API_KEY = localStorage.getItem('openai_api_key') || '';
-        let USAR_IA_REAL = false;
         
