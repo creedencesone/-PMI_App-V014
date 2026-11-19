@@ -5421,7 +5421,7 @@
     --evm-ev: var(--color-primary, #0A84FF);
     --evm-ac: #FFB020;
     --evm-text: var(--text-primary, #F1F5F9);
-    --evm-muted: var(--text-muted, #94A3B8);
+    --evm-muted: #BAC8DC;
     --evm-radius: 18px;
 }
 [data-theme="light"] #panelSalud {

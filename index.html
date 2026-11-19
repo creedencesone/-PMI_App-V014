@@ -11,14 +11,14 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
-    <link rel="stylesheet" href="/design-system/tokens.css?v=20261121a">
+    <link rel="stylesheet" href="/design-system/tokens.css?v=20261121b">
     <script>(function(){try{var t=localStorage.getItem('pmi_theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
     <title>PMI Mind - Iniciar Sesión</title>
-    <script src="js/vendor/pbkdf2.js?v=20261121a"></script>
-    <script src="auth.js?v=20261121a"></script>
-    <script src="js/services/DataService.js?v=20261121a"></script>
-    <script defer src="js/core/keyboard-a11y.js?v=20261121a"></script>
-    <script defer src="js/core/modal-a11y.js?v=20261121a"></script>
+    <script src="js/vendor/pbkdf2.js?v=20261121b"></script>
+    <script src="auth.js?v=20261121b"></script>
+    <script src="js/services/DataService.js?v=20261121b"></script>
+    <script defer src="js/core/keyboard-a11y.js?v=20261121b"></script>
+    <script defer src="js/core/modal-a11y.js?v=20261121b"></script>
     <style>
         @font-face {
             font-family: 'Inter';
@@ -103,6 +103,28 @@
         [data-theme="light"] .login-tabs { background: rgba(15, 23, 42, 0.06); }
         [data-theme="light"] .login-tab.active { background: #FFFFFF; color: #0F172A; }
         [data-theme="light"] .login-tab { color: #475569; }
+        /* Cobertura completa del tema claro (axe series color-contrast) */
+        [data-theme="light"] .login-error { background: #FEE2E2; border-color: #FCA5A5; color: #991B1B; }
+        [data-theme="light"] .demo-credentials {
+            background: #EFF6FF;
+            border-color: #93C5FD;
+        }
+        [data-theme="light"] .demo-credentials-text { color: #1E3A5F; }
+        [data-theme="light"] .demo-credentials-text strong { color: #0F172A; }
+        [data-theme="light"] .btn-demo {
+            background: #1D4ED8;
+            border-color: #1D4ED8;
+            color: #FFFFFF;
+        }
+        [data-theme="light"] .btn-demo:hover { background: #1E40AF; color: #FFFFFF; }
+        [data-theme="light"] .demo-users { background: #F8FAFC; }
+        [data-theme="light"] .demo-users .user-row { color: #334155; }
+        [data-theme="light"] .badge-admin { background: #FEE2E2; color: #991B1B; }
+        [data-theme="light"] .badge-pm { background: #DBEAFE; color: #1E40AF; }
+        [data-theme="light"] .badge-sponsor { background: #FEF3C7; color: #92400E; }
+        [data-theme="light"] .badge-team { background: #D1FAE5; color: #065F46; }
+        [data-theme="light"] .badge-client { background: #F3E8FF; color: #6B21A8; }
+        [data-theme="light"] .login-footer { color: #475569; }
         .form-group {
             margin-bottom: 20px;
         }

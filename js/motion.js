@@ -361,26 +361,45 @@ document.addEventListener('DOMContentLoaded', () => {
 // elemento sale del viewport (ahorro de batería y menos ruido visual).
 (function gestionarAnimacionesInfinitas() {
   if (typeof document === 'undefined' || !document.getAnimations) return;
-  const infinitas = () => document.getAnimations().filter(a =>
-    a.playState === 'running' && a.effect &&
-    a.effect.getTiming().iterations === Infinity
-  );
+  // Conservamos TODAS las animaciones infinitas (incluso pausadas) en un Set:
+  // filtrar por playState==='running' impedía reanudarlas después de pausarlas.
+  const registradas = new Set();
+  const registrar = () => document.getAnimations().forEach(a => {
+    if (a.effect && a.effect.getTiming().iterations === Infinity) {
+      registradas.add(a);
+    }
+  });
+  registrar();
 
   document.addEventListener('visibilitychange', () => {
-    infinitas().forEach(a => document.hidden ? a.pause() : a.play());
+    registrar();
+    registradas.forEach(a => {
+      if (document.hidden) a.pause();
+      else if (!a._pmiPorViewport) a.play();
+    });
   });
 
   if (typeof IntersectionObserver !== 'undefined') {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        const anims = infinitas().filter(a => a.effect?.target === entry.target);
-        anims.forEach(a => entry.isIntersecting ? a.play() : a.pause());
+        registrar();
+        registradas.forEach(a => {
+          if (a.effect?.target !== entry.target) return;
+          a._pmiPorViewport = !entry.isIntersecting;
+          if (entry.isIntersecting && !document.hidden) a.play();
+          else a.pause();
+        });
       });
     }, { threshold: 0 });
-    // Registrar targets de animaciones infinitas ya presentes
-    setTimeout(() => infinitas().forEach(a => {
-      if (a.effect?.target) observer.observe(a.effect.target);
-    }), 1000);
+    const observarNuevas = () => registrar();
+    document.addEventListener('pmi:animationcreated', observarNuevas);
+    // Registro inicial y sondeo ocasional para animaciones creadas dinámicamente
+    registrar();
+    registradas.forEach(a => { if (a.effect?.target) observer.observe(a.effect.target); });
+    setInterval(() => {
+      registrar();
+      registradas.forEach(a => { if (a.effect?.target) observer.observe(a.effect.target); });
+    }, 2000);
   }
 })();
 
