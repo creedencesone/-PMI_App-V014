@@ -149,6 +149,11 @@ function inicializarEstructuraProyecto(proy) {
     if (!proy.reuniones) proy.reuniones = [];
     if (!proy.riesgos) proy.riesgos = [];
     if (!Array.isArray(proy.requisitos)) proy.requisitos = [];
+    proy.estado = typeof normalizarEstadoProyecto === 'function'
+        ? normalizarEstadoProyecto(proy.estado) : (proy.estado || 'en_curso');
+    if (!Array.isArray(proy.lecciones)) proy.lecciones = [];
+    if (!Array.isArray(proy.cambios)) proy.cambios = [];
+    if (!Array.isArray(proy.lineasBase)) proy.lineasBase = [];
     if (!proy.accionesMitigacion) proy.accionesMitigacion = [];
     if (!proy.elementosGantt) proy.elementosGantt = [];
     sincronizarProcesosConPMBOK(proy);

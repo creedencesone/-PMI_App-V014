@@ -19,7 +19,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -670,6 +670,28 @@ QUnit.test('el coste real aprobado prevalece sobre el registrado en tareas', ass
     assert.strictEqual(d.total, 200);
     assert.strictEqual(d.fuente, 'real');
     assert.strictEqual(d.origen, 'aprobado');
+});
+
+QUnit.test('los estados heredados se normalizan al ciclo de vida del proyecto', assert => {
+    assert.strictEqual(normalizarEstadoProyecto('activo'), 'en_curso');
+    assert.strictEqual(normalizarEstadoProyecto('Finalizado'), 'cerrado');
+    assert.strictEqual(normalizarEstadoProyecto('planificado'), 'planificado');
+    assert.strictEqual(normalizarEstadoProyecto(undefined), 'en_curso');
+});
+
+QUnit.test('el cierre solo se habilita con evidencia verificable', assert => {
+    const base = {
+        procesos: [{ id: 1, completado: true }],
+        elementosGantt: [{ id: 1, tipo: 'entregable', progreso: 100 }],
+        requisitos: [{ id: 'REQ-001', estado: 'aprobado' }],
+        cambios: [{ id: 1, estado: 'Aprobado' }],
+        riesgos: [{ id: 1, estado: 'mitigado' }],
+        lecciones: [{ id: 1, titulo: 'Lección' }]
+    };
+    assert.true(evaluarChecklistCierre(base).every(x => x.ok), 'checklist completo');
+    const incompleto = { ...base, cambios: [{ id: 1, estado: 'Pendiente' }], lecciones: [] };
+    const fallos = evaluarChecklistCierre(incompleto).filter(x => !x.ok).map(x => x.clave);
+    assert.deepEqual(fallos, ['cambios', 'lecciones']);
 });
 
 QUnit.module('ENG-08 · Carga de trabajo');

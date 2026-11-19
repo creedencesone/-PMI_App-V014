@@ -11,17 +11,18 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <!-- Design System Tokens -->
-<link rel="stylesheet" href="design-system/tokens.css?v=20261121h">
+<link rel="stylesheet" href="design-system/tokens.css?v=20261121i">
     <!-- Preload Inter variable font -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
     <title>PMI Mind - Cartera de Proyectos</title>
-    <script src="js/vendor/pbkdf2.js?v=20261121h"></script>
-    <script src="auth.js?v=20261121h"></script>
-    <script src="js/config.js?v=20261121h"></script>
-    <script src="js/services/DataService.js?v=20261121h"></script>
-    <script src="js/core/audit.js?v=20261121h"></script>
-    <script src="js/vendor/feather.min.js?v=20261121h"></script>
-    <script src="js/motion.js?v=20261121h" defer></script>
+    <script src="js/vendor/pbkdf2.js?v=20261121i"></script>
+    <script src="auth.js?v=20261121i"></script>
+    <script src="js/config.js?v=20261121i"></script>
+    <script src="js/services/DataService.js?v=20261121i"></script>
+    <script src="js/core/audit.js?v=20261121i"></script>
+    <script src="js/panels/cierre.js?v=20261121i"></script>
+    <script src="js/vendor/feather.min.js?v=20261121i"></script>
+    <script src="js/motion.js?v=20261121i" defer></script>
     <style>
         /* ============================================
            PMI Mind — Dashboard Styles (v2.0)
@@ -756,6 +757,8 @@
         .status-warning { background: var(--status-atencion-bg); color: var(--status-atencion-text); border-color: var(--status-atencion-border); }
         .status-critical { background: var(--status-critico-bg); color: var(--status-critico-text); border-color: var(--status-critico-border); }
         .status-finalizado { background: var(--status-en-curso-bg); color: var(--status-en-curso-text); border-color: var(--status-en-curso-border); }
+        .status-planificado { background: var(--status-en-curso-bg); color: var(--status-en-curso-text); border-color: var(--status-en-curso-border); }
+        .status-cerrado { background: var(--status-finalizado-bg); color: var(--status-finalizado-text); border-color: var(--status-finalizado-border); }
 
         /* ============================================
            ALERTAS
@@ -2167,7 +2170,7 @@
     ============================================ -->
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/panels/manual.js?v=20261121h"></script>
+    <script src="js/panels/manual.js?v=20261121i"></script>
 
     <!-- ============================================
     SCRIPT COMPLETO
@@ -2781,6 +2784,11 @@
         function getEstadoProyecto(p) {
             if (!p) return { text: '🟢 En curso', class: 'status-en-curso' };
 
+            const estadoCivil = typeof normalizarEstadoProyecto === 'function'
+                ? normalizarEstadoProyecto(p.estado) : 'en_curso';
+            if (estadoCivil === 'cerrado') return { text: '🔒 Cerrado', class: 'status-cerrado' };
+            if (estadoCivil === 'planificado') return { text: '📋 Planificado', class: 'status-planificado' };
+
             let totalProcesos = p.procesos?.length || 49;
             let procesosCompletados = (p.procesos || []).filter(item => item.completado).length;
             let progresoProcesos = procesosCompletados / totalProcesos;
@@ -2986,7 +2994,8 @@
 
             proyectos.forEach(p => {
                 let estado = getEstadoProyecto(p);
-                if (estado.text === ' Finalizado') {
+                const cerrado = typeof normalizarEstadoProyecto === 'function' && normalizarEstadoProyecto(p.estado) === 'cerrado';
+                if (cerrado || estado.text === ' Finalizado') {
                     finalizados++;
                 } else {
                     activos++;
@@ -3049,7 +3058,7 @@
                 return `<div class="project-card card-interactive" data-pais="${escapeHtml(pais)}" onclick="abrirProyecto('${pid}')" data-hover-lift>
                     <div class="project-flag" style="--flag-emoji: '${paisInfo.emoji}'"></div>
                     <div class="project-header"><div><h4>${escapeHtml(p.nombre)}</h4><div class="project-dates"><span> ${t('modal_fecha_inicio')}: ${escapeHtml(String(p.fechaInicio || '-'))}</span><span> ${t('modal_fecha_fin')}: ${escapeHtml(String(p.fechaFinPlan || '-'))}</span></div></div>
-                    <div class="project-actions"><i data-feather="pen-tool" class="nav-feather" onclick="event.stopPropagation(); editarProyecto('${pid}')" title="${t('editar')}" style="cursor:pointer;padding:6px;border-radius:8px;"></i><i data-feather="download-cloud" class="nav-feather" onclick="event.stopPropagation(); duplicarProyecto('${pid}')" title="${t('duplicar')}" style="cursor:pointer;padding:6px;border-radius:8px;"></i><i data-feather="trash" class="nav-feather" onclick="event.stopPropagation(); eliminarProyectoPorId('${pid}')" title="${t('btn_eliminar')}" style="cursor:pointer;padding:6px;border-radius:8px;color:var(--color-danger);"></i></div></div>
+                    <div class="project-actions"><i data-feather="pen-tool" class="nav-feather" onclick="event.stopPropagation(); editarProyecto('${pid}')" title="${t('editar')}" style="cursor:pointer;padding:6px;border-radius:8px;"></i><i data-feather="download-cloud" class="nav-feather" onclick="event.stopPropagation(); duplicarProyecto('${pid}')" title="${t('duplicar')}" style="cursor:pointer;padding:6px;border-radius:8px;"></i><i data-feather="trash" class="nav-feather" onclick="event.stopPropagation(); eliminarProyectoPorId('${pid}')" title="${t('btn_eliminar')}" style="cursor:pointer;padding:6px;border-radius:8px;color:var(--color-danger);"></i><i data-feather="lock" class="nav-feather" onclick="event.stopPropagation(); abrirProyecto('${pid}', 'Cierre')" title="Gestionar cierre" aria-label="Gestionar cierre" style="cursor:pointer;padding:6px;border-radius:8px;"></i></div></div>
                     <div class="project-body"><div class="project-metrics"><div class="metric"><div class="metric-value">${progreso}%</div><div class="metric-label">${t('progreso')}</div></div>
                     <div class="metric"><div class="metric-value">${riesgos}</div><div class="metric-label">${t('riesgos')}</div></div>
                     <div class="metric"><div class="metric-value">${entregablesComp}/${entregablesTot}</div><div class="metric-label">${t('entregables')}</div></div></div>
@@ -3066,7 +3075,7 @@
             if (typeof feather !== 'undefined') { feather.replace(); }
         }
 
-        function abrirProyecto(id) {
+        function abrirProyecto(id, panel) {
             if (typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
                 id = DataService.resolveId(id);
             }
@@ -3088,7 +3097,7 @@
             }
 
             localStorage.setItem('proyectoSeleccionado', String(id));
-            window.location.href = 'proyecto.html';
+            window.location.href = 'proyecto.html' + (panel ? '#panel' + encodeURIComponent(panel) : '');
         }
 
         // ============================================================
@@ -3125,7 +3134,8 @@
             };
 
             let nuevoProyecto = {
-                id: nextId++, nombre: nombre, descripcion: descripcion, monedaBase: monedaBase, monedaVenta: monedaBase,
+                id: nextId++, nombre: nombre, descripcion: descripcion, estado: 'en_curso', lecciones: [], cambios: [], lineasBase: [],
+                monedaBase: monedaBase, monedaVenta: monedaBase,
                 fechaInicio: fechaInicio || null, fechaFinPlan: fechaFinPlan || null, precioVenta: 0, condicionesPago: "",
                 pais: pais,
                 entregables: [], riesgos: [], recursosHumanos: [], materiales: [], actividades: [], hitosFinancieros: [],
@@ -5110,8 +5120,8 @@ function idSeguroHandler(id, indice) {
             }
         });
     </script>
-    <script src="js/core/modal-a11y.js?v=20261121h"></script>
-    <script src="js/core/keyboard-a11y.js?v=20261121h"></script>
+    <script src="js/core/modal-a11y.js?v=20261121i"></script>
+    <script src="js/core/keyboard-a11y.js?v=20261121i"></script>
     </main>
 </body>
 </html>

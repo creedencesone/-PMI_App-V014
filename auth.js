@@ -142,6 +142,7 @@ class AuthSystem {
         riesgos: { nombre: ' Gestión de Riesgos', icono: '' },
         stakeholders: { nombre: ' Stakeholders', icono: '' },
         procesos: { nombre: ' Procesos', icono: '' },
+        cierre: { nombre: ' Cierre del Proyecto', icono: '' },
         recursos: { nombre: ' Recursos', icono: '' },
         comunicaciones: { nombre: ' Comunicaciones', icono: '' },
         beneficios: { nombre: ' Beneficios', icono: '' },

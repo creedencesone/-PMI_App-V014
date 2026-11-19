@@ -35,6 +35,7 @@
             if(pid === 'salud') { actualizarPanelSalud(); }
             if(pid === 'beneficios') renderizarBeneficios();
             if(pid === 'cambios') renderizarCambios();
+            if(pid === 'cierre' && typeof inicializarCierre === 'function') inicializarCierre();
             if(pid === 'lecciones') renderizarLecciones();
             if(pid === 'informe') { actualizarInformeCompleto(); }
             if(pid === 'metricasagiles') actualizarBurnDown();
@@ -224,6 +225,11 @@
             id: parseInt(id) || Date.now(),
             nombre: "Nuevo Proyecto",
             descripcion: "",
+            estado: "en_curso",
+            lecciones: [],
+            cambios: [],
+            lineasBase: [],
+            bitacora: [],
             monedaBase: "EUR",
             monedaVenta: "EUR",
             precioVenta: 0,
