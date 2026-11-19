@@ -282,6 +282,21 @@
   --text-primary: #E0E0E0;
   --text-secondary: #B0B0B0;
 
+  /* Colores de texto por rol (WCAG AA sobre fondo oscuro >=4.5:1) */
+  --role-admin-text: #FFD48A;
+  --role-pm-text: #7CB0FF;
+  --role-team-text: #5FD6A0;
+  --role-viewer-text: #C7C9CF;
+
+  /* Chips semánticos EVM: colors de texto legibles sobre fondos alpha */
+  --chip-success-text: #6EE7A8;
+  --chip-warning-text: #FCD34D;
+  --chip-neutral-text: #CBD5E1;
+  --chip-danger-text: #FCA5A5;
+
+  /* Labels de estadística sobre tarjetas oscuras */
+  --stat-label: #AAB4C4;
+
   /* Defaults de tokens referenciados sin definición (evita caídas
      a "unset" cuando el JS todavía no ha pintado el componente). */
   --card-bg: #2D2D2D;
@@ -430,6 +445,20 @@
   --text-muted: #6B7280;
   --text-primary: #1F2937;
   --text-secondary: #4B5563;
+
+  /* Colores de texto por rol (WCAG AA sobre fondo claro >=4.5:1) */
+  --role-admin-text: #92400E;
+  --role-pm-text: #175CD3;
+  --role-team-text: #047857;
+  --role-viewer-text: #475569;
+
+  /* Chips semánticos EVM sobre fondos alpha claros */
+  --chip-success-text: #047857;
+  --chip-warning-text: #92400E;
+  --chip-neutral-text: #475569;
+  --chip-danger-text: #B42318;
+
+  --stat-label: #52627A;
 
   --card-bg: #FFFFFF;
   --card-bg-hover: #F8F9FA;

@@ -490,6 +490,22 @@ class AuthSystem {
         return this.ROLES[role] || null;
     }
 
+    /**
+     * Color de TEXTO del rol, adaptado al tema activo (WCAG AA en claro y oscuro).
+     * El color `ROLES[role].color` se conserva para fondos/acentos decorativos,
+     * pero nunca debe usarse como color de texto: #FFD700, por ejemplo, tiene
+     * 1.40:1 sobre blanco.
+     */
+    static getRoleTextColor(role) {
+        const mapa = {
+            admin: 'var(--role-admin-text, #92400E)',
+            project_manager: 'var(--role-pm-text, #175CD3)',
+            team_member: 'var(--role-team-text, #047857)',
+            viewer: 'var(--role-viewer-text, #475569)'
+        };
+        return mapa[role] || 'var(--text-secondary, #4B5563)';
+    }
+
     /** Perfil validado por el proveedor de identidad (RLS), nunca por el JSON local. */
     static perfilRemotoVerificado() {
         try {

@@ -368,6 +368,8 @@ function actualizarPanelSalud() {
         else corto = Math.round(valor).toLocaleString('es-ES') + ' ' + simboloMoneda;
         el.textContent = corto;
         el.title = formatearMoneda(valor, monedaProyecto);
+        // aria-label solo es válido en elementos con rol que lo acepte.
+        el.setAttribute('role', 'img');
         el.setAttribute('aria-label', formatearMoneda(valor, monedaProyecto));
     };
     escribirMonedaCorta('evmBAC', BAC);

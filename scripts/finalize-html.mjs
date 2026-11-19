@@ -12,7 +12,7 @@ import path from 'node:path';
  * (tokens + bundle), en lugar de 4.
  */
 const ROOT = process.cwd();
-const VERSION = '20261120i';
+const VERSION = '20261121a';
 const LINKS = `<link rel="stylesheet" href="/design-system/tokens.css?v=${VERSION}">`;
 
 for (const nombre of ['dashboard.html', 'proyecto.html']) {

@@ -387,7 +387,7 @@ function actualizarUIProyecto(usuario) {
     if (rol) {
         var roleInfo = AuthSystem.getRoleInfo(usuario.role);
         rol.textContent = roleInfo?.nombre || usuario.role;
-        rol.style.color = roleInfo?.color || '#888';
+        rol.style.color = AuthSystem.getRoleTextColor(usuario.role);
     }
 
     // Mostrar controles de compartir (todos los usuarios autenticados)
@@ -600,7 +600,10 @@ function setActiveProceso(fase, opts) {
     const procedeNavegar = !opts || opts.navegar !== false;
     const panelDestino = procedeNavegar ? FASE_PANEL_INICIAL[fase] : null;
     if (panelDestino && typeof mostrarPanel === 'function') {
-        mostrarPanel(panelDestino);
+        // No escribir el hash en la carga inicial: si se escribe #panelSalud,
+        // el navegador hace scroll nativo al panel y deja el H1 fuera de pantalla.
+        // El hash solo se actualiza cuando el usuario navega explícitamente.
+        mostrarPanel(panelDestino, { url: false });
     }
 }
 window.setActiveProceso = setActiveProceso;

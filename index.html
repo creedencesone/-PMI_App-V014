@@ -11,12 +11,14 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
+    <link rel="stylesheet" href="/design-system/tokens.css?v=20261121a">
+    <script>(function(){try{var t=localStorage.getItem('pmi_theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
     <title>PMI Mind - Iniciar Sesión</title>
-    <script src="js/vendor/pbkdf2.js?v=20261120e"></script>
-    <script src="auth.js?v=20261120e"></script>
-    <script src="js/services/DataService.js?v=20261117a"></script>
-    <script defer src="js/core/keyboard-a11y.js?v=20261120e"></script>
-    <script defer src="js/core/modal-a11y.js?v=20261120e"></script>
+    <script src="js/vendor/pbkdf2.js?v=20261121a"></script>
+    <script src="auth.js?v=20261121a"></script>
+    <script src="js/services/DataService.js?v=20261121a"></script>
+    <script defer src="js/core/keyboard-a11y.js?v=20261121a"></script>
+    <script defer src="js/core/modal-a11y.js?v=20261121a"></script>
     <style>
         @font-face {
             font-family: 'Inter';
@@ -80,6 +82,27 @@
             font-size: 13px;
             margin-top: 6px;
         }
+        /* Tema claro del login: respeta la preferencia global de la app */
+        [data-theme="light"] body { background: #F1F5F9; color: #0F172A; }
+        [data-theme="light"] .login-container {
+            background: rgba(255, 255, 255, 0.96);
+            border-color: #CBD5E1;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+        }
+        [data-theme="light"] .login-logo h1 { color: #0F172A; }
+        [data-theme="light"] .login-logo p,
+        [data-theme="light"] .form-group label,
+        [data-theme="light"] .demo-users p { color: #475569; }
+        [data-theme="light"] .form-group input {
+            background: #FFFFFF;
+            border-color: #CBD5E1;
+            color: #0F172A;
+        }
+        [data-theme="light"] .form-group input::placeholder { color: #64748B; }
+        [data-theme="light"] .demo-users .user-row { color: #334155; }
+        [data-theme="light"] .login-tabs { background: rgba(15, 23, 42, 0.06); }
+        [data-theme="light"] .login-tab.active { background: #FFFFFF; color: #0F172A; }
+        [data-theme="light"] .login-tab { color: #475569; }
         .form-group {
             margin-bottom: 20px;
         }

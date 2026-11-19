@@ -5408,10 +5408,11 @@
    Lenguaje visual alineado con dashboard y cronograma.
    ============================================================ */
 #panelSalud {
-    --evm-ok: #00A859;
-    --evm-warn: #E8890C;
-    --evm-bad: #FF6B6B;
-    --evm-neutral: #8B97A8;
+    /* Tonos de texto legibles sobre fondos alpha oscuros (WCAG AA >=4.5:1) */
+    --evm-ok: var(--chip-success-text, #6EE7A8);
+    --evm-warn: var(--chip-warning-text, #FCD34D);
+    --evm-bad: var(--chip-danger-text, #FCA5A5);
+    --evm-neutral: var(--chip-neutral-text, #CBD5E1);
     --evm-surface: rgba(148,163,184,.055);
     --evm-surface-strong: rgba(148,163,184,.09);
     --evm-line: rgba(148,163,184,.14);
@@ -5436,7 +5437,7 @@
     --evm-ev: #2563EB;
     --evm-ac: #B45309;
     --evm-text: #0F172A;
-    --evm-muted: #64748B;
+    --evm-muted: #475569;
 }
 
 #panelSalud [data-tone="ok"]    { --tone: var(--evm-ok);   --tone-soft: rgba(0,168,89,.12); }

@@ -95,12 +95,13 @@ const Motion = (() => {
       { opacity: 0, transform: 'scale(0.95)' }
     ], { duration: 200, easing: defaultEasing, ...opts }),
 
-    // Stagger entrance for lists
+    // Stagger entrance for lists (máximo 8 elementos para evitar sobrecarga)
     staggerIn: (elements, opts = {}) => {
       const delay = opts.staggerDelay ?? 80;
       const startDelay = opts.startDelay ?? 0;
+      const max = opts.max ?? 8;
       return Promise.all(
-        Array.from(elements).map((el, i) =>
+        Array.from(elements).slice(0, max).map((el, i) =>
           presets.slideUp(el, {
             delay: startDelay + i * delay,
             duration: opts.duration ?? 400,
@@ -355,6 +356,33 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('touchend', () => Motion.tapScaleReset(el), { passive: true });
   });
 });
+
+// Pausar animaciones infinitas cuando la pestaña no está visible o el
+// elemento sale del viewport (ahorro de batería y menos ruido visual).
+(function gestionarAnimacionesInfinitas() {
+  if (typeof document === 'undefined' || !document.getAnimations) return;
+  const infinitas = () => document.getAnimations().filter(a =>
+    a.playState === 'running' && a.effect &&
+    a.effect.getTiming().iterations === Infinity
+  );
+
+  document.addEventListener('visibilitychange', () => {
+    infinitas().forEach(a => document.hidden ? a.pause() : a.play());
+  });
+
+  if (typeof IntersectionObserver !== 'undefined') {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const anims = infinitas().filter(a => a.effect?.target === entry.target);
+        anims.forEach(a => entry.isIntersecting ? a.play() : a.pause());
+      });
+    }, { threshold: 0 });
+    // Registrar targets de animaciones infinitas ya presentes
+    setTimeout(() => infinitas().forEach(a => {
+      if (a.effect?.target) observer.observe(a.effect.target);
+    }), 1000);
+  }
+})();
 
 // Export for ES modules
 if (typeof module !== 'undefined' && module.exports) {
