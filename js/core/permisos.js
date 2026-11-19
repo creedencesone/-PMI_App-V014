@@ -10,7 +10,7 @@
 const PANEL_A_MODULO = Object.freeze({
     proyecto: 'acta', acta: 'acta', roles: 'acta',
     dashboard: 'dashboard',
-    salud: 'salud', calidad: 'calidad',
+    salud: 'salud', calidad: 'calidad', agentes: 'agentes',
     financiero: 'finanzas', finanzas: 'finanzas', monedas: 'finanzas',
     venta: 'finanzas', resumengastos: 'finanzas', seguros: 'finanzas', cashflow: 'finanzas',
     cronograma: 'cronograma', ejecucioncronograma: 'cronograma',

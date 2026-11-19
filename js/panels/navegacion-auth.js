@@ -34,6 +34,7 @@
             if(pid === 'garantia') { renderizarGarantia(); }
             if(pid === 'salud') { actualizarPanelSalud(); }
             if(pid === 'calidad' && typeof inicializarCalidadPanel === 'function') inicializarCalidadPanel();
+            if(pid === 'agentes' && typeof inicializarPanelAgentes === 'function') inicializarPanelAgentes();
             if(pid === 'beneficios') renderizarBeneficios();
             if(pid === 'cambios') renderizarCambios();
             if(pid === 'cierre' && typeof inicializarCierre === 'function') inicializarCierre();
@@ -545,9 +546,12 @@ function initNavegacion() {
     function abrirPanelDesdeHash() {
         const coincidencia = /^#panel(.+)$/.exec(window.location.hash || '');
         if (!coincidencia) return;
-        const id = coincidencia[1];
-        if (document.getElementById('panel' + id) && typeof mostrarPanel === 'function') {
-            mostrarPanel(id, { foco: true, url: false, replaceUrl: true });
+        const desdeHash = coincidencia[1];
+        const paneles = [...document.querySelectorAll('.panel[id^="panel"]')];
+        const destino = paneles.find(p => p.id === 'panel' + desdeHash) ||
+            paneles.find(p => p.id.toLowerCase() === ('panel' + desdeHash).toLowerCase());
+        if (destino && typeof mostrarPanel === 'function') {
+            mostrarPanel(destino.id.slice(5), { foco: true, url: false, replaceUrl: true });
         }
     }
     window.addEventListener('hashchange', abrirPanelDesdeHash);

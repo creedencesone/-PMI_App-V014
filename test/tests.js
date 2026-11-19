@@ -19,7 +19,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "core/permisos.js", "core/portafolio.js", "core/calidad.js", "core/alertas.js", "core/nivelacion.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "core/agentes.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "core/permisos.js", "core/portafolio.js", "core/calidad.js", "core/alertas.js", "core/nivelacion.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -1345,4 +1345,97 @@ QUnit.test('el resumen distingue aprobados, sin cubrir y Must pendientes', asser
     ];
     assert.deepEqual(resumenRequisitos(lista, elementos), { total: 3, aprobados: 2, sinCubrir: 2, criticosPendientes: 1 });
     assert.deepEqual(resumenRequisitos([], elementos), { total: 0, aprobados: 0, sinCubrir: 0, criticosPendientes: 0 });
+});
+
+QUnit.module('Equipo de agentes');
+
+function proyectoAgenteFixture() {
+    return {
+        nombre: '<script>Proyecto & QA</script>',
+        estado: 'en_curso', monedaBase: 'EUR', precioVenta: 1000,
+        elementosGantt: [
+            { id: 1, tipo: 'actividad', progreso: 40 },
+            { id: 2, tipo: 'actividad', progreso: 60 },
+            { id: 3, tipo: 'entregable', progreso: 100 }
+        ],
+        riesgos: [{ nombre: 'R', nivel: 'critico', estado: 'activo' }],
+        equipo: [{}, {}], stakeholders: [], cambios: [],
+        calidad: { noConformidades: [{ estado: 'abierta' }] },
+        alertas: [{ estado: 'abierta' }], fechaFinPlan: '2026-12-31'
+    };
+}
+
+QUnit.test('el registro tiene cinco especialistas con ids únicos', assert => {
+    const ids = AGENTES_PMI.map(a => a.id);
+    assert.strictEqual(ids.length, 5);
+    assert.strictEqual(new Set(ids).size, 5);
+    assert.true(AGENTES_PMI.every(a => a.nombre && a.rol && a.system && typeof a.heuristica === 'function'));
+});
+
+QUnit.test('el contexto es una instantánea plana, saneada e inmutable', assert => {
+    const proyecto = proyectoAgenteFixture();
+    const antes = JSON.stringify(proyecto);
+    const ctx = construirContextoAgente(proyecto, { spi: 0.8, cpi: 1.1, costeTotal: 900, ingresoTotal: 1000, beneficio: 100, roi: 11 });
+    assert.strictEqual(JSON.stringify(proyecto), antes, 'el proyecto no se muta');
+    assert.false(ctx.nombre.includes('<'), 'el nombre se sanea');
+    assert.strictEqual(ctx.avance, 50);
+    assert.strictEqual(ctx.entregables, 1);
+    assert.strictEqual(ctx.riesgosCriticos, 1);
+    assert.strictEqual(ctx.spi, 0.8);
+    assert.true(Object.isFrozen(ctx));
+});
+
+QUnit.test('la respuesta del modelo se normaliza y sanea antes de la UI', assert => {
+    const bueno = normalizarRespuestaAgente('```json\n{"resumen":"Todo correcto","senales":[{"nivel":"alta","texto":"Revisar costes"}],"acciones":["Conciliar"]}\n```');
+    assert.deepEqual(bueno, { resumen: 'Todo correcto', senales: [{ nivel: 'alta', texto: 'Revisar costes' }], acciones: ['Conciliar'] });
+    assert.strictEqual(normalizarRespuestaAgente('texto sin json'), null);
+    assert.strictEqual(normalizarRespuestaAgente('{"senales":[]}'), null, 'sin resumen no es válido');
+    const sucio = normalizarRespuestaAgente('{"resumen":"<img src=x>hola","senales":[{"nivel":"xx","texto":"<b>t</b>"}],"acciones":[]}');
+    assert.false(sucio.resumen.includes('<img'));
+    assert.strictEqual(sucio.senales[0].nivel, 'media', 'nivel desconocido degrada a media');
+    assert.false(sucio.senales[0].texto.includes('<b>'));
+});
+
+QUnit.test('sin modelo, los cinco agentes responden con la heurística', async assert => {
+    const original = LocalAIService.ask;
+    LocalAIService.ask = async () => { throw new Error('sin modelo'); };
+    try {
+        const resultado = await ejecutarEquipoAgentes(proyectoAgenteFixture(), {});
+        assert.strictEqual(resultado.resultados.length, 5);
+        assert.true(resultado.resultados.every(r => r.modo === 'heuristico' && r.modelo === ''));
+        assert.strictEqual(resultado.metadata.modo, 'heuristico');
+        assert.true(resultado.resultados.every(r => r.resumen && Array.isArray(r.senales) && Array.isArray(r.acciones)));
+    } finally {
+        LocalAIService.ask = original;
+    }
+});
+
+QUnit.test('con modelo, el resultado conserva la procedencia IA', async assert => {
+    const original = LocalAIService.ask;
+    LocalAIService.configurar({ perfil: 'local', modelos: { local: 'modelo-qa' } });
+    LocalAIService.ask = async () => JSON.stringify({ resumen: 'Todo correcto', senales: [{ nivel: 'baja', texto: 'OK' }], acciones: ['Seguir'] });
+    try {
+        const resultado = await ejecutarEquipoAgentes(proyectoAgenteFixture(), { agentes: ['planificador'] });
+        assert.strictEqual(resultado.resultados.length, 1);
+        assert.strictEqual(resultado.resultados[0].modo, 'ia');
+        assert.strictEqual(resultado.resultados[0].modelo, 'modelo-qa');
+        assert.strictEqual(resultado.metadata.modo, 'mixto');
+    } finally {
+        LocalAIService.ask = original;
+    }
+});
+
+QUnit.test('un agente desconocido se ignora y una respuesta inválida cae al fallback', async assert => {
+    const original = LocalAIService.ask;
+    LocalAIService.ask = async () => 'respuesta sin json';
+    try {
+        const resultado = await ejecutarEquipoAgentes(proyectoAgenteFixture(), { agentes: ['no-existe', 'riesgos'] });
+        assert.strictEqual(resultado.resultados.length, 1);
+        assert.strictEqual(resultado.resultados[0].agente, 'riesgos');
+        assert.strictEqual(resultado.resultados[0].error, 'respuesta_invalida');
+        assert.strictEqual(resultado.resultados[0].modo, 'heuristico');
+        assert.strictEqual(resultado.metadata.agentes, 1);
+    } finally {
+        LocalAIService.ask = original;
+    }
 });

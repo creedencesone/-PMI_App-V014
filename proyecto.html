@@ -13,19 +13,19 @@
     <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
     <title>PMI Mind - Gestión de Proyecto</title>
     <!-- Librerías vendorizadas localmente: no dependen de CDN -->
-    <script src="js/vendor/chart.umd.min.js?v=20261121j"></script>
-    <script src="js/vendor/chart-fallback.js?v=20261121j"></script>
-    <script defer src="js/vendor/html2canvas.min.js?v=20261121j"></script>
+    <script src="js/vendor/chart.umd.min.js?v=20261121k"></script>
+    <script src="js/vendor/chart-fallback.js?v=20261121k"></script>
+    <script defer src="js/vendor/html2canvas.min.js?v=20261121k"></script>
 
     <!-- Three.js + controles -->
-    <script defer src="js/vendor/three/three.min.js?v=20261121j"></script>
-    <script defer src="js/vendor/three/OrbitControls.js?v=20261121j"></script>
-    <script defer src="js/vendor/three/DragControls.js?v=20261121j"></script>
+    <script defer src="js/vendor/three/three.min.js?v=20261121k"></script>
+    <script defer src="js/vendor/three/OrbitControls.js?v=20261121k"></script>
+    <script defer src="js/vendor/three/DragControls.js?v=20261121k"></script>
 
     <!-- PDF.js y EmailJS -->
-    <script defer src="js/vendor/pdfjs/pdf.min.js?v=20261121j"></script>
-    <script defer src="js/vendor/email.min.js?v=20261121j"></script>
-    <script src="js/vendor/feather.min.js?v=20261121j"></script>
+    <script defer src="js/vendor/pdfjs/pdf.min.js?v=20261121k"></script>
+    <script defer src="js/vendor/email.min.js?v=20261121k"></script>
+    <script src="js/vendor/feather.min.js?v=20261121k"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof pdfjsLib !== 'undefined') {
@@ -33,8 +33,8 @@
             }
         });
     </script>
-<link rel="stylesheet" href="design-system/tokens.css?v=20261121j">
-<link rel="stylesheet" href="styles.css?v=20261121j">
+<link rel="stylesheet" href="design-system/tokens.css?v=20261121k">
+<link rel="stylesheet" href="styles.css?v=20261121k">
 <style>
   .skip-link { position:fixed; top:-60px; left:12px; z-index:10000; padding:10px 16px; background:#1D4ED8; color:#fff; border-radius:8px; font-weight:700; box-shadow:0 4px 18px rgba(0,0,0,.3); transition:top .15s ease; }
   .skip-link:focus { top:12px; outline:3px solid #007AFF; }
@@ -51,9 +51,9 @@
   @keyframes pmiReveal { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
   @media (prefers-reduced-motion:reduce){ .scroll-reveal.revealed{animation:none} }
 </style>
-<script src="js/vendor/pbkdf2.js?v=20261121j"></script>
-<script src="auth.js?v=20261121j"></script>
-<script defer src="js/motion.js?v=20261121j"></script>
+<script src="js/vendor/pbkdf2.js?v=20261121k"></script>
+<script src="auth.js?v=20261121k"></script>
+<script defer src="js/motion.js?v=20261121k"></script>
 </head>
 <body>
     <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
@@ -180,6 +180,7 @@
                 <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header" data-panel="salud"><span class="nav-icon"><i data-feather="thumbs-up" class="nav-feather"></i></span><span class="nav-title">Salud del Proyecto</span></div></div>
             <div class="nav-section"><div class="nav-header" data-panel="calidad"><span class="nav-icon"><i data-feather="shield" class="nav-feather"></i></span><span class="nav-title">Gestión de la Calidad</span></div></div>
+            <div class="nav-section"><div class="nav-header" data-panel="Agentes"><span class="nav-icon"><i data-feather="users" class="nav-feather"></i></span><span class="nav-title">Equipo de Agentes</span></div></div>
             <div class="nav-section">
                 <div class="nav-header" data-panel="beneficios">
                     <span class="nav-icon"><i data-feather="zap-off" class="nav-feather"></i></span>
@@ -545,6 +546,21 @@
                         <thead><tr><th scope="col">Código</th><th scope="col">Acción</th><th scope="col">Estado</th><th scope="col">Evidencia</th></tr></thead>
                         <tbody id="calidadAccionesBody"></tbody>
                     </table>
+                </div>
+            </section>
+
+            <section id="panelAgentes" class="panel hidden" aria-labelledby="agentesTitulo">
+                <div class="panel-title">
+                    <h2 id="agentesTitulo"><i data-feather="users" class="nav-feather"></i> Equipo de Agentes PMI</h2>
+                    <div class="panel-title-actions">
+                        <button type="button" class="btn btn-primary btn-small" id="btnEjecutarEquipoAgentes" onclick="ejecutarEquipoAgentesDesdeUI()">Ejecutar equipo</button>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="copiarInformeEquipoAgentes()" aria-label="Copiar informe del equipo">Copiar informe</button>
+                    </div>
+                </div>
+                <p id="agentesResumen" class="u-text-muted" role="status" aria-live="polite">Ejecuta el equipo para obtener un diagnóstico por especialidad.</p>
+                <p class="u-text-muted">Cinco especialistas analizan el mismo contexto del proyecto. Si hay un modelo local o LAN configurado se usa; si no, cada agente aplica el análisis integrado. La salida del modelo nunca se inserta como HTML.</p>
+                <div id="agentesResultados" aria-live="polite">
+                    <p id="agentesVacio" class="u-text-muted">Aún no hay resultados. El análisis se muestra aquí cuando termines la ejecución.</p>
                 </div>
             </section>
 
@@ -2794,60 +2810,62 @@
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Módulos base -->
-    <script src="js/config-global.js?v=20261121j"></script>
-    <script src="js/i18n.js?v=20261121j"></script>
-    <script src="js/utils.js?v=20261121j"></script>
-    <script src="js/core/collections.js?v=20261121j"></script>
-    <script src="js/services/DataService.js?v=20261121j"></script>
+    <script src="js/config-global.js?v=20261121k"></script>
+    <script src="js/i18n.js?v=20261121k"></script>
+    <script src="js/utils.js?v=20261121k"></script>
+    <script src="js/core/collections.js?v=20261121k"></script>
+    <script src="js/services/DataService.js?v=20261121k"></script>
 
     <!-- Core modules (ES6, compatibles con scripts legacy via window.*) -->
-    <script src="js/core/dates.js?v=20261121j"></script>
-    <script src="js/core/csv.js?v=20261121j"></script>
-    <script src="js/core/whatif.js?v=20261121j"></script>
-    <script src="js/core/evm.js?v=20261121j"></script>
-    <script src="js/core/finance.js?v=20261121j"></script>
-    <script src="js/core/ui.js?v=20261121j"></script>
-    <script src="js/core/wbs.js?v=20261121j"></script>
-    <script src="js/core/audit.js?v=20261121j"></script>
-    <script src="js/core/linea-base.js?v=20261121j"></script>
-    <script src="js/core/raci.js?v=20261121j"></script>
+    <script src="js/core/dates.js?v=20261121k"></script>
+    <script src="js/core/csv.js?v=20261121k"></script>
+    <script src="js/core/whatif.js?v=20261121k"></script>
+    <script src="js/core/evm.js?v=20261121k"></script>
+    <script src="js/core/finance.js?v=20261121k"></script>
+    <script src="js/core/ui.js?v=20261121k"></script>
+    <script src="js/core/wbs.js?v=20261121k"></script>
+    <script src="js/core/audit.js?v=20261121k"></script>
+    <script src="js/core/linea-base.js?v=20261121k"></script>
+    <script src="js/core/raci.js?v=20261121k"></script>
 
     <!-- Paneles de la aplicación -->
-    <script src="js/panels/acta-roles.js?v=20261121j"></script>
-    <script src="js/panels/equipo-servicios.js?v=20261121j"></script>
-    <script src="js/panels/comunicaciones.js?v=20261121j"></script>
-    <script src="js/panels/gantt.js?v=20261121j"></script>
-    <script src="js/panels/carga-trabajo.js?v=20261121j"></script>
-    <script src="js/panels/edt-panel.js?v=20261121j"></script>
-    <script src="js/panels/materiales.js?v=20261121j"></script>
-    <script src="js/panels/financiero-monedas.js?v=20261121j"></script>
-    <script src="js/panels/grafico-monedas.js?v=20261121j"></script>
-    <script src="js/panels/venta-cashflow.js?v=20261121j"></script>
-    <script src="js/panels/stakeholders.js?v=20261121j"></script>
-    <script src="js/panels/organigrama.js?v=20261121j"></script>
-    <script src="js/panels/requisitos.js?v=20261121j"></script>
-    <script src="js/panels/cierre.js?v=20261121j"></script>
-    <script src="js/core/permisos.js?v=20261121j"></script>
-    <script src="js/core/calidad.js?v=20261121j"></script>
-    <script src="js/panels/panel-calidad.js?v=20261121j"></script>
-    <script src="js/core/alertas.js?v=20261121j"></script>
-    <script src="js/core/nivelacion.js?v=20261121j"></script>
-    <script src="js/panels/resumen-procesos.js?v=20261121j"></script>
-    <script src="js/panels/riesgos.js?v=20261121j"></script>
-    <script src="js/panels/garantia-viajes-avales.js?v=20261121j"></script>
-    <script src="js/panels/import-export.js?v=20261121j"></script>
-    <script src="js/services/LocalAIService.js?v=20261121j"></script>
-    <script src="js/panels/ia-analisis.js?v=20261121j"></script>
-    <script src="js/panels/panel-salud.js?v=20261121j"></script>
-    <script src="js/panels/panel-informe.js?v=20261121j"></script>
-    <script src="js/panels/compartir.js?v=20261121j"></script>
-    <script src="js/panels/beneficios-cambios-lecciones.js?v=20261121j"></script>
-    <script src="js/panels/scrum.js?v=20261121j"></script>
-    <script src="js/panels/logistica-3d.js?v=20261121j"></script>
-    <script src="js/panels/agenda.js?v=20261121j"></script>
-    <script src="js/panels/navegacion-auth.js?v=20261121j"></script>
-    <script src="js/panels/montecarlo.js?v=20261121j"></script>
-    <script src="js/panels/manual.js?v=20261121j"></script>
+    <script src="js/panels/acta-roles.js?v=20261121k"></script>
+    <script src="js/panels/equipo-servicios.js?v=20261121k"></script>
+    <script src="js/panels/comunicaciones.js?v=20261121k"></script>
+    <script src="js/panels/gantt.js?v=20261121k"></script>
+    <script src="js/panels/carga-trabajo.js?v=20261121k"></script>
+    <script src="js/panels/edt-panel.js?v=20261121k"></script>
+    <script src="js/panels/materiales.js?v=20261121k"></script>
+    <script src="js/panels/financiero-monedas.js?v=20261121k"></script>
+    <script src="js/panels/grafico-monedas.js?v=20261121k"></script>
+    <script src="js/panels/venta-cashflow.js?v=20261121k"></script>
+    <script src="js/panels/stakeholders.js?v=20261121k"></script>
+    <script src="js/panels/organigrama.js?v=20261121k"></script>
+    <script src="js/panels/requisitos.js?v=20261121k"></script>
+    <script src="js/panels/cierre.js?v=20261121k"></script>
+    <script src="js/core/permisos.js?v=20261121k"></script>
+    <script src="js/core/calidad.js?v=20261121k"></script>
+    <script src="js/panels/panel-calidad.js?v=20261121k"></script>
+    <script src="js/core/alertas.js?v=20261121k"></script>
+    <script src="js/core/nivelacion.js?v=20261121k"></script>
+    <script src="js/core/agentes.js?v=20261121k"></script>
+    <script src="js/panels/resumen-procesos.js?v=20261121k"></script>
+    <script src="js/panels/riesgos.js?v=20261121k"></script>
+    <script src="js/panels/garantia-viajes-avales.js?v=20261121k"></script>
+    <script src="js/panels/import-export.js?v=20261121k"></script>
+    <script src="js/services/LocalAIService.js?v=20261121k"></script>
+    <script src="js/panels/ia-analisis.js?v=20261121k"></script>
+    <script src="js/panels/panel-agentes.js?v=20261121k"></script>
+    <script src="js/panels/panel-salud.js?v=20261121k"></script>
+    <script src="js/panels/panel-informe.js?v=20261121k"></script>
+    <script src="js/panels/compartir.js?v=20261121k"></script>
+    <script src="js/panels/beneficios-cambios-lecciones.js?v=20261121k"></script>
+    <script src="js/panels/scrum.js?v=20261121k"></script>
+    <script src="js/panels/logistica-3d.js?v=20261121k"></script>
+    <script src="js/panels/agenda.js?v=20261121k"></script>
+    <script src="js/panels/navegacion-auth.js?v=20261121k"></script>
+    <script src="js/panels/montecarlo.js?v=20261121k"></script>
+    <script src="js/panels/manual.js?v=20261121k"></script>
 
 <script>
 // ============================================================
@@ -3089,8 +3107,8 @@ if (_user && _user.nombre) {
 }
 if (typeof feather !== 'undefined') { feather.replace(); }
 </script>
-    <script src="js/core/modal-a11y.js?v=20261121j"></script>
-    <script src="js/core/keyboard-a11y.js?v=20261121j"></script>
+    <script src="js/core/modal-a11y.js?v=20261121k"></script>
+    <script src="js/core/keyboard-a11y.js?v=20261121k"></script>
 </body>
 </html>
 
