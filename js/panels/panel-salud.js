@@ -117,10 +117,14 @@ function actualizarPanelSalud() {
     }
     const fechaCorte = new Date();
     const sprintsParaAC = (esAgile && proyecto.scrum && Array.isArray(proyecto.scrum.sprints)) ? proyecto.scrum.sprints : [];
+    const _realAprobadoSalud = typeof costeRealAprobado === 'function'
+        ? costeRealAprobado(proyecto, (valor, origen) => convertirMoneda(valor, origen, proyecto.monedaBase || 'EUR'))
+        : null;
     let desgloseAC = (typeof calcularDesgloseAC === 'function')
         ? calcularDesgloseAC(costeTotal, proyecto.elementosGantt || [], fechaCorte, proyecto.fechaInicio, {
             fechaCorte: fechaCorte, sprints: sprintsParaAC,
-            convertirMoneda, monedaBase: proyecto.monedaBase || 'EUR'
+            convertirMoneda, monedaBase: proyecto.monedaBase || 'EUR',
+            costeRealAprobado: _realAprobadoSalud ? _realAprobadoSalud.enBase : 0
         })
         : { real: 0, estimado: costeTotal * _pctTiempo, total: costeTotal * _pctTiempo, fuente: 'estimado' };
     let AC = desgloseAC.total;
@@ -373,12 +377,19 @@ function actualizarPanelSalud() {
         el.setAttribute('aria-label', formatearMoneda(valor, monedaProyecto));
     };
     escribirMonedaCorta('evmBAC', BAC);
+    const _presupuestoAprobado = typeof presupuestoBaseAprobado === 'function' ? presupuestoBaseAprobado(proyecto) : null;
+    const elemBAC = document.getElementById('evmBAC');
+    if (elemBAC) elemBAC.title = _presupuestoAprobado
+        ? `Presupuesto base aprobado${_presupuestoAprobado.aprobadoPor ? ` por ${_presupuestoAprobado.aprobadoPor}` : ''}${_presupuestoAprobado.fecha ? ` el ${_presupuestoAprobado.fecha}` : ''}`
+        : 'Presupuesto calculado a partir de estimaciones';
     const nombreAC = document.getElementById('evmACNombre');
     if (nombreAC) nombreAC.textContent = desgloseAC.fuente === 'real' ? 'Gasto real' : 'Coste estimado';
     const fuenteAC = document.getElementById('evmACFuente');
-    if (fuenteAC) fuenteAC.textContent = desgloseAC.fuente === 'real'
-        ? 'Gasto real registrado'
-        : (desgloseAC.fuente === 'estimado' ? 'Estimación temporal (sin coste real)' : 'Sin gasto registrado');
+    if (fuenteAC) fuenteAC.textContent = desgloseAC.origen === 'aprobado'
+        ? 'Coste real aprobado en el acta'
+        : (desgloseAC.fuente === 'real'
+            ? 'Gasto real registrado'
+            : (desgloseAC.fuente === 'estimado' ? 'Estimación temporal (sin coste real)' : 'Sin gasto registrado'));
 
     // Desviación
     let desviacionCronoElem = document.getElementById('desviacionCronograma');

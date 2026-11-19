@@ -630,6 +630,48 @@ QUnit.test('calcularCosteTotal convierte coste de recurso en moneda distinta', a
     delete global.proyecto;
 });
 
+QUnit.module('Fase 1 · Presupuesto base y coste real aprobados');
+
+QUnit.test('el presupuesto y coste real del acta gobiernan BAC y AC del EVM', assert => {
+    global.tiposCambio = { EUR: 1, USD: 2 };
+    const p = {
+        monedaBase: 'EUR', fechaInicio: '2026-01-01',
+        elementosGantt: [{ id: 1, tipo: 'actividad', inicio: '2026-01-01', duracion: 10, costeEstimado: 1000 }],
+        acta: {
+            presupuestoBase: 5000, monedaPresupuesto: 'USD',
+            aprobadoPorPresupuesto: 'Sponsor', fechaAprobacionPresupuesto: '2026-01-02',
+            costeReal: 1500, monedaCosteReal: 'USD', fechaCosteReal: '2026-02-01'
+        }
+    };
+    const m = calcularModeloEVM(p);
+    assert.strictEqual(m.BAC, 2500, 'BAC aprobado se convierte a la moneda base');
+    assert.strictEqual(m.costeTotal, m.BAC, 'salud e informe comparten el mismo BAC');
+    assert.strictEqual(m.origenBAC, 'aprobado');
+    assert.strictEqual(m.AC, 750, 'AC aprobado se convierte a la moneda base');
+    assert.strictEqual(m.origenAC, 'aprobado');
+    delete global.tiposCambio;
+});
+
+QUnit.test('sin valores aprobados el EVM sigue calculando BAC y AC como antes', assert => {
+    const p = {
+        monedaBase: 'EUR', fechaInicio: '2026-01-01',
+        elementosGantt: [{ id: 1, tipo: 'actividad', inicio: '2026-01-01', duracion: 10, costeEstimado: 1000 }],
+        acta: { presupuestoBase: 0, costeReal: 0 }
+    };
+    const m = calcularModeloEVM(p);
+    assert.strictEqual(m.BAC, 1000);
+    assert.strictEqual(m.origenBAC, 'calculado');
+    assert.notStrictEqual(m.origenAC, 'aprobado');
+});
+
+QUnit.test('el coste real aprobado prevalece sobre el registrado en tareas', assert => {
+    const d = calcularDesgloseAC(1000, [{ id: 1, inicio: '2026-01-01', duracion: 1, costeReal: 900, fechaGasto: '2026-01-02' }],
+        new Date('2026-03-01'), '2026-01-01', { costeRealAprobado: 200 });
+    assert.strictEqual(d.total, 200);
+    assert.strictEqual(d.fuente, 'real');
+    assert.strictEqual(d.origen, 'aprobado');
+});
+
 QUnit.module('ENG-08 · Carga de trabajo');
 
 QUnit.test('calcularCargaPorDia distribuye horas en días hábiles', assert => {

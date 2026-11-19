@@ -199,6 +199,8 @@ function renderizarActa() {
             </div>
             <div class="acta-grid">
                 <div class="acta-field"><div class="acta-label">${tApp('acta_presupuesto_valor')}</div><div class="acta-value">${a.presupuesto ? formatearMoneda(a.presupuesto) : '-'}</div></div>
+                <div class="acta-field"><div class="acta-label">Presupuesto base aprobado (BAC)</div><div class="acta-value">${a.presupuestoBase > 0 ? formatearMoneda(a.presupuestoBase, a.monedaPresupuesto || proyecto.monedaBase) : 'Calculado de estimaciones'}</div></div>
+                <div class="acta-field"><div class="acta-label">Coste real aprobado (AC)</div><div class="acta-value">${a.costeReal > 0 ? formatearMoneda(a.costeReal, a.monedaCosteReal || proyecto.monedaBase) : 'De registros operativos'}</div></div>
                 <div class="acta-field"><div class="acta-label">${tApp('acta_contrato')}</div><div class="acta-value"><strong class="u-color-success">${proyecto.precioVenta ? formatearMoneda(proyecto.precioVenta) : 'No definido'}</strong></div></div>
                 <div class="acta-field"><div class="acta-label">${tApp('acta_moneda_venta')}</div><div class="acta-value">${proyecto.monedaVenta || proyecto.monedaBase}</div></div>
                 <div class="acta-field"><div class="acta-label">${tApp('acta_roi')}</div><div class="acta-value">${a.roi ? a.roi + '%' : '-'}</div></div>
@@ -303,6 +305,17 @@ function editarActa() {
         <div class="form-group"><label>${tApp('acta_roi')}</label><input type="number" id="actaROI" value="${a.roi || 0}"></div></div>
 
         <hr class="u-hr">
+        <h4 class="u-fs-13">Control EVM — presupuesto base y coste real aprobados</h4>
+        <div class="form-row"><div class="form-group"><label>Presupuesto base (BAC)</label><input type="number" id="actaPresupuestoBase" min="0" step="0.01" value="${a.presupuestoBase || 0}"><small>0 = calcular BAC a partir de estimaciones.</small></div>
+        <div class="form-group"><label>Moneda del presupuesto</label><select id="actaMonedaPresupuesto">${Object.keys(MONEDAS).map(m => `<option value="${m}" ${(a.monedaPresupuesto || proyecto.monedaBase) === m ? 'selected' : ''}>${m} - ${MONEDAS[m]}</option>`).join('')}</select></div></div>
+        <div class="form-row"><div class="form-group"><label>Aprobado por</label><input type="text" id="actaAprobadoPresupuesto" value="${escapeHtml(a.aprobadoPorPresupuesto || '')}"></div>
+        <div class="form-group"><label>Fecha de aprobación</label><input type="date" id="actaFechaAprobacionPresupuesto" value="${a.fechaAprobacionPresupuesto || ''}"></div></div>
+        <div class="form-row"><div class="form-group"><label>Coste real incurrido (AC)</label><input type="number" id="actaCosteReal" min="0" step="0.01" value="${a.costeReal || 0}"><small>0 = usar costes reales registrados en tareas/sprints.</small></div>
+        <div class="form-group"><label>Moneda del coste real</label><select id="actaMonedaCosteReal">${Object.keys(MONEDAS).map(m => `<option value="${m}" ${(a.monedaCosteReal || proyecto.monedaBase) === m ? 'selected' : ''}>${m} - ${MONEDAS[m]}</option>`).join('')}</select></div></div>
+        <div class="form-row"><div class="form-group"><label>Fecha del coste real</label><input type="date" id="actaFechaCosteReal" value="${a.fechaCosteReal || ''}"></div>
+        <div class="form-group"><label>Registrado por</label><input type="text" id="actaRegistradoCosteRealPor" value="${escapeHtml(a.registradoCosteRealPor || '')}"></div></div>
+
+        <hr class="u-hr">
         <h4 class="u-fs-13"> ${tApp('acta_metodologia_tipo')}</h4>
         <div class="form-group">
             <label>${tApp('acta_metodologia_tipo')}</label>
@@ -365,6 +378,7 @@ function toggleMetodologiaCampos() {
 }
 
         function guardarActa() {
+    const actaAntes = { ...(proyecto.acta || {}) };
     let actaData = {
         nombreProyecto: document.getElementById('actaNombre').value,
         codigo: document.getElementById('actaCodigo').value,
@@ -375,6 +389,14 @@ function toggleMetodologiaCampos() {
         alcance: document.getElementById('actaAlcance').value,
         entregablesClave: document.getElementById('actaEntregables').value,
         presupuesto: parseFloat(document.getElementById('actaPresupuesto').value),
+        presupuestoBase: parseFloat(document.getElementById('actaPresupuestoBase').value) || 0,
+        monedaPresupuesto: document.getElementById('actaMonedaPresupuesto').value,
+        aprobadoPorPresupuesto: document.getElementById('actaAprobadoPresupuesto').value.trim(),
+        fechaAprobacionPresupuesto: document.getElementById('actaFechaAprobacionPresupuesto').value,
+        costeReal: parseFloat(document.getElementById('actaCosteReal').value) || 0,
+        monedaCosteReal: document.getElementById('actaMonedaCosteReal').value,
+        fechaCosteReal: document.getElementById('actaFechaCosteReal').value,
+        registradoCosteRealPor: document.getElementById('actaRegistradoCosteRealPor').value.trim(),
         roi: parseFloat(document.getElementById('actaROI').value),
         aprobadoPor: document.getElementById('actaAprobado').value,
         fechaAprobacion: document.getElementById('actaFechaAprobacion').value,
@@ -423,6 +445,14 @@ function toggleMetodologiaCampos() {
     document.getElementById('monedaVenta2').value = proyecto.monedaVenta;
     document.getElementById('condicionesPago').value = proyecto.condicionesPago;
     document.getElementById('condicionesPago2').value = proyecto.condicionesPago;
+
+    const clavesEVM = ['presupuestoBase', 'monedaPresupuesto', 'aprobadoPorPresupuesto', 'fechaAprobacionPresupuesto',
+        'costeReal', 'monedaCosteReal', 'fechaCosteReal', 'registradoCosteRealPor'];
+    if (typeof registrarBitacora === 'function' && clavesEVM.some(k => actaAntes[k] !== actaData[k])) {
+        registrarBitacora('acta', proyecto.id || 'acta', 'actualizar_control_evm',
+            Object.fromEntries(clavesEVM.map(k => [k, actaAntes[k] ?? null])),
+            Object.fromEntries(clavesEVM.map(k => [k, actaData[k]])));
+    }
 
     guardarProyecto();
     renderizarActa();

@@ -102,18 +102,55 @@ function calcularACReal(elementosGantt, fechaCorte, sprints, convertirFn, moneda
     return total;
 }
 
+/**
+ * Presupuesto base aprobado (BAC). Cero/no definido ⇒ se calcula de estimaciones.
+ * El acta es la única fuente aprobada; el campo del proyecto es compatibilidad legacy.
+ */
+function presupuestoBaseAprobado(proyectoParam, convertirFn) {
+    const p = proyectoParam || {};
+    const acta = p.acta || {};
+    const valor = Number(acta.presupuestoBase ?? p.presupuestoBase) || 0;
+    if (!(valor > 0)) return null;
+    const moneda = acta.monedaPresupuesto || p.monedaPresupuesto || p.monedaBase || 'EUR';
+    const enBase = convertirFn ? convertirFn(valor, moneda) : valor;
+    return {
+        valor, moneda, enBase,
+        aprobadoPor: acta.aprobadoPorPresupuesto || p.aprobadoPorPresupuesto || null,
+        fecha: acta.fechaAprobacionPresupuesto || p.fechaAprobacionPresupuesto || null
+    };
+}
+
+/** Coste real aprobado (AC). Cero/no definido ⇒ AC se calcula de registros operativos. */
+function costeRealAprobado(proyectoParam, convertirFn) {
+    const p = proyectoParam || {};
+    const acta = p.acta || {};
+    const valor = Number(acta.costeReal ?? p.costeReal) || 0;
+    if (!(valor > 0)) return null;
+    const moneda = acta.monedaCosteReal || p.monedaCosteReal || p.monedaBase || 'EUR';
+    const enBase = convertirFn ? convertirFn(valor, moneda) : valor;
+    return {
+        valor, moneda, enBase,
+        fecha: acta.fechaCosteReal || p.fechaCosteReal || null,
+        registradoPor: acta.registradoCosteRealPor || p.registradoCosteRealPor || null
+    };
+}
+
 /** Desglose transparente entre gasto real y estimación temporal. */
 function calcularDesgloseAC(costeTotal, elementosGantt, ahora, fechaInicio, opciones) {
     const opts = opciones || {};
     const fechaCorte = opts.fechaCorte || ahora;
     const base = _monedaBaseCalculo(opts.monedaBase);
     const conversion = opts.convertirMoneda || ((valor, origen) => (typeof aBase === 'function' ? aBase(valor, origen, base) : valor));
+    const aprobado = Number(opts.costeRealAprobado) || 0;
+    if (aprobado > 0) {
+        return { real: aprobado, estimado: 0, total: aprobado, fuente: 'real', origen: 'aprobado' };
+    }
     const real = calcularACReal(elementosGantt, fechaCorte, opts.sprints, conversion, base);
     if (real > 0) {
-        return { real: real, estimado: 0, total: real, fuente: 'real' };
+        return { real: real, estimado: 0, total: real, fuente: 'real', origen: 'operativo' };
     }
     const estimado = calcularACProrrateado(costeTotal, elementosGantt, ahora, fechaInicio);
-    return { real: 0, estimado: estimado, total: estimado, fuente: estimado > 0 ? 'estimado' : 'sin-datos' };
+    return { real: 0, estimado: estimado, total: estimado, fuente: estimado > 0 ? 'estimado' : 'sin-datos', origen: 'estimado' };
 }
 
 /** Prorrateo temporal: estimación burda, nunca se presenta como coste real. */
@@ -197,14 +234,18 @@ function calcularModeloEVM(proyectoParam, opciones) {
             return sum + conversion(bruto, item.moneda || base);
         }, 0)
         : 0;
-    const BAC = costeBase + (esAgile ? costeAgileReal + costePendiente : 0);
+    const presupuestoAprobado = presupuestoBaseAprobado(p, conversion);
+    const realAprobado = costeRealAprobado(p, conversion);
+    const BAC = presupuestoAprobado ? presupuestoAprobado.enBase : costeBase + (esAgile ? costeAgileReal + costePendiente : 0);
 
     const fechaCorte = opts.fechaCorte || new Date();
-    const AC = (typeof calcularDesgloseAC === 'function')
+    const desgloseAC = (typeof calcularDesgloseAC === 'function')
         ? calcularDesgloseAC(BAC, p.elementosGantt || [], fechaCorte, p.fechaInicio, {
-            fechaCorte, sprints, convertirMoneda: conversion, monedaBase: base
-        }).total
-        : BAC;
+            fechaCorte, sprints, convertirMoneda: conversion, monedaBase: base,
+            costeRealAprobado: realAprobado ? realAprobado.enBase : 0
+        })
+        : { real: 0, estimado: 0, total: BAC, fuente: 'sin-datos', origen: 'estimado' };
+    const AC = desgloseAC.total;
 
     const EV = (typeof calcularEV === 'function') ? calcularEV(p.elementosGantt || [], conversion, base) : 0;
     const PV = (typeof calcularPV === 'function') ? calcularPV(p.elementosGantt || [], fechaCorte, null, conversion, base) : 0;
@@ -235,6 +276,8 @@ function calcularModeloEVM(proyectoParam, opciones) {
 
     return {
         esAgile, BAC, costeTotal: BAC, AC,
+        origenBAC: presupuestoAprobado ? 'aprobado' : 'calculado',
+        origenAC: desgloseAC.origen || 'estimado',
         EV: valorGanado, PV: valorPlanificado,
         CPI, SPI, EAC,
         agileCPI, agileSPI, agileEAC,
@@ -283,6 +326,8 @@ function calcularSaludGeneral(valores) {
 
 // Asignar al window para compatibilidad legacy
 window.calcularModeloEVM = calcularModeloEVM;
+window.presupuestoBaseAprobado = presupuestoBaseAprobado;
+window.costeRealAprobado = costeRealAprobado;
 window.calcularCosteTotal = calcularCosteTotal;
 window.calcularPV = calcularPV;
 window.calcularEV = calcularEV;

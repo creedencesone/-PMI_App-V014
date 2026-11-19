@@ -57,10 +57,14 @@ function actualizarInformeCompleto() {
 
     const fechaCorteInforme = new Date();
     const sprintsParaACInforme = (esAgile && proyecto.scrum && Array.isArray(proyecto.scrum.sprints)) ? proyecto.scrum.sprints : [];
+    const _realAprobadoInforme = typeof costeRealAprobado === 'function'
+        ? costeRealAprobado(proyecto, (valor, origen) => convertirMoneda(valor, origen, proyecto.monedaBase || 'EUR'))
+        : null;
     let AC = (typeof calcularDesgloseAC === 'function')
         ? calcularDesgloseAC(costeTotal, proyecto.elementosGantt || [], fechaCorteInforme, proyecto.fechaInicio, {
             fechaCorte: fechaCorteInforme, sprints: sprintsParaACInforme,
-            convertirMoneda, monedaBase: proyecto.monedaBase || 'EUR'
+            convertirMoneda, monedaBase: proyecto.monedaBase || 'EUR',
+            costeRealAprobado: _realAprobadoInforme ? _realAprobadoInforme.enBase : 0
         }).total
         : costeTotal * _pctTiempo;
 
