@@ -6482,3 +6482,48 @@ html:not([data-theme="light"]) .pm-col-green .pm-col-subtitle { color: #FFFFFF !
         transform: none !important;
     }
 }
+
+/* ============================================================
+   REQUISITOS — filtros, badges y matriz de trazabilidad
+   Los colores usan tokens semánticos ya ajustados para AA en
+   tema oscuro y claro; no se fijan hexadecimales aquí.
+   ============================================================ */
+.req-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.req-toolbar .form-group { margin-bottom: 0; min-width: 170px; }
+
+.req-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--radius-full, 9999px);
+    border: 1px solid transparent;
+    font-size: var(--text-xs, 12px);
+    font-weight: var(--font-medium, 500);
+    white-space: nowrap;
+}
+.req-badge--tipo { background: var(--color-primary-subtle); color: var(--color-primary-text); }
+.req-badge--estado {
+    background: var(--status-en-curso-bg);
+    color: var(--status-en-curso-text);
+    border-color: var(--status-en-curso-border);
+}
+.req-badge--prioridad { background: var(--status-atencion-bg); color: var(--status-atencion-text); }
+.req-badge--cubierto { background: var(--status-finalizado-bg); color: var(--status-finalizado-text); }
+.req-badge--sin-cobertura { background: var(--status-critico-bg); color: var(--status-critico-text); }
+
+.requisitos-matrix { min-width: 720px; }
+.requisitos-matrix th[scope="col"] { background: var(--table-header-bg); }
+.u-fs-11 { font-size: 0.72rem; }
+
+/* Jerarquía y tamaño de impacto en el panel de requisitos (Lighthouse AA). */
+.panel-title > h2 { font-size: inherit; font-weight: inherit; margin: 0; }
+.req-acciones { white-space: nowrap; }
+.req-acciones .edit-btn,
+.req-acciones .delete-btn,
+.req-acciones .btn-small { min-height: 24px; margin-right: 8px; vertical-align: middle; }

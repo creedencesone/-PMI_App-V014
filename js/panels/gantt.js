@@ -126,6 +126,7 @@ function _normalizarElementosGantt(dataKey) {
     }
     arr.forEach(e => {
         if (!e.predecesores) e.predecesores = [];
+        if (!Array.isArray(e.requisitosIds)) e.requisitosIds = [];
 
         // Alias de tipos habituales en importaciones / seeds
         const aliasTipo = { tarea: 'actividad', task: 'actividad', milestone: 'hito', deliverable: 'entregable', summary: 'edt', fase: 'edt' };
@@ -1769,6 +1770,9 @@ function abrirModalNuevoElementoGantt(parentId) {
     (proyecto.equipo || []).forEach(m => {
         recursoOptions += `<option value="${m.id}">${escapeHtml(m.nombre)} (${escapeHtml(m.rol || '')}) - ${m.costeHora} ${m.moneda}/h</option>`;
     });
+    const requisitoOptions = (proyecto.requisitos || []).map(r =>
+        `<option value="${escapeHtml(String(r.id))}">${escapeHtml(r.codigo || 'REQ')} · ${escapeHtml(r.necesidad || r.nombre || '')}</option>`
+    ).join('');
 
     const html = `<div class="modal-content modal-sm">
         <div class="modal-header"><h3> Nuevo Elemento</h3><span class="close-modal" onclick="cerrarModalNuevoElemento()">&times;</span></div>
@@ -1800,6 +1804,10 @@ function abrirModalNuevoElementoGantt(parentId) {
             <div class="form-group u-flex-1"><label> Responsable</label><input type="text" id="nuevoResponsable" class="u-select-glass" placeholder="Nombre"></div>
         </div>
         <div class="form-group"><label> EDT padre</label><select id="nuevoDependeDe" class="u-select-glass">${edtOptions}</select></div>
+        <div class="form-group"><label for="nuevoRequisitos">Requisitos que cubre</label>
+            <select id="nuevoRequisitos" class="u-select-glass" multiple size="4" aria-describedby="nuevoRequisitosAyuda">${requisitoOptions}</select>
+            <small id="nuevoRequisitosAyuda" class="form-text">Selecciona uno o varios con ⌘/Ctrl + clic. Puedes usar varias opciones.</small>
+        </div>
         <button class="btn btn-primary" onclick="guardarNuevoElementoGantt()" style="width:100%;margin-top:16px;"> Crear</button>
     </div>`;
     let m = document.getElementById('modalNuevoElemento');
@@ -1832,6 +1840,8 @@ function guardarNuevoElementoGantt() {
         const recursoId = document.getElementById('nuevoRecursoId').value;
         const tipoDuracion = document.getElementById('nuevoTipoDuracion').value;
         const horasDia = parseInt(document.getElementById('nuevoHorasDia').value) || 8;
+        const requisitosIds = Array.from(document.getElementById('nuevoRequisitos')?.selectedOptions || [])
+            .map(o => String(o.value)).filter(Boolean);
         // Si la duración está en horas, convertir a días para almacenamiento interno (duracion en días hábiles)
         let duracionDias = duracion;
         if (tipoDuracion === 'horas' && horasDia > 0) {
@@ -1852,7 +1862,7 @@ function guardarNuevoElementoGantt() {
             tipoDuracion, duracionHoras: tipoDuracion === 'horas' ? duracion : 0,
             progreso: tipo === 'hito' ? 100 : 0, responsable: document.getElementById('nuevoResponsable').value || '',
             dependeDe, recursoAsignado: recursoInfo, horasDia, costeEstimado, costeReal: 0,
-            predecesores: []
+            predecesores: [], requisitosIds
         };
         if (!proyecto[cronogramaActivo.dataKey]) proyecto[cronogramaActivo.dataKey] = [];
         proyecto[cronogramaActivo.dataKey].push(nuevo);
@@ -1862,6 +1872,7 @@ function guardarNuevoElementoGantt() {
         if (typeof registrarBitacora === 'function') registrarBitacora('elemento', nuevo.id, 'crear', null, { id: nuevo.id, nombre: nuevo.nombre, tipo: nuevo.tipo });
         guardarProyecto();
         renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
+        if (typeof renderizarRequisitos === 'function' && document.getElementById('requisitosBody')) renderizarRequisitos();
         reordenarNumeracionElementos(proyecto[cronogramaActivo.dataKey], _ctxCronograma(cronogramaActivo.panelKey));
         calcularCashflow();
         if (tipo !== 'edt' && recursoInfo?.id) {
@@ -1885,6 +1896,9 @@ function editarElementoGantt(id) {
     (proyecto[cronogramaActivo.dataKey] || []).filter(e => e.tipo === 'edt' && e.id !== elem.id).forEach(edt => {
         edtOpts += `<option value="${edt.id}" ${elem.dependeDe === edt.id ? 'selected' : ''}>${escapeHtml(edt.nombre)}</option>`;
     });
+    const requisitoOpts = (proyecto.requisitos || []).map(r =>
+        `<option value="${escapeHtml(String(r.id))}" ${(elem.requisitosIds || []).some(id => String(id) === String(r.id)) ? 'selected' : ''}>${escapeHtml(r.codigo || 'REQ')} · ${escapeHtml(r.necesidad || r.nombre || '')}</option>`
+    ).join('');
     const html = `<div class="modal-content modal-sm">
         <div class="modal-header"><h3> Editar ${elem.tipo.toUpperCase()}</h3><span class="close-modal" onclick="cerrarModalGeneric()">&times;</span></div>
         <input type="hidden" id="editId" value="${elem.id}">
@@ -1926,6 +1940,10 @@ function editarElementoGantt(id) {
             ).join('')}
         </select></div>
         <div class="form-group"><label>EDT padre</label><select id="editDependeDe">${edtOpts}</select></div>
+        <div class="form-group"><label for="editRequisitos">Requisitos que cubre</label>
+            <select id="editRequisitos" class="u-select-glass" multiple size="4" aria-describedby="editRequisitosAyuda">${requisitoOpts}</select>
+            <small id="editRequisitosAyuda" class="form-text">Selecciona uno o varios con ⌘/Ctrl + clic.</small>
+        </div>
         <button class="btn btn-primary" onclick="guardarEdicionElementoGantt()">Actualizar</button>
     </div>`;
     document.getElementById('modalContainer').innerHTML = `<div class="modal u-flex" id="genericModal">${html}</div>`;
@@ -1977,10 +1995,13 @@ function guardarEdicionElementoGantt() {
         return;
     }
     elem.dependeDe = nuevoDependeDe;
+    elem.requisitosIds = Array.from(document.getElementById('editRequisitos')?.selectedOptions || [])
+        .map(o => String(o.value)).filter(Boolean);
     if (typeof registrarBitacora === 'function') registrarBitacora('elemento', elem.id, 'editar', antes, { id: elem.id, nombre: elem.nombre, tipo: elem.tipo, horasMes: elem.recursoAsignado?.horasMes });
     recalcularEdtAuto();
     guardarProyecto();
     renderizarCronograma(_ctxCronograma(cronogramaActivo.panelKey));
+    if (typeof renderizarRequisitos === 'function' && document.getElementById('requisitosBody')) renderizarRequisitos();
     if (elem.tipo !== 'edt' && elem.recursoAsignado?.id) {
         const r = proyecto.equipo?.find(x => x.id == elem.recursoAsignado.id);
         if (r?.email) {

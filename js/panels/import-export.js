@@ -148,6 +148,7 @@ function inicializarEstructuraProyecto(proy) {
     if (!Array.isArray(proy.bitacora)) proy.bitacora = [];
     if (!proy.reuniones) proy.reuniones = [];
     if (!proy.riesgos) proy.riesgos = [];
+    if (!Array.isArray(proy.requisitos)) proy.requisitos = [];
     if (!proy.accionesMitigacion) proy.accionesMitigacion = [];
     if (!proy.elementosGantt) proy.elementosGantt = [];
     sincronizarProcesosConPMBOK(proy);

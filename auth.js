@@ -138,6 +138,7 @@ class AuthSystem {
         salud: { nombre: ' Salud del Proyecto', icono: '' },
         finanzas: { nombre: ' Finanzas', icono: '' },
         cronograma: { nombre: ' Cronograma Gantt', icono: '' },
+        requisitos: { nombre: ' Requisitos', icono: '' },
         riesgos: { nombre: ' Gestión de Riesgos', icono: '' },
         stakeholders: { nombre: ' Stakeholders', icono: '' },
         procesos: { nombre: ' Procesos', icono: '' },

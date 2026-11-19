@@ -26,6 +26,7 @@
             if(pid === 'comunicaciones') { renderizarComunicaciones(); renderizarReuniones(); if (typeof renderizarPlanComunicaciones === 'function') renderizarPlanComunicaciones(); document.querySelectorAll('.subpanel-comunicaciones').forEach(el => el.style.display = 'none'); document.getElementById('subpanelComunicaciones').style.display = 'block'; }
             if(pid === 'acta') renderizarActa();
             if(pid === 'procesos') renderizarProcesos();
+            if(pid === 'requisitos' && typeof renderizarRequisitos === 'function') renderizarRequisitos();
             if(pid === 'roles') renderizarRoles();
             if(pid === 'viajes') { renderizarViajes(); }
             if(pid === 'avales') { renderizarAvales(); }
@@ -172,7 +173,7 @@
         if(!proyecto.configAranceles) proyecto.configAranceles = [];
         if(!proyecto.tasasAduanerasFijas) proyecto.tasasAduanerasFijas = [];
         if(!proyecto.costesFinancierosExtra) proyecto.costesFinancierosExtra = [];
-        ['proveedores', 'contratos', 'ordenesCompra', 'pagosRealizados', 'lineasBase', 'cambios', 'bitacora', 'planComunicaciones'].forEach(function (clave) {
+        ['proveedores', 'contratos', 'ordenesCompra', 'pagosRealizados', 'lineasBase', 'cambios', 'bitacora', 'planComunicaciones', 'requisitos'].forEach(function (clave) {
             if (!Array.isArray(proyecto[clave])) proyecto[clave] = [];
         });
         if(!proyecto.hitosFinancieros) proyecto.hitosFinancieros = [];
@@ -244,6 +245,7 @@
             costesFinancierosExtra: [],
             elementosGantt: [],
             riesgos: [],
+            requisitos: [],
             accionesMitigacion: [],
             comunicaciones: [],
             reuniones: [],
@@ -289,6 +291,7 @@
     renderizarRoles();
     renderizarStakeholders();
     renderizarProcesos();
+    if (typeof renderizarRequisitos === 'function') renderizarRequisitos();
     renderizarEquipo();
     renderizarMateriales();
     renderizarServicios();

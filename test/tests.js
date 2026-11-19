@@ -19,7 +19,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js", "panels/requisitos.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -1138,4 +1138,41 @@ QUnit.test('ask envía el modelo activo al endpoint del proveedor', async assert
     } finally {
         global.fetch = fetchOriginal;
     }
+});
+
+QUnit.module('Requisitos y trazabilidad');
+
+QUnit.test('el correlativo REQ-001 ignora códigos mal formados', assert => {
+    assert.strictEqual(siguienteCodigoRequisito([]), 'REQ-001');
+    assert.strictEqual(siguienteCodigoRequisito([{ codigo: 'REQ-007' }, { codigo: 'borrador' }, { codigo: 'req-12' }]), 'REQ-013');
+});
+
+QUnit.test('la aprobación exige estado explícito y es compatible con proyectos legacy', assert => {
+    assert.true(esRequisitoAprobado({ estado: 'aprobado' }));
+    assert.true(esRequisitoAprobado({ estado: 'validado' }));
+    assert.true(esRequisitoAprobado({ aprobado: true }));
+    assert.false(esRequisitoAprobado({ estado: 'propuesto' }));
+    assert.false(esRequisitoAprobado(null));
+});
+
+QUnit.test('la cobertura funciona en ambos sentidos (Gantt y entregableId)', assert => {
+    const elementos = [
+        { id: 10, codigo: '1.1', nombre: 'Diseño', requisitosIds: ['a', 7] },
+        { id: 20, codigo: 'E-1', nombre: 'Prototipo', requisitosIds: [] }
+    ];
+    assert.deepEqual(elementosQueCubren({ id: 'a' }, elementos).map(e => e.id), [10], 'id como texto');
+    assert.deepEqual(elementosQueCubren({ id: 7 }, elementos).map(e => e.id), [10], 'id numérico');
+    assert.deepEqual(elementosQueCubren({ id: 'b', entregableId: 20 }, elementos).map(e => e.id), [20], 'vinculación inversa');
+    assert.strictEqual(elementosQueCubren({ id: 'sin-cubrir' }, elementos).length, 0);
+});
+
+QUnit.test('el resumen distingue aprobados, sin cubrir y Must pendientes', assert => {
+    const elementos = [{ id: 10, requisitosIds: ['r1'] }];
+    const lista = [
+        { id: 'r1', estado: 'aprobado', prioridad: 'must' },
+        { id: 'r2', estado: 'propuesto', prioridad: 'must' },
+        { id: 'r3', estado: 'validado', prioridad: 'could' }
+    ];
+    assert.deepEqual(resumenRequisitos(lista, elementos), { total: 3, aprobados: 2, sinCubrir: 2, criticosPendientes: 1 });
+    assert.deepEqual(resumenRequisitos([], elementos), { total: 0, aprobados: 0, sinCubrir: 0, criticosPendientes: 0 });
 });

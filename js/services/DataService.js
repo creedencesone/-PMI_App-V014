@@ -51,7 +51,7 @@ function _getSupabase() {
 }
 
 // ------------------------------------------------------------
-// Tablas de dominio del blob projects.data (21)
+// Tablas de dominio del blob projects.data (22)
 // Cada dominio se normaliza en una tabla con `data jsonb`.
 // garantia es OBJETO (una fila por proyecto); el resto son arrays.
 // ------------------------------------------------------------
@@ -64,6 +64,7 @@ const DOMAIN_TABLES = [
     { key: 'hitosFinancieros', table: 'project_hitos_financieros' },
     { key: 'elementosGantt', table: 'project_elementos_gantt' },
     { key: 'riesgos', table: 'project_riesgos' },
+    { key: 'requisitos', table: 'project_requisitos' },
     { key: 'comunicaciones', table: 'project_comunicaciones' },
     { key: 'reuniones', table: 'project_reuniones' },
     { key: 'viajes', table: 'project_viajes' },

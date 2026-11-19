@@ -355,10 +355,24 @@ function exportarResumenGastos() {
         };
         const ICONO_DOMINIO_DEFAULT = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
 
+        /** B.2 «Recopilar y analizar requisitos» sólo se marca con evidencia real. */
+        function hayRequisitosAprobados() {
+            if (typeof proyecto === 'undefined' || !Array.isArray(proyecto.requisitos)) return false;
+            return proyecto.requisitos.some(r => r.estado === 'aprobado' || r.estado === 'validado' || r.aprobado === true);
+        }
+
+        /** Proyectos legacy sin requisitos[] conservan su marca manual. */
+        function sincronizarProcesoB2() {
+            if (typeof proyecto === 'undefined' || !Array.isArray(proyecto.requisitos) || !proyecto.requisitos.length) return;
+            const b2 = (proyecto.procesos || []).find(p => p.codigo === 'B.2');
+            if (b2) b2.completado = hayRequisitosAprobados();
+        }
+
         function renderizarProcesos() {
             const grid = document.getElementById('procesosGrid');
             if (typeof sincronizarProcesosConPMBOK === 'function') sincronizarProcesosConPMBOK(proyecto);
             else if (!proyecto.procesos) proyecto.procesos = JSON.parse(JSON.stringify(PROCESOS_PMBOK));
+            sincronizarProcesoB2();
 
             const expandidos = new Set();
             document.querySelectorAll('.pmbok-col.expanded').forEach(col => {
@@ -449,7 +463,17 @@ function exportarResumenGastos() {
 
         function toggleProceso(id) {
             let p = proyecto.procesos.find(p => p.id === id);
-            if (p) { p.completado = !p.completado; guardarProyecto(); renderizarProcesos(); calcularCashflow(); mostrarToast(`${p.nombre}: ${p.completado ? 'Completado' : 'Pendiente'}`, 'success'); }
+            if (!p) return;
+            if (p.codigo === 'B.2' && !p.completado &&
+                Array.isArray(proyecto.requisitos) && proyecto.requisitos.length > 0 && !hayRequisitosAprobados()) {
+                mostrarToast('Aprueba al menos un requisito para completar B.2', 'error');
+                return;
+            }
+            p.completado = !p.completado;
+            guardarProyecto();
+            renderizarProcesos();
+            calcularCashflow();
+            mostrarToast(`${p.nombre}: ${p.completado ? 'Completado' : 'Pendiente'}`, 'success');
         }
 
         function resetearProcesos() {
