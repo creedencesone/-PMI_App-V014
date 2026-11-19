@@ -19,7 +19,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js", "panels/requisitos.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -798,6 +798,32 @@ QUnit.test('aprobar un cambio crea nueva línea base y conserva la anterior', as
     assert.ok(nueva.diffAlcance.total >= 1, 'el cambio de códigos WBS respecto a la baseline inicial se detecta');
     assert.strictEqual(nueva.predecesoraId, 10);
     assert.true(verificarBitacora(), 'bitácora íntegra');
+    delete global.proyecto;
+});
+
+QUnit.test('solo el CCB puede aprobar un cambio', assert => {
+    assert.deepEqual(normalizarEstadoCambio('Aprobado', false), { estado: 'En análisis', autorizado: false });
+    assert.deepEqual(normalizarEstadoCambio('Implementado', false, 'Aprobado'), { estado: 'Aprobado', autorizado: false });
+    assert.deepEqual(normalizarEstadoCambio('Aprobado', true), { estado: 'Aprobado', autorizado: true });
+    assert.deepEqual(normalizarEstadoCambio('Pendiente', false), { estado: 'Pendiente', autorizado: true });
+});
+
+QUnit.test('la línea base tras aprobación conserva el impacto acordado por el CCB', assert => {
+    const snapshot = { version: 1, codigos: [{ id: 1, codigo: '1', nombre: 'Raíz', tipo: 'edt' }] };
+    global.proyecto = {
+        id: 1, nombre: 'Demo', monedaBase: 'EUR', bitacora: [], cambios: [],
+        elementosGantt: [{ id: 1, tipo: 'edt', nombre: 'Raíz', costeEstimado: 0 }],
+        lineasBase: [{ id: 10, nombre: 'LB inicial', fecha: '2026-01-01', scopeBaseline: snapshot }]
+    };
+    const nueva = propagarCambioALineaBase(proyecto.lineasBase[0], {
+        id: 99, descripcion: 'Ampliar alcance', impactoCosteNumerico: 5000,
+        impactoPlazoDias: 10, impactoAlcance: 'Nuevo entregable',
+        aprobadoPor: 'Sponsor', fechaAprobacion: '2026-02-01', estado: 'Aprobado'
+    });
+    assert.strictEqual(nueva.impactoCambio.coste, 5000);
+    assert.strictEqual(nueva.impactoCambio.plazoDias, 10);
+    assert.strictEqual(nueva.impactoCambio.aprobadoPor, 'Sponsor');
+    assert.true(verificarBitacora());
     delete global.proyecto;
 });
 

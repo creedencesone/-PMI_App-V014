@@ -315,6 +315,45 @@ function inicializarCambios() {
     renderizarCambios();
 }
 
+const ESTADOS_CAMBIO_CCB = ['Aprobado', 'Implementado'];
+
+/** Regla pura: sin autorización del CCB, ningún cambio entra en Aprobado/Implementado. */
+function normalizarEstadoCambio(estadoSolicitado, puedeAprobar, estadoAnterior) {
+    const estado = estadoSolicitado || 'Pendiente';
+    if (!ESTADOS_CAMBIO_CCB.includes(estado) || puedeAprobar) {
+        return { estado, autorizado: true };
+    }
+    const seguro = ESTADOS_CAMBIO_CCB.includes(estadoAnterior) ? estadoAnterior : 'En análisis';
+    return { estado: seguro, autorizado: false };
+}
+
+/** El CCB usa la acción `aprobar` de auth.js; ausencia de sesión ⇒ sin aprobación. */
+function puedeAprobarCambio() {
+    if (typeof AuthSystem === 'undefined' || !AuthSystem || typeof AuthSystem.tieneAccion !== 'function') return false;
+    if (!AuthSystem.tieneAccion('aprobar')) return false;
+    if (typeof AuthSystem.esAdmin === 'function' && AuthSystem.esAdmin()) return true;
+    if (typeof proyecto !== 'undefined' && proyecto && proyecto.id && typeof AuthSystem.getNivelAccesoModulo === 'function') {
+        return AuthSystem.getNivelAccesoModulo(proyecto.id, 'cambios') === 'edit';
+    }
+    return true;
+}
+
+/** Opciones del selector: oculta la aprobación a quien no es CCB. */
+function opcionesEstadoCambio(estadoActual) {
+    const permitido = puedeAprobarCambio();
+    return [['Pendiente', 'Pendiente de revisión'], ['En análisis', 'En análisis'],
+        ['Aprobado', 'Aprobado'], ['Rechazado', 'Rechazado'], ['Implementado', 'Implementado']]
+        .filter(([valor]) => permitido || !ESTADOS_CAMBIO_CCB.includes(valor) || valor === estadoActual)
+        .map(([valor, etiqueta]) => `<option value="${valor}" ${valor === estadoActual ? 'selected' : ''}>${etiqueta}</option>`)
+        .join('');
+}
+
+function aprobadorCambioActual() {
+    if (typeof AuthSystem === 'undefined' || !AuthSystem || typeof AuthSystem.getCurrentUser !== 'function') return null;
+    const usuario = AuthSystem.getCurrentUser();
+    return usuario ? (usuario.nombre || usuario.email || usuario.id || null) : null;
+}
+
 function renderizarCambios() {
     const cambios = proyecto.cambios || [];
 
@@ -395,13 +434,8 @@ function abrirModalNuevoCambio() {
             <div class="form-row">
                 <div class="form-group">
                     <label> Estado inicial</label>
-                    <select id="cambioEstado">
-                        <option value="Pendiente">Pendiente de revisión</option>
-                        <option value="En análisis">En análisis</option>
-                        <option value="Aprobado">Aprobado</option>
-                        <option value="Rechazado">Rechazado</option>
-                        <option value="Implementado">Implementado</option>
-                    </select>
+                    <select id="cambioEstado">${opcionesEstadoCambio('Pendiente')}</select>
+                    ${puedeAprobarCambio() ? '' : '<small>Solo el CCB puede aprobar cambios. Tu solicitud quedará en análisis.</small>'}
                 </div>
                 <div class="form-group">
                     <label> Aprobado por</label>
@@ -420,7 +454,9 @@ function guardarCambio() {
 
     const impactoCoste = document.getElementById('cambioImpactoCosto').value.trim();
     const impactoPlazo = document.getElementById('cambioImpactoPlazo').value.trim();
-    const estado = document.getElementById('cambioEstado').value;
+    const decisionCCB = normalizarEstadoCambio(document.getElementById('cambioEstado').value, puedeAprobarCambio());
+    const estado = decisionCCB.estado;
+    const aprobado = ESTADOS_CAMBIO_CCB.includes(estado);
     const lineaBase = (proyecto.lineasBase || []).slice().sort((a, b) => b.id - a.id)[0];
     const nuevoCambio = {
         id: Date.now(),
@@ -435,21 +471,26 @@ function guardarCambio() {
         prioridad: document.getElementById('cambioPrioridad').value,
         estado,
         justificacion: document.getElementById('cambioJustificacion').value,
-        aprobadoPor: document.getElementById('cambioAprobadoPor').value,
+        aprobadoPor: document.getElementById('cambioAprobadoPor').value.trim() || (aprobado ? aprobadorCambioActual() : '') || '',
+        fechaAprobacion: aprobado ? new Date().toISOString().slice(0, 10) : null,
         fechaRegistro: new Date().toISOString()
     };
 
     if (!proyecto.cambios) proyecto.cambios = [];
     proyecto.cambios.push(nuevoCambio);
     if (typeof registrarBitacora === 'function') registrarBitacora('cambio', nuevoCambio.id, 'crear', null, nuevoCambio);
-    if (estado === 'Aprobado' || estado === 'Implementado') {
+    if (aprobado) {
+        if (typeof registrarBitacora === 'function') registrarBitacora('cambio', nuevoCambio.id, 'aprobar', null, { estado, aprobadoPor: nuevoCambio.aprobadoPor });
         propagarCambioALineaBase(lineaBase, nuevoCambio);
     }
 
     guardarProyecto();
     renderizarCambios();
     cerrarModalGeneric();
-    mostrarToast(` Solicitud de cambio #${nuevoCambio.id} registrada`, 'success');
+    mostrarToast(decisionCCB.autorizado
+        ? ` Solicitud de cambio #${nuevoCambio.id} registrada`
+        : ` Solicitud #${nuevoCambio.id} guardada en análisis: la aprobación requiere permiso de CCB`,
+        decisionCCB.autorizado ? 'success' : 'warning');
 }
 
 function editarCambio(id) {
@@ -481,13 +522,8 @@ function editarCambio(id) {
                     </select>
                 </div>
                 <div class="form-group"><label>Estado</label>
-                    <select id="editCambioEstado">
-                        <option value="Pendiente" ${cambio.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                        <option value="En análisis" ${cambio.estado === 'En análisis' ? 'selected' : ''}>En análisis</option>
-                        <option value="Aprobado" ${cambio.estado === 'Aprobado' ? 'selected' : ''}>Aprobado</option>
-                        <option value="Rechazado" ${cambio.estado === 'Rechazado' ? 'selected' : ''}>Rechazado</option>
-                        <option value="Implementado" ${cambio.estado === 'Implementado' ? 'selected' : ''}>Implementado</option>
-                    </select>
+                    <select id="editCambioEstado">${opcionesEstadoCambio(cambio.estado)}</select>
+                    ${puedeAprobarCambio() ? '' : '<small>Solo el CCB puede aprobar cambios.</small>'}
                 </div>
             </div>
             <div class="form-group">
@@ -505,24 +541,32 @@ function actualizarCambio() {
     const idx = proyecto.cambios.findIndex(c => c.id === id);
     if (idx >= 0) {
         const antes = { ...proyecto.cambios[idx] };
-        const estado = document.getElementById('editCambioEstado').value;
+        const decisionCCB = normalizarEstadoCambio(
+            document.getElementById('editCambioEstado').value, puedeAprobarCambio(), antes.estado);
+        const estado = decisionCCB.estado;
+        const aprobadoAhora = ESTADOS_CAMBIO_CCB.includes(estado) && antes.estado !== estado;
         proyecto.cambios[idx] = {
             ...antes,
             descripcion: document.getElementById('editCambioDescripcion').value,
             solicitante: document.getElementById('editCambioSolicitante').value,
             prioridad: document.getElementById('editCambioPrioridad').value,
             estado,
-            aprobadoPor: document.getElementById('editCambioAprobadoPor').value
+            aprobadoPor: document.getElementById('editCambioAprobadoPor').value.trim()
+                || (aprobadoAhora ? aprobadorCambioActual() : '') || (antes.aprobadoPor || ''),
+            fechaAprobacion: aprobadoAhora ? new Date().toISOString().slice(0, 10) : (antes.fechaAprobacion || null)
         };
-        if (typeof registrarBitacora === 'function') registrarBitacora('cambio', id, estado === 'Aprobado' ? 'aprobar' : 'actualizar', antes, proyecto.cambios[idx]);
-        if ((estado === 'Aprobado' || estado === 'Implementado') && antes.estado !== estado) {
+        if (typeof registrarBitacora === 'function') registrarBitacora('cambio', id, aprobadoAhora ? 'aprobar' : 'actualizar', antes, proyecto.cambios[idx]);
+        if (aprobadoAhora) {
             const lineaBase = (proyecto.lineasBase || []).find(lb => lb.id === antes.lineaBaseId) || (proyecto.lineasBase || []).slice().sort((a, b) => b.id - a.id)[0];
             propagarCambioALineaBase(lineaBase, proyecto.cambios[idx]);
         }
         guardarProyecto();
         renderizarCambios();
         cerrarModalGeneric();
-        mostrarToast(tApp('toast_solicitud_actualizada'), 'success');
+        mostrarToast(decisionCCB.autorizado
+            ? tApp('toast_solicitud_actualizada')
+            : 'Cambio actualizado en análisis: la aprobación requiere permiso de CCB',
+            decisionCCB.autorizado ? 'success' : 'warning');
     }
 }
 

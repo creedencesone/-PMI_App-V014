@@ -48,6 +48,14 @@ function nuevaLineaBaseTrasCambio(lineaBaseAnterior, cambio, opciones) {
         scopeBaselineAnterior: anterior,
         diffAlcance: diff,
         cambioId: cambio.id,
+        impactoCambio: {
+            descripcion: cambio.descripcion || null,
+            coste: Number(cambio.impactoCosteNumerico) || 0,
+            plazoDias: Number(cambio.impactoPlazoDias) || 0,
+            alcance: cambio.impactoAlcance || 'Por determinar',
+            aprobadoPor: cambio.aprobadoPor || null,
+            fechaAprobacion: cambio.fechaAprobacion || null
+        },
         predecesoraId: lineaBaseAnterior ? lineaBaseAnterior.id : null,
         originadaPor: 'cambio-aprobado'
     };
