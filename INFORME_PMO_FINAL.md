@@ -88,7 +88,7 @@ Ejecutada sobre el HEAD final `c9c0963`, con deploy congelado antes de la re-aud
 
 ## 5. Riesgos y seguimiento externo
 
-No hay defectos abiertos en la aplicación. El seguimiento R1 quedó resuelto el 20-nov; permanecen dos seguimientos de carácter externo que no bloquean el despliegue ni la conformidad AA.
+No hay defectos abiertos en la aplicación. Los seguimientos R1 y R3 quedaron resueltos el 20-nov; permanece abierto únicamente R2, de carácter externo y sin impacto en el despliegue ni en la conformidad AA.
 
 ### 5.1 R1 — resuelto: migración `0008`
 
@@ -98,12 +98,18 @@ No hay defectos abiertos en la aplicación. El seguimiento R1 quedó resuelto el
 - **Verificación de acceso:** antes `GET /rest/v1/project_requisitos` devolvía `PGRST205` (tabla ausente); después responde HTTP 200 con `[]` usando solo la clave publishable. El contrato coincide con `DOMAIN_TABLES` y `_writeDomains()` de `DataService.js`.
 - **Pendiente ligado a R3:** la prueba de lectura/escritura con un usuario `authenticated` real queda cubierta por la resolución del usuario de QA; RLS ya está verificado en definición.
 
+### 5.2 R3 — resuelto: usuario de QA y verificación autenticada
+
+- **Diagnóstico:** `admin@pmi.app` existía, estaba confirmado y pertenecía a una organización como `owner`; el error `400 Invalid login credentials` se debía únicamente a una contraseña desactualizada.
+- **Acción:** se rotó el hash bcrypt en `auth.users` a la credencial documentada `Admin!2026` mediante SQL con `pgcrypto`, sin service role ni secretos persistidos. El PAT temporal de R1 se reutilizó solo en memoria y debe seguir siendo revocado por el propietario.
+- **Login real:** `POST /auth/v1/token?grant_type=password` → HTTP 200 para `admin@pmi.app`. En producción, el flujo de la UI (`index.html` → `DataService.login()`) autenticó y redirigió a `proyecto.html` con la sesión de Supabase; 0 errores de login.
+- **RLS de requisitos con token autenticado:** `SELECT` previo 200/0 filas, `INSERT` 201/1 fila, `SELECT` posterior 200/1 fila con el `id` esperado, `INSERT` duplicado rechazado con 409 por el índice único, `DELETE` de limpieza 204. La fila de prueba se eliminó; no queda datos residuales.
+
 | ID | Seguimiento | Impacto | Mitigación aplicada | Acción pendiente | Estado |
 |---|---|---|---|---|---|
 | R2 | Ollama `0.40.16` vs cliente `0.30.11`, 0 modelos descargados y CORS `403` desde el dominio de producción | Inferencia real con modelos locales/LAN | Perfiles `local`/`lan`/`bionico`, descubrimiento en runtime y fallback heurístico por agente | Descargar modelo, alinear versiones y configurar `OLLAMA_ORIGINS='https://pmi-mind.vercel.app,http://localhost:5173'` | Abierto |
-| R3 | Login Supabase `admin@pmi.app` / `Admin!2026` → `400 Invalid login credentials` | Pruebas E2E con cuenta real y verificación RLS autenticada | QA usa sesión local fixture con hash semilla válido | Crear/rotar el usuario de QA en Supabase, repetir el flujo autenticado real y validar lectura/escritura de `project_requisitos` | Abierto |
 
-Si alguno de estos seguimientos llega a modificar UI visible, repetir axe y Lighthouse antes de cerrarlo, según el estándar del PMO.
+Si R2 llega a modificar UI visible, repetir axe y Lighthouse antes de cerrarlo, según el estándar del PMO.
 
 ---
 
@@ -111,7 +117,7 @@ Si alguno de estos seguimientos llega a modificar UI visible, repetir axe y Ligh
 
 Con la evidencia de las secciones 2 y 3, el informe PMO se declara **cerrado para el alcance planificado**: las cinco fases están desplegadas, la auditoría final es 9,3/10 PREMIABLE y no existen defectos abiertos de accesibilidad ni de build.
 
-Los seguimientos R2–R3 quedan registrados como trabajo externo con responsable de infraestructura/credenciales. Su resolución no requiere reabrir el informe: sólo una verificación focalizada (CORS y modelo activo; flujo autenticado y lectura/escritura Supabase; axe/Lighthouse si hay cambio de UI).
+El seguimiento R2 queda registrado como trabajo externo con responsable de infraestructura. Su resolución no requiere reabrir el informe: sólo una verificación focalizada (CORS, modelo activo y axe/Lighthouse si hay cambio de UI).
 
 **Firmado:** PMO · 2026-11-20 · `main@c9c0963`
 
