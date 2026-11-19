@@ -96,7 +96,7 @@ No hay defectos abiertos en la aplicación. Los seguimientos R1 y R3 quedaron re
 - **Resultado de la ejecución:** HTTP 200, sin errores.
 - **Verificación estructural:** 6 columnas (`id`, `organization_id`, `project_id`, `data`, `created_at`, `updated_at`), RLS activo, 4 políticas (`SELECT`/`INSERT`/`UPDATE`/`DELETE`) restringidas a `authenticated` con `is_org_member(organization_id)` y 1 índice único parcial `ux_project_requisitos_project_data_id (project_id, (data->>'id'))`.
 - **Verificación de acceso:** antes `GET /rest/v1/project_requisitos` devolvía `PGRST205` (tabla ausente); después responde HTTP 200 con `[]` usando solo la clave publishable. El contrato coincide con `DOMAIN_TABLES` y `_writeDomains()` de `DataService.js`.
-- **Pendiente ligado a R3:** la prueba de lectura/escritura con un usuario `authenticated` real queda cubierta por la resolución del usuario de QA; RLS ya está verificado en definición.
+- **Prueba autenticada:** la lectura/escritura con un usuario `authenticated` real se ejecutó tras resolver R3 y se documenta en la sección 5.2.
 
 ### 5.2 R3 — resuelto: usuario de QA y verificación autenticada
 
