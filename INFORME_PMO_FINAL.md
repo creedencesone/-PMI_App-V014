@@ -21,7 +21,7 @@ El plan PMO se ha ejecutado íntegramente en cinco bloques (Fase 0, requisitos, 
 | Calidad | 0 violaciones axe, Lighthouse 100, 0 defectos AA abiertos | 0 auditorías fallidas; auditoría final 9,3/10 PREMIABLE | Cerrado |
 | Trazabilidad | `requisitos[]`, matriz, bitácora y B.2 basado en evidencia | Panel, CRUD, filtros y `requisitosIds` en Gantt; migración `0008` aplicada y verificada | Cerrado |
 | Gobierno | Permisos, calidad, alertas, cartera, backup y nivelación | Fase 2 desplegada y verificada en producción | Cerrado |
-| IA local/LAN | Local y LAN simultáneos, modelo configurable, sin secretos, fallback | Fase 3 desplegada con 5 agentes y heurística por agente | Cerrado (R2) |
+| IA local/LAN | Local y LAN simultáneos, modelo configurable, sin secretos, fallback | Fase 3 desplegada; CORS y modelo locales verificados en producción, LAN configurable y con fallback | Cerrado |
 | Higiene y seguridad | Sin API keys en `localStorage`; artefactos protegidos intactos | `.env` solo con clave publishable; 10 artefactos untracked sin modificar | Cerrado |
 
 **Índice de madurez PMI:** 99,8 % (898/900), con 0 hallazgos 🔴 y 0 🟡, según el certificado de 18-nov (Anexo A).
@@ -88,7 +88,7 @@ Ejecutada sobre el HEAD final `c9c0963`, con deploy congelado antes de la re-aud
 
 ## 5. Riesgos y seguimiento externo
 
-No hay defectos abiertos en la aplicación. Los seguimientos R1 y R3 quedaron resueltos el 20-nov; permanece abierto únicamente R2, de carácter externo y sin impacto en el despliegue ni en la conformidad AA.
+No hay defectos abiertos en la aplicación. Los tres seguimientos (R1, R2 y R3) quedaron resueltos el 20-nov; no queda trabajo externo pendiente.
 
 ### 5.1 R1 — resuelto: migración `0008`
 
@@ -105,11 +105,23 @@ No hay defectos abiertos en la aplicación. Los seguimientos R1 y R3 quedaron re
 - **Login real:** `POST /auth/v1/token?grant_type=password` → HTTP 200 para `admin@pmi.app`. En producción, el flujo de la UI (`index.html` → `DataService.login()`) autenticó y redirigió a `proyecto.html` con la sesión de Supabase; 0 errores de login.
 - **RLS de requisitos con token autenticado:** `SELECT` previo 200/0 filas, `INSERT` 201/1 fila, `SELECT` posterior 200/1 fila con el `id` esperado, `INSERT` duplicado rechazado con 409 por el índice único, `DELETE` de limpieza 204. La fila de prueba se eliminó; no queda datos residuales.
 
-| ID | Seguimiento | Impacto | Mitigación aplicada | Acción pendiente | Estado |
-|---|---|---|---|---|---|
-| R2 | Ollama `0.40.16` vs cliente `0.30.11`, 0 modelos descargados y CORS `403` desde el dominio de producción | Inferencia real con modelos locales/LAN | Perfiles `local`/`lan`/`bionico`, descubrimiento en runtime y fallback heurístico por agente | Descargar modelo, alinear versiones y configurar `OLLAMA_ORIGINS='https://pmi-mind.vercel.app,http://localhost:5173'` | Abierto |
+### 5.3 R2 — resuelto: Ollama, CORS y modelo activo
 
-Si R2 llega a modificar UI visible, repetir axe y Lighthouse antes de cerrarlo, según el estándar del PMO.
+- **Estado previo:** CORS `403` desde `https://pmi-mind.vercel.app`, servidor `0.40.16`, cliente Homebrew `0.30.11` y sin modelos utilizables.
+- **Acción:** ambos binarios (`/opt/homebrew/bin/ollama` y `/usr/local/bin/ollama`) están alineados en `0.40.16`; el modelo `qwen2.5:7b-instruct` (4,7 GB) está disponible. Se configuró `launchctl setenv OLLAMA_ORIGINS 'https://pmi-mind.vercel.app,http://localhost:5173'` y se reinició el servicio de Ollama.
+- **Persistencia:** además del `launchctl setenv` de sesión, se instaló `~/Library/LaunchAgents/com.pmi.ollama-origins.plist` (`RunAtLoad`) para reaplicar la variable en cada inicio; `plutil -lint` OK y `launchctl getenv` devuelve el valor esperado.
+- **CORS:** `GET /api/tags` con `Origin: https://pmi-mind.vercel.app` → HTTP 200 y `Access-Control-Allow-Origin: https://pmi-mind.vercel.app`; el origen de desarrollo `http://localhost:5173` también responde 200.
+- **Inferencia:** `POST /v1/chat/completions` con el modelo activo devuelve `OK`. Desde la página de producción, `LocalAIService` descubre 1 proveedor y 1 modelo, y `ask()` devuelve `OK` sin errores.
+- **LAN y coexistencia:** la configuración conserva modelos independientes para `local` y `lan`. Con el endpoint LAN por defecto (`https://ai.tu-tailnet.ts.net`, sustituible en runtime por el tailnet del usuario) el perfil aparece «sin conexión», `listModels('lan')` devuelve `[]` y los agentes degradan a heurística con error `red`, sin afectar al perfil local. El despliegue HTTPS del LAN sigue siendo responsabilidad de infraestructura (Tailscale o Caddy), sin cambios en el repo.
+- **UI:** el modal de IA muestra «1 proveedor(es) · 1 modelo(s) disponible(s)» y la opción `qwen2.5:7b-instruct (4.7 GB)`. No se modificó código de UI, por lo que no procede repetir axe/Lighthouse.
+
+| ID | Seguimiento | Resolución | Estado |
+|---|---|---|---|
+| R1 | Migración `0008` sin aplicar | Aplicada y verificada (5.1) | Cerrado |
+| R2 | Ollama sin modelo y CORS `403` | Modelo activo, CORS configurado e inferencia verificada (5.3) | Cerrado |
+| R3 | Login Supabase inválido | Credencial rotada, login real y RLS autenticado verificados (5.2) | Cerrado |
+
+Cualquier cambio futuro de UI derivado de estos seguimientos deberá repetir axe y Lighthouse antes de cerrarse, según el estándar del PMO.
 
 ---
 
@@ -117,7 +129,7 @@ Si R2 llega a modificar UI visible, repetir axe y Lighthouse antes de cerrarlo, 
 
 Con la evidencia de las secciones 2 y 3, el informe PMO se declara **cerrado para el alcance planificado**: las cinco fases están desplegadas, la auditoría final es 9,3/10 PREMIABLE y no existen defectos abiertos de accesibilidad ni de build.
 
-El seguimiento R2 queda registrado como trabajo externo con responsable de infraestructura. Su resolución no requiere reabrir el informe: sólo una verificación focalizada (CORS, modelo activo y axe/Lighthouse si hay cambio de UI).
+No queda ningún seguimiento abierto. Si en el futuro se sustituye el endpoint LAN por un tailnet real o se cambia la UI de IA, bastará una verificación focalizada (CORS, modelo activo y axe/Lighthouse si hay cambio visible) sin reabrir el informe.
 
 **Firmado:** PMO · 2026-11-20 · `main@c9c0963`
 
