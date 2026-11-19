@@ -1065,43 +1065,71 @@ function diagnosticarProgreso() {
         }
 
         function abrirModalSatisfaccion() {
-            const select = document.getElementById('satisfaccionStakeholder');
-            if (select && proyecto.stakeholders) {
-                select.innerHTML = '<option value="todos">Todos los stakeholders (promedio)</option>' +
-                    proyecto.stakeholders.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)}</option>`).join('');
-            }
-            const modal = document.getElementById('modalSatisfaccion');
-            if (!modal) {
-                mostrarToast('La validación de satisfacción no está disponible aún', 'warning');
-                return;
-            }
-            modal.style.display = 'flex';
+            if (typeof proyecto === 'undefined' || !proyecto) return;
+            const opciones = (proyecto.stakeholders || []).map(s =>
+                `<option value="${escapeHtml(s.id)}">${escapeHtml(s.nombre)}</option>`).join('');
+            const modalHtml = `<div class="modal-content modal-600">
+        <div class="modal-header">
+            <h3 id="satisfaccionTitulo">Registrar satisfacción del stakeholder</h3>
+            <span class="close-modal" onclick="cerrarModalSatisfaccion()" aria-label="Cerrar">&times;</span>
+        </div>
+        <form onsubmit="guardarSatisfaccion(); return false;">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="satisfaccionStakeholder">Stakeholder</label>
+                    <select id="satisfaccionStakeholder" required>
+                        <option value="todos">Todos los stakeholders (promedio)</option>${opciones}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="satisfaccionPuntaje">Puntaje (1 a 5)</label>
+                    <input type="number" id="satisfaccionPuntaje" min="1" max="5" step="0.1" value="4" required>
+                </div>
+                <div class="form-group">
+                    <label for="satisfaccionComentarios">Comentarios</label>
+                    <textarea id="satisfaccionComentarios" rows="3" placeholder="Evidencia de la percepción del stakeholder"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalSatisfaccion()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>`;
+            const contenedor = document.getElementById('modalContainer') || document.body;
+            contenedor.innerHTML = `<div class="modal u-flex" id="genericModal" aria-labelledby="satisfaccionTitulo">${modalHtml}</div>`;
+            if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(document.getElementById('genericModal'));
         }
 
         function guardarSatisfaccion() {
             const inputPuntaje = document.getElementById('satisfaccionPuntaje');
             const inputStakeholder = document.getElementById('satisfaccionStakeholder');
-            if (!inputPuntaje || !inputStakeholder) {
-                mostrarToast('La validación de satisfacción no está disponible aún', 'warning');
+            if (!inputPuntaje || !inputStakeholder || typeof proyecto === 'undefined' || !proyecto) {
+                mostrarToast('La validación de satisfacción no está disponible', 'error');
                 return;
             }
-            let puntaje = parseFloat(inputPuntaje.value);
-            let stakeholderId = inputStakeholder.value;
-            let comentarios = document.getElementById('satisfaccionComentarios') ? document.getElementById('satisfaccionComentarios').value : '';
-
-            if (!proyecto.satisfacciones) proyecto.satisfacciones = [];
-            proyecto.satisfacciones.push({
+            const puntaje = Number(inputPuntaje.value);
+            if (!isFinite(puntaje) || puntaje < 1 || puntaje > 5) {
+                mostrarToast('El puntaje debe estar entre 1 y 5', 'error');
+                return;
+            }
+            const stakeholderId = inputStakeholder.value;
+            const comentarios = document.getElementById('satisfaccionComentarios')?.value.trim() || '';
+            const registro = {
                 id: Date.now(),
-                stakeholderId: stakeholderId,
-                puntaje: puntaje,
-                comentarios: comentarios,
+                stakeholderId,
+                puntaje,
+                comentarios,
                 fecha: new Date().toISOString()
-            });
+            };
+            if (!Array.isArray(proyecto.satisfacciones)) proyecto.satisfacciones = [];
+            proyecto.satisfacciones.push(registro);
+            proyecto.satisfaccionPromedio = proyecto.satisfacciones.reduce(
+                (suma, s) => suma + (Number(s.puntaje) || 0), 0) / proyecto.satisfacciones.length;
 
-            // Calcular promedio global (todos los registros)
-            let promedio = proyecto.satisfacciones.reduce((sum, s) => sum + s.puntaje, 0) / (proyecto.satisfacciones.length || 1);
-            proyecto.satisfaccionPromedio = promedio;
-
+            if (typeof registrarBitacora === 'function') {
+                registrarBitacora('satisfaccion', registro.id, 'crear', null, registro, proyecto);
+            }
             guardarProyecto();
             cerrarModalSatisfaccion();
             actualizarPanelSalud();
@@ -1153,16 +1181,56 @@ function diagnosticarProgreso() {
 function cerrarModalSatisfaccion() {
     const modal = document.getElementById('modalSatisfaccion');
     if (modal) modal.style.display = 'none';
+    if (typeof cerrarModalGeneric === 'function') cerrarModalGeneric();
 }
 
-
 function registrarDefecto() {
-    let defectos = prompt(tApp('prompt_defectos'), "0");
-    if (defectos !== null) {
-        proyecto.defectos = (proyecto.defectos || 0) + parseInt(defectos);
-        guardarProyecto();
-        actualizarPanelSalud();
-        mostrarToast(` Defectos registrados. Total: ${proyecto.defectos}`, 'success');
+    if (typeof proyecto === 'undefined' || !proyecto) return;
+    const modalHtml = `<div class="modal-content modal-600">
+        <div class="modal-header">
+            <h3 id="defectoTitulo">Registrar defectos como no conformidad</h3>
+            <span class="close-modal" onclick="cerrarModalGeneric()" aria-label="Cerrar">&times;</span>
+        </div>
+        <form onsubmit="guardarDefecto(); return false;">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="defectoCantidad">Número de defectos</label>
+                    <input type="number" id="defectoCantidad" min="1" step="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="defectoDescripcion">Descripción</label>
+                    <textarea id="defectoDescripcion" rows="3" placeholder="Qué se detectó y dónde" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalGeneric()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Registrar</button>
+            </div>
+        </form>
+    </div>`;
+    const contenedor = document.getElementById('modalContainer') || document.body;
+    contenedor.innerHTML = `<div class="modal u-flex" id="genericModal" aria-labelledby="defectoTitulo">${modalHtml}</div>`;
+    if (typeof window.abrirModalAccesible === 'function') window.abrirModalAccesible(document.getElementById('genericModal'));
+}
+
+function guardarDefecto() {
+    const cantidad = Number(document.getElementById('defectoCantidad')?.value);
+    const descripcion = document.getElementById('defectoDescripcion')?.value.trim();
+    if (!isFinite(cantidad) || cantidad < 1 || !descripcion) {
+        mostrarToast('Indica la cantidad y una descripción', 'error');
+        return;
     }
+    const registro = typeof registrarNoConformidad === 'function'
+        ? registrarNoConformidad(proyecto, { descripcion, origen: 'salud', cantidad })
+        : null;
+    if (!registro) {
+        mostrarToast('No se pudo registrar la no conformidad', 'error');
+        return;
+    }
+    guardarProyecto();
+    cerrarModalGeneric();
+    if (typeof renderizarCalidad === 'function') renderizarCalidad();
+    actualizarPanelSalud();
+    mostrarToast(`${registro.codigo} registrada con ${cantidad} defecto(s)`, 'success');
 }
 

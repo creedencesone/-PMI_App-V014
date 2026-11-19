@@ -770,6 +770,31 @@ const DataService = {
     // Notificaciones
     // --------------------------------------------------
 
+    /** Alta de notificación de gobierno; tolera fallo de red para no bloquear la UI. */
+    async createNotification(opciones) {
+        const datos = opciones || {};
+        if (!datos.title || !datos.message) throw new Error('title y message son obligatorios');
+        const supabase = await _getSupabase();
+        let userId = datos.userId;
+        if (!userId) {
+            const usuario = await this._getCurrentUser();
+            userId = usuario && usuario.id;
+        }
+        if (!userId) throw new Error('No hay usuario autenticado para notificar');
+        const registro = {
+            user_id: userId,
+            type: datos.type || 'gobierno.alerta',
+            title: datos.title,
+            message: datos.message,
+            data: datos.data || {},
+            is_read: false
+        };
+        if (datos.organizationId) registro.organization_id = datos.organizationId;
+        const { data, error } = await supabase.from('notifications').insert(registro).select().maybeSingle();
+        if (error) throw error;
+        return data || registro;
+    },
+
     async listNotifications() {
         const supabase = await _getSupabase();
         const user = await this._getCurrentUser();

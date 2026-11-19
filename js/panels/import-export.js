@@ -85,7 +85,7 @@ function importarProyecto() {
                 guardarProyectosStorage(todos);
                 localStorage.setItem('proyectoSeleccionado', proyecto.id);
                 if (typeof registrarBitacora === 'function') {
-                    registrarBitacora('proyecto', proyecto.id, 'importar', null, { nombre: proyecto.nombre });
+                    registrarBitacora('proyecto', proyecto.id, 'importar', null, { nombre: proyecto.nombre }, proyecto);
                 }
 
                 // Recargar la página para aplicar cambios
@@ -108,7 +108,7 @@ function importarProyecto() {
                 guardarProyectosStorage(todos);
                 localStorage.setItem('proyectoSeleccionado', proyecto.id);
                 if (typeof registrarBitacora === 'function') {
-                    registrarBitacora('proyecto', proyecto.id, 'importar', null, { nombre: proyecto.nombre });
+                    registrarBitacora('proyecto', proyecto.id, 'importar', null, { nombre: proyecto.nombre }, proyecto);
                 }
 
                 mostrarToast(tApp('toast_proyecto_importado'), 'success');
@@ -169,6 +169,9 @@ function inicializarEstructuraProyecto(proy) {
     if (proy.huellaCarbono === undefined) proy.huellaCarbono = 0;
     if (!proy.satisfacciones) proy.satisfacciones = [];
     if (proy.satisfaccionPromedio === undefined) proy.satisfaccionPromedio = 0;
+    if (!Array.isArray(proy.alertas)) proy.alertas = [];
+    if (typeof inicializarCalidad === 'function') inicializarCalidad(proy);
+    if (typeof migrarDefectosCalidad === 'function') migrarDefectosCalidad(proy);
 
     return proy;
 }

@@ -11,18 +11,22 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <!-- Design System Tokens -->
-<link rel="stylesheet" href="design-system/tokens.css?v=20261121i">
+<link rel="stylesheet" href="design-system/tokens.css?v=20261121j">
     <!-- Preload Inter variable font -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
     <title>PMI Mind - Cartera de Proyectos</title>
-    <script src="js/vendor/pbkdf2.js?v=20261121i"></script>
-    <script src="auth.js?v=20261121i"></script>
-    <script src="js/config.js?v=20261121i"></script>
-    <script src="js/services/DataService.js?v=20261121i"></script>
-    <script src="js/core/audit.js?v=20261121i"></script>
-    <script src="js/panels/cierre.js?v=20261121i"></script>
-    <script src="js/vendor/feather.min.js?v=20261121i"></script>
-    <script src="js/motion.js?v=20261121i" defer></script>
+    <script src="js/vendor/pbkdf2.js?v=20261121j"></script>
+    <script src="auth.js?v=20261121j"></script>
+    <script src="js/config.js?v=20261121j"></script>
+    <script src="js/services/DataService.js?v=20261121j"></script>
+    <script src="js/core/audit.js?v=20261121j"></script>
+    <script src="js/panels/cierre.js?v=20261121j"></script>
+    <script src="js/core/permisos.js?v=20261121j"></script>
+    <script src="js/core/portafolio.js?v=20261121j"></script>
+    <script src="js/core/calidad.js?v=20261121j"></script>
+    <script src="js/core/alertas.js?v=20261121j"></script>
+    <script src="js/vendor/feather.min.js?v=20261121j"></script>
+    <script src="js/motion.js?v=20261121j" defer></script>
     <style>
         /* ============================================
            PMI Mind — Dashboard Styles (v2.0)
@@ -863,6 +867,19 @@
             margin-top: var(--space-1);
             font-weight: var(--font-medium);
         }
+        .alerta-meta {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+            margin-left: var(--space-9);
+            margin-top: var(--space-2);
+        }
+        .alerta-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-left: var(--space-9);
+            margin-top: var(--space-3);
+        }
 
         .no-alertas {
             text-align: center;
@@ -1674,7 +1691,11 @@
             </div>
             <div class="header-actions">
                 <button class="panel-add-btn" onclick="abrirModalNuevoProyecto()" aria-label="+ Nuevo proyecto" title="Nuevo Proyecto" data-tap-scale>+</button>
-                <button class="theme-toggle-sidebar" onclick="exportarProyectoCSV()" title="Exportar a CSV" data-tap-scale><span><i data-feather="file-text" class="nav-feather"></i></span></button>
+                <button class="theme-toggle-sidebar" onclick="exportarInformeCartera()" aria-label="Exportar informe ejecutivo de cartera" title="Informe ejecutivo de cartera" data-tap-scale><span><i data-feather="bar-chart-2" class="nav-feather"></i></span></button>
+                <button class="theme-toggle-sidebar" onclick="exportarProyectoCSV()" aria-label="Exportar cartera a CSV" title="Exportar a CSV" data-tap-scale><span><i data-feather="file-text" class="nav-feather"></i></span></button>
+                <button class="theme-toggle-sidebar" onclick="exportarTodosProyectos()" aria-label="Crear backup de la cartera" title="Crear backup" data-tap-scale><span><i data-feather="download-cloud" class="nav-feather"></i></span></button>
+                <button class="theme-toggle-sidebar" onclick="importarProyectos()" aria-label="Restaurar cartera desde archivo" title="Restaurar desde archivo" data-tap-scale><span><i data-feather="upload-cloud" class="nav-feather"></i></span></button>
+                <button class="theme-toggle-sidebar" onclick="restaurarAutoBackup()" aria-label="Restaurar backup automático" title="Restaurar backup automático" data-tap-scale><span><i data-feather="rotate-ccw" class="nav-feather"></i></span></button>
             </div>
         </div>
 
@@ -2170,7 +2191,7 @@
     ============================================ -->
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="js/panels/manual.js?v=20261121i"></script>
+    <script src="js/panels/manual.js?v=20261121j"></script>
 
     <!-- ============================================
     SCRIPT COMPLETO
@@ -2634,9 +2655,30 @@
                     const parsed = JSON.parse(raw);
                     const datos = fuente.parser(parsed);
                     if (datos && Array.isArray(datos) && datos.length > 0) {
-                        const msg = `¿Restaurar ${datos.length} proyectos desde ${fuente.nombre}?\n\nSe reemplazarán los proyectos actuales.`;
+                        const msg = `¿Restaurar ${datos.length} proyectos desde ${fuente.nombre}?\n\nSe guardará la cartera actual en pmi_recovery y se reemplazarán los proyectos.`;
                         if (confirm(msg)) {
-                            proyectos = datos;
+                            try {
+                                localStorage.setItem('pmi_recovery', JSON.stringify({
+                                    fecha: new Date().toISOString(),
+                                    data: proyectos
+                                }));
+                            } catch { /* no hay espacio: se continúa con la restauración */ }
+                            proyectos = datos.map((p, i) => {
+                                const limpio = sanitizarBackupProyecto(p, 0) || {};
+                                if (typeof recalcularBitacoraImportada === 'function') recalcularBitacoraImportada(limpio);
+                                limpio.id = idSeguroHandler(limpio.id, i);
+                                if (typeof inicializarCalidad === 'function') inicializarCalidad(limpio);
+                                if (!Array.isArray(limpio.alertas)) limpio.alertas = [];
+                                if (typeof registrarBitacora === 'function') {
+                                    registrarBitacora('proyecto', limpio.id, 'restaurar', null,
+                                        { fuente: fuente.key, cantidad: datos.length }, limpio);
+                                }
+                                return limpio;
+                            });
+                            nextId = proyectos.reduce((max, p) => {
+                                const n = Number(p.id);
+                                return Number.isFinite(n) ? Math.max(max, n + 1) : max;
+                            }, nextId || 1);
                             guardarProyectosStorage(proyectos);
                             renderizarProyectos();
                             actualizarDashboard();
@@ -2987,33 +3029,32 @@
 
             renderizarProyectos();
 
-            document.getElementById('totalProyectos').innerText = proyectos.length;
-
-            let activos = 0, finalizados = 0;
-            let totalEntregables = 0, totalRiesgos = 0, valorPortafolio = 0, beneficioGlobal = 0;
-
-            proyectos.forEach(p => {
-                let estado = getEstadoProyecto(p);
-                const cerrado = typeof normalizarEstadoProyecto === 'function' && normalizarEstadoProyecto(p.estado) === 'cerrado';
-                if (cerrado || estado.text === ' Finalizado') {
-                    finalizados++;
-                } else {
-                    activos++;
-                }
-                let entregables = (p.elementosGantt || []).filter(e => e.tipo === 'entregable');
-                totalEntregables += entregables.filter(e => (e.progreso || 0) === 100).length;
-                totalRiesgos += p.riesgos ? p.riesgos.length : 0;
-                valorPortafolio += p.precioVenta || 0;
-                let beneficioProyecto = calcularBeneficioProyecto(p);
-                beneficioGlobal += beneficioProyecto;
-            });
-
-            document.getElementById('totalActivos').innerText = activos;
-            document.getElementById('totalFinalizados').innerText = finalizados;
-            document.getElementById('totalRiesgos').innerText = totalRiesgos;
-            let monedaBase = proyectos[0]?.monedaBase || "EUR";
-            document.getElementById('valorPortafolio').innerHTML = formatearMoneda(valorPortafolio, monedaBase);
-            document.getElementById('beneficioPortafolio').innerHTML = formatearMoneda(beneficioGlobal, monedaBase);
+            const resumen = typeof resumirCartera === 'function' ? resumirCartera(proyectos) : null;
+            if (resumen) {
+                document.getElementById('totalProyectos').innerText = resumen.total;
+                document.getElementById('totalActivos').innerText = resumen.activos;
+                document.getElementById('totalFinalizados').innerText = resumen.finalizados;
+                document.getElementById('totalRiesgos').innerText = resumen.riesgos;
+                document.getElementById('valorPortafolio').innerHTML = formatearMoneda(Math.round(resumen.valor), resumen.moneda);
+                document.getElementById('beneficioPortafolio').innerHTML = formatearMoneda(Math.round(resumen.beneficio), resumen.moneda);
+            } else {
+                let activos = 0, finalizados = 0, totalRiesgos = 0, valorPortafolio = 0, beneficioGlobal = 0;
+                proyectos.forEach(p => {
+                    const cerrado = typeof normalizarEstadoProyecto === 'function' && normalizarEstadoProyecto(p.estado) === 'cerrado';
+                    if (cerrado || getEstadoProyecto(p).text === ' Finalizado') finalizados++;
+                    else activos++;
+                    totalRiesgos += p.riesgos ? p.riesgos.length : 0;
+                    valorPortafolio += p.precioVenta || 0;
+                    beneficioGlobal += calcularBeneficioProyecto(p);
+                });
+                const monedaBase = proyectos[0]?.monedaBase || 'EUR';
+                document.getElementById('totalProyectos').innerText = proyectos.length;
+                document.getElementById('totalActivos').innerText = activos;
+                document.getElementById('totalFinalizados').innerText = finalizados;
+                document.getElementById('totalRiesgos').innerText = totalRiesgos;
+                document.getElementById('valorPortafolio').innerHTML = formatearMoneda(valorPortafolio, monedaBase);
+                document.getElementById('beneficioPortafolio').innerHTML = formatearMoneda(beneficioGlobal, monedaBase);
+            }
 
             actualizarAlertasGlobales();
         }
@@ -3305,9 +3346,17 @@
             if (!container) return;
 
             let todasAlertas = [];
+            let persistidas = [];
             let hoy = new Date();
 
             proyectos.forEach(proyecto => {
+                const registrar = function (alerta) {
+                    todasAlertas.push(alerta);
+                    if (typeof registrarAlerta === 'function') {
+                        const guardada = registrarAlerta(proyecto, alerta);
+                        if (guardada) persistidas.push(guardada);
+                    }
+                };
                 let nombreProyecto = proyecto.nombre;
                 let proyectoId = proyecto.id;
                 let monedaBase = proyecto.monedaBase || 'EUR';
@@ -3324,16 +3373,18 @@
                         let diasRestantes = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
 
                         if (diasRestantes < 0) {
-                            todasAlertas.push({
+                            registrar({
                                 proyecto: nombreProyecto, proyectoId: proyectoId, tipo: 'aval_vencido', nivel: 'critica',
+                                entidadId: aval.id || aval.numero || aval.tipoAval || 'aval',
                                 icono: '', titulo: 'Aval vencido',
                                 detalle: `${aval.tipoAval || 'Aval'} de ${aval.entidad || 'entidad'} - ${formatearMoneda(convertirMoneda(aval.importe || 0, aval.moneda || monedaBase, monedaBase), monedaBase)} (vencido hace ${Math.abs(diasRestantes)} días)`,
                                 accion: `Revisar avales en ${nombreProyecto}`, fecha: aval.fechaVencimiento
                             });
                         } else if (diasRestantes <= 30 && diasRestantes >= 0) {
                             let nivel = diasRestantes <= 7 ? 'critica' : (diasRestantes <= 15 ? 'alta' : 'media');
-                            todasAlertas.push({
+                            registrar({
                                 proyecto: nombreProyecto, proyectoId: proyectoId, tipo: 'aval_proximo', nivel: nivel,
+                                entidadId: aval.id || aval.numero || aval.tipoAval || 'aval',
                                 icono: '', titulo: 'Aval próximo a vencer',
                                 detalle: `${aval.tipoAval || 'Aval'} de ${aval.entidad || 'entidad'} - ${formatearMoneda(convertirMoneda(aval.importe || 0, aval.moneda || monedaBase, monedaBase), monedaBase)} (vencerá en ${diasRestantes} días)`,
                                 accion: `Gestionar renovación en ${nombreProyecto}`, fecha: aval.fechaVencimiento
@@ -3359,15 +3410,17 @@
                     let desviacion = porcentajeAvanceReal - porcentajeAvancePlanificado;
 
                     if (desviacion < -15 && diasTranscurridos > 15) {
-                        todasAlertas.push({
+                        registrar({
                             proyecto: nombreProyecto, proyectoId: proyectoId, tipo: 'retraso_cronograma', nivel: 'critica',
+                            entidadId: 'cronograma',
                             icono: '', titulo: 'Retraso significativo en cronograma',
                             detalle: `Avance real: ${porcentajeAvanceReal.toFixed(0)}% vs planificado: ${porcentajeAvancePlanificado.toFixed(0)}% (retraso de ${Math.abs(desviacion).toFixed(0)}%)`,
                             accion: `Revisar planificación en ${nombreProyecto}`, fecha: null
                         });
                     } else if (desviacion < -5 && diasTranscurridos > 10) {
-                        todasAlertas.push({
+                        registrar({
                             proyecto: nombreProyecto, proyectoId: proyectoId, tipo: 'retraso_cronograma', nivel: 'alta',
+                            entidadId: 'cronograma',
                             icono: '🟠', titulo: 'Leve retraso en cronograma',
                             detalle: `Avance real: ${porcentajeAvanceReal.toFixed(0)}% vs planificado: ${porcentajeAvancePlanificado.toFixed(0)}%`,
                             accion: `Monitorear progreso en ${nombreProyecto}`, fecha: null
@@ -3378,8 +3431,9 @@
                 // Riesgos críticos
                 let riesgosCriticos = (proyecto.riesgos || []).filter(r => r.nivel === 'critico' && r.estado === 'activo');
                 if (riesgosCriticos.length > 0) {
-                    todasAlertas.push({
+                    registrar({
                         proyecto: nombreProyecto, proyectoId: proyectoId, tipo: 'riesgos_criticos', nivel: 'critica',
+                        entidadId: 'riesgos',
                         icono: '', titulo: `${riesgosCriticos.length} riesgo(s) crítico(s) activo(s)`,
                         detalle: riesgosCriticos.map(r => r.nombre).join(', '),
                         accion: `Gestionar riesgos en ${nombreProyecto}`, fecha: null
@@ -3387,8 +3441,16 @@
                 }
             });
 
+            if (typeof fusionarAlertas === 'function') {
+                todasAlertas = fusionarAlertas(todasAlertas, persistidas)
+                    .filter(alerta => alerta.estado !== 'resuelta');
+            }
             const nivelOrden = { 'critica': 0, 'alta': 1, 'media': 2, 'baja': 3 };
-            todasAlertas.sort((a, b) => nivelOrden[a.nivel] - nivelOrden[b.nivel]);
+            const estadoOrden = { 'abierta': 0, 'escalada': 1, 'acknowledged': 2, 'resuelta': 3 };
+            todasAlertas.sort((a, b) =>
+                (estadoOrden[a.estado] || 0) - (estadoOrden[b.estado] || 0)
+                || (nivelOrden[a.nivel] || 9) - (nivelOrden[b.nivel] || 9));
+            todasAlertas.forEach(notificarAlerta);
 
             if (todasAlertas.length === 0) {
                 container.innerHTML = `
@@ -3399,17 +3461,122 @@
                     </div>
                 `;
             } else {
-                container.innerHTML = todasAlertas.map(alerta => `
-                    <div class="alerta-card ${alerta.nivel}" onclick="abrirProyecto('${idSeguroHandler(alerta.proyectoId, 0)}')">
+                const estadoTexto = { abierta: 'Abierta', escalada: 'Escalada', acknowledged: 'Reconocida', resuelta: 'Resuelta' };
+                container.innerHTML = todasAlertas.map(alerta => {
+                    const idArg = encodeURIComponent(alerta.id);
+                    const etiqueta = `[${alerta.proyecto}] ${alerta.titulo}`;
+                    return `
+                    <article class="alerta-card ${alerta.nivel}" aria-label="Alerta ${escapeHtml(etiqueta)}">
                         <div class="alerta-titulo">
-                            <span class="icono">${alerta.icono}</span>
-                            <span class="texto">[${escapeHtml(alerta.proyecto)}] ${alerta.titulo}</span>
+                            <span class="icono">${alerta.icono || ''}</span>
+                            <span class="texto">${escapeHtml(etiqueta)}</span>
                         </div>
                         <div class="alerta-detalle">${escapeHtml(alerta.detalle)}</div>
-                        <div class="alerta-accion"> ${alerta.accion} →</div>
-                    </div>
-                `).join('');
+                        <div class="alerta-meta">
+                            Estado: ${estadoTexto[alerta.estado] || 'Abierta'}
+                            ${alerta.responsable ? ` · Responsable: ${escapeHtml(alerta.responsable)}` : ' · Sin responsable'}
+                            ${alerta.fechaLimite ? ` · Límite: ${escapeHtml(alerta.fechaLimite)}` : ''}
+                        </div>
+                        <div class="alerta-actions" role="group" aria-label="Acciones de la alerta ${escapeHtml(alerta.titulo)}">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="abrirProyecto('${idSeguroHandler(alerta.proyectoId, 0)}')">Abrir proyecto</button>
+                            ${alerta.estado === 'abierta' ? `<button type="button" class="btn btn-secondary btn-small" onclick="ackAlertaGlobal('${idArg}')">Reconocer</button>` : ''}
+                            ${alerta.estado !== 'escalada' && alerta.estado !== 'resuelta' ? `<button type="button" class="btn btn-secondary btn-small" onclick="escalarAlertaGlobal('${idArg}')">Escalar</button>` : ''}
+                        </div>
+                    </article>`;
+                }).join('');
             }
+        }
+
+        const CLAVE_NOTIF_ALERTAS = 'pmi_notificaciones_alertas';
+
+        function proyectoDeAlertaGlobal(proyectoId) {
+            return (proyectos || []).find(p => String(p.id) === String(proyectoId)) || null;
+        }
+
+        function proyectoIdDeAlerta(id) {
+            const crudo = String(id || '').split('|')[1];
+            if (!crudo) return null;
+            try { return JSON.parse(crudo); } catch { return crudo; }
+        }
+
+        function fechaLimiteAlertaGlobal(nivel) {
+            const dias = { critica: 1, alta: 3, media: 7, baja: 15 }[nivel] || 7;
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() + dias);
+            return fecha.toISOString().slice(0, 10);
+        }
+
+        function notificarAlerta(alerta) {
+            if (!alerta || !alerta.id || !['abierta', 'escalada'].includes(alerta.estado)) return;
+            const notificacion = {
+                id: 'alerta-' + alerta.id,
+                alertaId: alerta.id,
+                type: alerta.estado === 'escalada' ? 'gobierno.alerta.escalada' : 'gobierno.alerta',
+                title: (alerta.estado === 'escalada' ? 'Alerta escalada: ' : '') + alerta.titulo,
+                message: `[${alerta.proyecto}] ${alerta.detalle}`,
+                data: { proyectoId: alerta.proyectoId, tipo: alerta.tipo, nivel: alerta.nivel },
+                created_at: new Date().toISOString(),
+                is_read: false,
+                origen: 'local'
+            };
+            try {
+                const lista = JSON.parse(localStorage.getItem(CLAVE_NOTIF_ALERTAS) || '[]');
+                if (!lista.some(n => n.alertaId === alerta.id && n.type === notificacion.type)) {
+                    localStorage.setItem(CLAVE_NOTIF_ALERTAS, JSON.stringify([notificacion, ...lista].slice(0, 50)));
+                }
+            } catch { /* almacenamiento no disponible */ }
+            if (DataService && typeof DataService.createNotification === 'function'
+                && typeof DataService.getToken === 'function' && DataService.getToken()) {
+                DataService.createNotification({
+                    type: notificacion.type,
+                    title: notificacion.title,
+                    message: notificacion.message,
+                    data: notificacion.data
+                }).catch(() => { /* la copia local ya quedó registrada */ });
+            }
+        }
+
+        function persistirCambioAlertaGlobal(proyecto) {
+            guardarProyectosStorage(proyectos);
+            if (proyecto && DataService && typeof DataService.syncAllProjects === 'function'
+                && typeof DataService.getToken === 'function' && DataService.getToken()) {
+                DataService.syncAllProjects([proyecto]).catch(() => {});
+            }
+        }
+
+        function ackAlertaGlobal(idCodificado) {
+            const id = decodeURIComponent(idCodificado);
+            const proyecto = proyectoDeAlertaGlobal(proyectoIdDeAlerta(id));
+            if (!proyecto || typeof acknowledgedAlerta !== 'function') {
+                mostrarToast('No se pudo localizar la alerta', 'error');
+                return;
+            }
+            const acknowledge = acknowledgedAlerta(proyecto, id, { fechaLimite: fechaLimiteAlertaGlobal('media') });
+            if (!acknowledge) {
+                mostrarToast('La alerta ya no está disponible', 'warning');
+                return;
+            }
+            acknowledge.fechaLimite = fechaLimiteAlertaGlobal(acknowledge.nivel);
+            persistirCambioAlertaGlobal(proyecto);
+            mostrarToast(`Alerta reconocida · límite ${acknowledge.fechaLimite}`, 'success');
+            actualizarAlertasGlobales();
+        }
+
+        function escalarAlertaGlobal(idCodificado) {
+            const id = decodeURIComponent(idCodificado);
+            const proyecto = proyectoDeAlertaGlobal(proyectoIdDeAlerta(id));
+            if (!proyecto || typeof escalarAlerta !== 'function') {
+                mostrarToast('No se pudo localizar la alerta', 'error');
+                return;
+            }
+            const escalada = escalarAlerta(proyecto, id, { nivel: 'critica' });
+            if (!escalada) {
+                mostrarToast('La alerta ya no está disponible', 'warning');
+                return;
+            }
+            persistirCambioAlertaGlobal(proyecto);
+            mostrarToast('Alerta escalada a nivel crítico', 'warning');
+            actualizarAlertasGlobales();
         }
 
         // ============================================================
@@ -4285,6 +4452,32 @@
             } else { descargaTradicional(blob, nombreArchivo); }
         }
 
+        function exportarInformeCartera() {
+            if (!proyectos || proyectos.length === 0) {
+                mostrarToast(" No hay proyectos para generar el informe", 'error');
+                return;
+            }
+            const resumen = resumirCartera(proyectos);
+            const esc = typeof escaparCSV === 'function' ? escaparCSV : (v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"');
+            const filas = [[
+                'Proyecto', 'Estado', 'Progreso %', 'Valor entregado %',
+                'Valor (' + resumen.moneda + ')', 'Beneficio (' + resumen.moneda + ')', 'Riesgos'
+            ]];
+            resumen.proyectos.forEach(p => filas.push([
+                p.nombre, p.estado.texto, p.progreso, p.valorEntregado,
+                Math.round(p.valor),
+                Math.round(p.beneficio),
+                (proyectos.find(x => String(x.id) === String(p.id)) || {}).riesgos?.length || 0
+            ]));
+            filas.push([]);
+            filas.push(['TOTAL', '', '', '', Math.round(resumen.valor), Math.round(resumen.beneficio), resumen.riesgos]);
+            filas.push(['Moneda de referencia', resumen.moneda]);
+            const csv = '\uFEFF' + filas.map(fila => fila.map(esc).join(';')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            descargaTradicional(blob, `informe_ejecutivo_cartera_${new Date().toISOString().slice(0, 10)}.csv`);
+            mostrarToast(` Informe de ${resumen.total} proyecto(s) exportado en ${resumen.moneda}`, 'success');
+        }
+
         function descargaTradicional(blob, nombreArchivo) {
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
@@ -4403,6 +4596,8 @@ function idSeguroHandler(id, indice) {
                             if (typeof recalcularBitacoraImportada === 'function') recalcularBitacoraImportada(limpio);
                             limpio.id = idSeguroHandler(limpio.id, i);
                             limpio.nombre = String(limpio.nombre || ('Proyecto importado ' + (i + 1))).slice(0, 200);
+                            if (typeof inicializarCalidad === 'function') inicializarCalidad(limpio);
+                            if (!Array.isArray(limpio.alertas)) limpio.alertas = [];
                             return limpio;
                         });
                         nextId = datos.ultimoId || (proyectos.reduce((max, p) => {
@@ -4550,7 +4745,11 @@ function idSeguroHandler(id, indice) {
             container.innerHTML = '<p style="color:var(--text-muted);font-size: 13px;"> Cargando...</p>';
             try {
                 var data = await DataService.listNotifications();
-                var notifs = data.notifications || [];
+                var notifs = (data.notifications || []).map(function (n) { return Object.assign({}, n, { origen: 'remoto' }); });
+                try {
+                    var locales = JSON.parse(localStorage.getItem(CLAVE_NOTIF_ALERTAS) || '[]');
+                    notifs = locales.concat(notifs);
+                } catch { /* locales corruptas: se ignoran */ }
                 if (notifs.length === 0) {
                     container.innerHTML = '<p style="color:var(--text-muted);font-size: 13px;text-align:center;padding:40px 0;">No hay notificaciones</p>';
                     return;
@@ -4566,7 +4765,7 @@ function idSeguroHandler(id, indice) {
                     html += '<div style="font-size: 12px;color:var(--text-muted);margin-top:4px;">' + (n.created_at || '') + '</div>';
                     html += '</div>';
                     if (noLeida) {
-                        html += '<span style="font-size: 12px;cursor:pointer;color:#007AFF;flex-shrink:0;" onclick="marcarLeida(' + n.id + ')"></span>';
+                        html += '<button type="button" class="btn btn-secondary btn-small" onclick="marcarLeida(\'' + encodeURIComponent(n.id) + '\')">Marcar leída</button>';
                     }
                     html += '</div>';
                 });
@@ -4577,7 +4776,17 @@ function idSeguroHandler(id, indice) {
             }
         }
 
-        async function marcarLeida(id) {
+        async function marcarLeida(idCodificado) {
+            const id = decodeURIComponent(idCodificado);
+            if (String(id).startsWith('alerta-')) {
+                try {
+                    const lista = JSON.parse(localStorage.getItem(CLAVE_NOTIF_ALERTAS) || '[]');
+                    const actualizadas = lista.map(n => n.id === id ? Object.assign({}, n, { is_read: true }) : n);
+                    localStorage.setItem(CLAVE_NOTIF_ALERTAS, JSON.stringify(actualizadas));
+                } catch { /* almacenamiento no disponible */ }
+                recargarNotificaciones();
+                return;
+            }
             try {
                 await DataService.markNotificationRead(id);
                 actualizarBadgeNotif();
@@ -5120,8 +5329,8 @@ function idSeguroHandler(id, indice) {
             }
         });
     </script>
-    <script src="js/core/modal-a11y.js?v=20261121i"></script>
-    <script src="js/core/keyboard-a11y.js?v=20261121i"></script>
+    <script src="js/core/modal-a11y.js?v=20261121j"></script>
+    <script src="js/core/keyboard-a11y.js?v=20261121j"></script>
     </main>
 </body>
 </html>

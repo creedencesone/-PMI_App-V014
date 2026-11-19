@@ -13,19 +13,19 @@
     <link rel="preload" as="font" type="font/woff2" href="/fonts/InterVariable.woff2" crossorigin>
     <title>PMI Mind - Gestión de Proyecto</title>
     <!-- Librerías vendorizadas localmente: no dependen de CDN -->
-    <script src="js/vendor/chart.umd.min.js?v=20261121i"></script>
-    <script src="js/vendor/chart-fallback.js?v=20261121i"></script>
-    <script defer src="js/vendor/html2canvas.min.js?v=20261121i"></script>
+    <script src="js/vendor/chart.umd.min.js?v=20261121j"></script>
+    <script src="js/vendor/chart-fallback.js?v=20261121j"></script>
+    <script defer src="js/vendor/html2canvas.min.js?v=20261121j"></script>
 
     <!-- Three.js + controles -->
-    <script defer src="js/vendor/three/three.min.js?v=20261121i"></script>
-    <script defer src="js/vendor/three/OrbitControls.js?v=20261121i"></script>
-    <script defer src="js/vendor/three/DragControls.js?v=20261121i"></script>
+    <script defer src="js/vendor/three/three.min.js?v=20261121j"></script>
+    <script defer src="js/vendor/three/OrbitControls.js?v=20261121j"></script>
+    <script defer src="js/vendor/three/DragControls.js?v=20261121j"></script>
 
     <!-- PDF.js y EmailJS -->
-    <script defer src="js/vendor/pdfjs/pdf.min.js?v=20261121i"></script>
-    <script defer src="js/vendor/email.min.js?v=20261121i"></script>
-    <script src="js/vendor/feather.min.js?v=20261121i"></script>
+    <script defer src="js/vendor/pdfjs/pdf.min.js?v=20261121j"></script>
+    <script defer src="js/vendor/email.min.js?v=20261121j"></script>
+    <script src="js/vendor/feather.min.js?v=20261121j"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof pdfjsLib !== 'undefined') {
@@ -33,8 +33,8 @@
             }
         });
     </script>
-<link rel="stylesheet" href="design-system/tokens.css?v=20261121i">
-<link rel="stylesheet" href="styles.css?v=20261121i">
+<link rel="stylesheet" href="design-system/tokens.css?v=20261121j">
+<link rel="stylesheet" href="styles.css?v=20261121j">
 <style>
   .skip-link { position:fixed; top:-60px; left:12px; z-index:10000; padding:10px 16px; background:#1D4ED8; color:#fff; border-radius:8px; font-weight:700; box-shadow:0 4px 18px rgba(0,0,0,.3); transition:top .15s ease; }
   .skip-link:focus { top:12px; outline:3px solid #007AFF; }
@@ -51,9 +51,9 @@
   @keyframes pmiReveal { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
   @media (prefers-reduced-motion:reduce){ .scroll-reveal.revealed{animation:none} }
 </style>
-<script src="js/vendor/pbkdf2.js?v=20261121i"></script>
-<script src="auth.js?v=20261121i"></script>
-<script defer src="js/motion.js?v=20261121i"></script>
+<script src="js/vendor/pbkdf2.js?v=20261121j"></script>
+<script src="auth.js?v=20261121j"></script>
+<script defer src="js/motion.js?v=20261121j"></script>
 </head>
 <body>
     <a href="#contenido-principal" class="skip-link">Saltar al contenido principal</a>
@@ -179,6 +179,7 @@
             <div class="nav-group" data-fase="Monitoreo y Control">
                 <div class="nav-group-body">
             <div class="nav-section"><div class="nav-header" data-panel="salud"><span class="nav-icon"><i data-feather="thumbs-up" class="nav-feather"></i></span><span class="nav-title">Salud del Proyecto</span></div></div>
+            <div class="nav-section"><div class="nav-header" data-panel="calidad"><span class="nav-icon"><i data-feather="shield" class="nav-feather"></i></span><span class="nav-title">Gestión de la Calidad</span></div></div>
             <div class="nav-section">
                 <div class="nav-header" data-panel="beneficios">
                     <span class="nav-icon"><i data-feather="zap-off" class="nav-feather"></i></span>
@@ -493,6 +494,59 @@
         </table>
     </div>
             </div>
+
+            <section id="panelCalidad" class="panel hidden" aria-labelledby="calidadTitulo">
+                <div class="panel-title">
+                    <h2 id="calidadTitulo"><i data-feather="shield" class="nav-feather"></i> Gestión de la Calidad</h2>
+                    <div class="panel-title-actions">
+                        <button type="button" class="btn btn-primary btn-small" id="btnNuevaVerificacion" onclick="abrirModalCalidad('verificacion')" aria-label="Nueva verificación"><i data-feather="plus" class="nav-feather"></i> Nueva verificación</button>
+                        <button type="button" class="btn btn-secondary btn-small" id="btnNuevaNoConformidad" onclick="abrirModalCalidad('noConformidad')" aria-label="Nueva no conformidad"><i data-feather="alert-triangle" class="nav-feather"></i> Nueva no conformidad</button>
+                    </div>
+                </div>
+
+                <p id="calidadResumen" class="u-text-muted" role="status" aria-live="polite"></p>
+
+                <h3>Plan de calidad</h3>
+                <div class="form-row">
+                    <div class="form-group"><label for="calidadObjetivos">Objetivos</label><textarea id="calidadObjetivos" rows="3" placeholder="Objetivos medibles de calidad"></textarea></div>
+                    <div class="form-group"><label for="calidadEstandares">Estándares (uno por línea)</label><textarea id="calidadEstandares" rows="3" placeholder="ISO 9001, normativa interna, criterios de aceptación"></textarea></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="calidadResponsable">Responsable</label><input type="text" id="calidadResponsable" placeholder="Nombre del responsable de calidad"></div>
+                    <div class="form-group"><label for="calidadFechaRevision">Próxima revisión</label><input type="date" id="calidadFechaRevision"></div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-small" onclick="guardarPlanCalidad()">Guardar plan</button>
+
+                <h3 class="u-mt-24">Evidencia del proceso</h3>
+                <ul id="checklistCalidad" class="cierre-checklist"></ul>
+
+                <h3 class="u-mt-24">Verificaciones ejecutadas</h3>
+                <div class="u-overflow-x-auto" tabindex="0" role="region" aria-label="Verificaciones de calidad, desplazable horizontalmente">
+                    <table class="data-table">
+                        <caption class="sr-only">Verificaciones de calidad con tipo, resultado y fecha</caption>
+                        <thead><tr><th scope="col">Código</th><th scope="col">Tipo</th><th scope="col">Descripción</th><th scope="col">Resultado</th><th scope="col">Fecha</th></tr></thead>
+                        <tbody id="calidadVerificacionesBody"></tbody>
+                    </table>
+                </div>
+
+                <h3 class="u-mt-24">No conformidades</h3>
+                <div class="u-overflow-x-auto" tabindex="0" role="region" aria-label="No conformidades, desplazable horizontalmente">
+                    <table class="data-table">
+                        <caption class="sr-only">No conformidades registradas con estado, origen y acciones</caption>
+                        <thead><tr><th scope="col">Código</th><th scope="col">Descripción</th><th scope="col">Estado</th><th scope="col">Origen</th><th scope="col">Acciones</th></tr></thead>
+                        <tbody id="calidadNoConformidadesBody"></tbody>
+                    </table>
+                </div>
+
+                <h3 class="u-mt-24">Acciones correctivas</h3>
+                <div class="u-overflow-x-auto" tabindex="0" role="region" aria-label="Acciones correctivas, desplazable horizontalmente">
+                    <table class="data-table">
+                        <caption class="sr-only">Acciones correctivas vinculadas a no conformidades</caption>
+                        <thead><tr><th scope="col">Código</th><th scope="col">Acción</th><th scope="col">Estado</th><th scope="col">Evidencia</th></tr></thead>
+                        <tbody id="calidadAccionesBody"></tbody>
+                    </table>
+                </div>
+            </section>
 
             <div id="panelMonedas" class="panel hidden">
                 <div class="panel-title">
@@ -1319,6 +1373,37 @@
                     <div class="evm-chart__canvas"><canvas id="cargaTrabajoChart" role="img" aria-label="Histograma apilado de horas asignadas por día y recurso"></canvas></div>
                     <p id="cargaTrabajoVacio" class="evm-chart__empty" hidden>El cronograma aún no tiene recursos asignados.</p>
                 </figure>
+
+                <section class="u-mt-24" aria-labelledby="nivelacionTitulo">
+                    <h3 id="nivelacionTitulo">Disponibilidad y nivelación</h3>
+                    <p class="u-text-muted">La capacidad diaria se deriva de <code>horasMes / 20</code> y respeta el calendario laboral de cada persona. La simulación no modifica el proyecto.</p>
+                    <div class="u-overflow-x-auto" tabindex="0" role="region" aria-label="Disponibilidad por persona, desplazable horizontalmente">
+                        <table class="data-table">
+                            <caption class="sr-only">Capacidad y calendario efectivo por persona</caption>
+                            <thead><tr><th scope="col">Persona</th><th scope="col">Horas/mes</th><th scope="col">Capacidad diaria</th><th scope="col">Días no laborables</th><th scope="col">Festivos propios</th></tr></thead>
+                            <tbody id="nivelacionDisponibilidadBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="req-toolbar u-mt-16" role="group" aria-label="Parámetros de simulación de nivelación">
+                        <div class="form-group">
+                            <label for="nivelacionGranularidad">Granularidad</label>
+                            <select id="nivelacionGranularidad" onchange="simularNivelacionDesdeUI()">
+                                <option value="dia">Diaria</option>
+                                <option value="semana">Semanal</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="simularNivelacionDesdeUI()">Simular escenarios</button>
+                        <button type="button" class="btn btn-primary btn-small" onclick="aplicarNivelacionSeleccionada()">Aplicar escenario nivelado</button>
+                    </div>
+                    <p id="nivelacionResumen" class="u-text-muted" role="status" aria-live="polite">Sin simulación ejecutada.</p>
+                    <div class="u-overflow-x-auto" tabindex="0" role="region" aria-label="Escenarios de nivelación, desplazable horizontalmente">
+                        <table class="data-table">
+                            <caption class="sr-only">Comparativa de escenarios de nivelación de recursos</caption>
+                            <thead><tr><th scope="col">Escenario</th><th scope="col">Pico (h)</th><th scope="col">Sobreasignaciones</th><th scope="col">Movimientos</th><th scope="col">Riesgo</th></tr></thead>
+                            <tbody id="nivelacionEscenariosBody"></tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
 
             <!-- MODAL PARA NUEVO/EDITAR VIAJE -->
@@ -2709,55 +2794,60 @@
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Módulos base -->
-    <script src="js/config-global.js?v=20261121i"></script>
-    <script src="js/i18n.js?v=20261121i"></script>
-    <script src="js/utils.js?v=20261121i"></script>
-    <script src="js/core/collections.js?v=20261121i"></script>
-    <script src="js/services/DataService.js?v=20261121i"></script>
+    <script src="js/config-global.js?v=20261121j"></script>
+    <script src="js/i18n.js?v=20261121j"></script>
+    <script src="js/utils.js?v=20261121j"></script>
+    <script src="js/core/collections.js?v=20261121j"></script>
+    <script src="js/services/DataService.js?v=20261121j"></script>
 
     <!-- Core modules (ES6, compatibles con scripts legacy via window.*) -->
-    <script src="js/core/dates.js?v=20261121i"></script>
-    <script src="js/core/csv.js?v=20261121i"></script>
-    <script src="js/core/whatif.js?v=20261121i"></script>
-    <script src="js/core/evm.js?v=20261121i"></script>
-    <script src="js/core/finance.js?v=20261121i"></script>
-    <script src="js/core/ui.js?v=20261121i"></script>
-    <script src="js/core/wbs.js?v=20261121i"></script>
-    <script src="js/core/audit.js?v=20261121i"></script>
-    <script src="js/core/linea-base.js?v=20261121i"></script>
-    <script src="js/core/raci.js?v=20261121i"></script>
+    <script src="js/core/dates.js?v=20261121j"></script>
+    <script src="js/core/csv.js?v=20261121j"></script>
+    <script src="js/core/whatif.js?v=20261121j"></script>
+    <script src="js/core/evm.js?v=20261121j"></script>
+    <script src="js/core/finance.js?v=20261121j"></script>
+    <script src="js/core/ui.js?v=20261121j"></script>
+    <script src="js/core/wbs.js?v=20261121j"></script>
+    <script src="js/core/audit.js?v=20261121j"></script>
+    <script src="js/core/linea-base.js?v=20261121j"></script>
+    <script src="js/core/raci.js?v=20261121j"></script>
 
     <!-- Paneles de la aplicación -->
-    <script src="js/panels/acta-roles.js?v=20261121i"></script>
-    <script src="js/panels/equipo-servicios.js?v=20261121i"></script>
-    <script src="js/panels/comunicaciones.js?v=20261121i"></script>
-    <script src="js/panels/gantt.js?v=20261121i"></script>
-    <script src="js/panels/carga-trabajo.js?v=20261121i"></script>
-    <script src="js/panels/edt-panel.js?v=20261121i"></script>
-    <script src="js/panels/materiales.js?v=20261121i"></script>
-    <script src="js/panels/financiero-monedas.js?v=20261121i"></script>
-    <script src="js/panels/grafico-monedas.js?v=20261121i"></script>
-    <script src="js/panels/venta-cashflow.js?v=20261121i"></script>
-    <script src="js/panels/stakeholders.js?v=20261121i"></script>
-    <script src="js/panels/organigrama.js?v=20261121i"></script>
-    <script src="js/panels/requisitos.js?v=20261121i"></script>
-    <script src="js/panels/cierre.js?v=20261121i"></script>
-    <script src="js/panels/resumen-procesos.js?v=20261121i"></script>
-    <script src="js/panels/riesgos.js?v=20261121i"></script>
-    <script src="js/panels/garantia-viajes-avales.js?v=20261121i"></script>
-    <script src="js/panels/import-export.js?v=20261121i"></script>
-    <script src="js/services/LocalAIService.js?v=20261121i"></script>
-    <script src="js/panels/ia-analisis.js?v=20261121i"></script>
-    <script src="js/panels/panel-salud.js?v=20261121i"></script>
-    <script src="js/panels/panel-informe.js?v=20261121i"></script>
-    <script src="js/panels/compartir.js?v=20261121i"></script>
-    <script src="js/panels/beneficios-cambios-lecciones.js?v=20261121i"></script>
-    <script src="js/panels/scrum.js?v=20261121i"></script>
-    <script src="js/panels/logistica-3d.js?v=20261121i"></script>
-    <script src="js/panels/agenda.js?v=20261121i"></script>
-    <script src="js/panels/navegacion-auth.js?v=20261121i"></script>
-    <script src="js/panels/montecarlo.js?v=20261121i"></script>
-    <script src="js/panels/manual.js?v=20261121i"></script>
+    <script src="js/panels/acta-roles.js?v=20261121j"></script>
+    <script src="js/panels/equipo-servicios.js?v=20261121j"></script>
+    <script src="js/panels/comunicaciones.js?v=20261121j"></script>
+    <script src="js/panels/gantt.js?v=20261121j"></script>
+    <script src="js/panels/carga-trabajo.js?v=20261121j"></script>
+    <script src="js/panels/edt-panel.js?v=20261121j"></script>
+    <script src="js/panels/materiales.js?v=20261121j"></script>
+    <script src="js/panels/financiero-monedas.js?v=20261121j"></script>
+    <script src="js/panels/grafico-monedas.js?v=20261121j"></script>
+    <script src="js/panels/venta-cashflow.js?v=20261121j"></script>
+    <script src="js/panels/stakeholders.js?v=20261121j"></script>
+    <script src="js/panels/organigrama.js?v=20261121j"></script>
+    <script src="js/panels/requisitos.js?v=20261121j"></script>
+    <script src="js/panels/cierre.js?v=20261121j"></script>
+    <script src="js/core/permisos.js?v=20261121j"></script>
+    <script src="js/core/calidad.js?v=20261121j"></script>
+    <script src="js/panels/panel-calidad.js?v=20261121j"></script>
+    <script src="js/core/alertas.js?v=20261121j"></script>
+    <script src="js/core/nivelacion.js?v=20261121j"></script>
+    <script src="js/panels/resumen-procesos.js?v=20261121j"></script>
+    <script src="js/panels/riesgos.js?v=20261121j"></script>
+    <script src="js/panels/garantia-viajes-avales.js?v=20261121j"></script>
+    <script src="js/panels/import-export.js?v=20261121j"></script>
+    <script src="js/services/LocalAIService.js?v=20261121j"></script>
+    <script src="js/panels/ia-analisis.js?v=20261121j"></script>
+    <script src="js/panels/panel-salud.js?v=20261121j"></script>
+    <script src="js/panels/panel-informe.js?v=20261121j"></script>
+    <script src="js/panels/compartir.js?v=20261121j"></script>
+    <script src="js/panels/beneficios-cambios-lecciones.js?v=20261121j"></script>
+    <script src="js/panels/scrum.js?v=20261121j"></script>
+    <script src="js/panels/logistica-3d.js?v=20261121j"></script>
+    <script src="js/panels/agenda.js?v=20261121j"></script>
+    <script src="js/panels/navegacion-auth.js?v=20261121j"></script>
+    <script src="js/panels/montecarlo.js?v=20261121j"></script>
+    <script src="js/panels/manual.js?v=20261121j"></script>
 
 <script>
 // ============================================================
@@ -2999,8 +3089,8 @@ if (_user && _user.nombre) {
 }
 if (typeof feather !== 'undefined') { feather.replace(); }
 </script>
-    <script src="js/core/modal-a11y.js?v=20261121i"></script>
-    <script src="js/core/keyboard-a11y.js?v=20261121i"></script>
+    <script src="js/core/modal-a11y.js?v=20261121j"></script>
+    <script src="js/core/keyboard-a11y.js?v=20261121j"></script>
 </body>
 </html>
 

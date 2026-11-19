@@ -19,7 +19,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "core/permisos.js", "core/portafolio.js", "core/calidad.js", "core/alertas.js", "core/nivelacion.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -692,6 +692,86 @@ QUnit.test('el cierre solo se habilita con evidencia verificable', assert => {
     const incompleto = { ...base, cambios: [{ id: 1, estado: 'Pendiente' }], lecciones: [] };
     const fallos = evaluarChecklistCierre(incompleto).filter(x => !x.ok).map(x => x.clave);
     assert.deepEqual(fallos, ['cambios', 'lecciones']);
+});
+
+QUnit.module('Fase 2 · Gobierno, cartera y calidad');
+
+QUnit.test('los paneles se mapean a módulos gobernados y degradan sin AuthSystem', assert => {
+    assert.strictEqual(moduloDePanel('requisitos'), 'requisitos');
+    assert.strictEqual(moduloDePanel('panelCargaTrabajo'), 'recursos');
+    assert.strictEqual(moduloDePanel('sprintBacklog'), 'scrum');
+    assert.strictEqual(moduloDePanel('inexistente'), null);
+    assert.strictEqual(nivelAccesoPanel(1, 'requisitos'), 'edit', 'sin AuthSystem no se bloquean los helpers puros');
+});
+
+QUnit.test('la cartera convierte monedas y usa un solo cálculo de progreso', assert => {
+    const tasas = { EUR: 1, USD: 2, GBP: 0.5 };
+    assert.strictEqual(convertirEnCartera(100, 'USD', 'EUR', tasas), 50);
+    assert.strictEqual(convertirEnCartera(100, 'EUR', 'USD', tasas), 200);
+    const conTarea = { elementosGantt: [{ tipo: 'tarea', progreso: 50 }], procesos: [] };
+    const conActividad = { elementosGantt: [{ tipo: 'actividad', progreso: 50 }], procesos: [] };
+    assert.strictEqual(progresoProyecto(conTarea), progresoProyecto(conActividad));
+    assert.strictEqual(progresoProyecto(conTarea), 20);
+    const resumen = resumirCartera([
+        { id: 1, nombre: 'A', monedaBase: 'EUR', precioVenta: 100, procesos: [], elementosGantt: [] },
+        { id: 2, nombre: 'B', monedaBase: 'USD', monedaVenta: 'USD', precioVenta: 200, procesos: [], elementosGantt: [] }
+    ], { moneda: 'EUR', tasas });
+    assert.strictEqual(resumen.moneda, 'EUR');
+    assert.strictEqual(resumen.valor, 200, '100 EUR + 200 USD (x2) = 200 EUR');
+    assert.strictEqual(resumen.total, 2);
+});
+
+QUnit.test('la calidad convierte el contador heredado en evidencia verificable', assert => {
+    const p = { defectos: 3, calidad: null, bitacora: [] };
+    const calidad = migrarDefectosCalidad(p);
+    assert.strictEqual(calidad.noConformidades.length, 1);
+    assert.strictEqual(siguienteCodigoNoConformidad(p), 'NC-002');
+    const nc = calidad.noConformidades[0];
+    assert.false(puedeCerrarNoConformidad(nc, []), 'sin acción correctiva no se puede cerrar');
+    assert.true(puedeCerrarNoConformidad(nc, [{ noConformidadId: nc.id, estado: 'Completada', evidencia: 'Revisión firmada' }]));
+    const checklist = evaluarChecklistCalidad(p);
+    assert.true(checklist.some(x => x.clave === 'noConformidades' && !x.ok));
+    const nueva = registrarNoConformidad(p, { descripcion: 'Raíz no identificada', origen: 'auditoría' });
+    assert.strictEqual(nueva.codigo, 'NC-002');
+    assert.strictEqual(siguienteCodigoNoConformidad(p), 'NC-003');
+    assert.true(verificarBitacora(p), 'el alta de NC queda firmada en la bitácora');
+});
+
+QUnit.test('las alertas son accionables, persistentes y auditables', assert => {
+    const p = { id: 1, nombre: 'Demo', bitacora: [] };
+    const detectada = { tipo: 'aval_vencido', proyectoId: 1, entidadId: 7, nivel: 'media' };
+    const id = idAlerta(detectada);
+    assert.strictEqual(id, 'aval_vencido|1|7');
+    registrarAlerta(p, detectada);
+    acknowledgedAlerta(p, id, { responsable: 'QA', fechaLimite: '2026-11-30' });
+    escalarAlerta(p, id, { nivel: 'critica' });
+    const fusionada = fusionarAlertas([detectada], p.alertas)[0];
+    assert.strictEqual(fusionada.responsable, 'QA');
+    assert.strictEqual(fusionada.nivel, 'critica');
+    assert.strictEqual(resumenAlertas(p).criticas, 1);
+    assert.true(verificarBitacora(p), 'la bitácora sigue íntegra con proyecto explícito');
+});
+
+QUnit.test('la nivelación respeta calendario por persona y no muta el proyecto', assert => {
+    global.proyecto = {
+        id: 1, nombre: 'Demo', bitacora: [],
+        calendario: { diasNoLaborables: [0, 6], festivos: ['2026-11-20'] },
+        equipo: [{ id: 1, nombre: 'Ana', horasMes: 160 }],
+        elementosGantt: [
+            { id: 1, tipo: 'actividad', inicio: '2026-11-19', duracion: 2, recursoAsignado: { id: 1, nombre: 'Ana' } },
+            { id: 2, tipo: 'actividad', inicio: '2026-11-19', duracion: 2, recursoAsignado: { id: 1, nombre: 'Ana' } }
+        ]
+    };
+    const antes = JSON.stringify(global.proyecto);
+    const curva = curvaRecursos(global.proyecto);
+    assert.true(curva.sobreasignaciones.length > 0, 'dos tareas solapadas sobrecargan a Ana');
+    assert.false(curva.dias.includes('2026-11-20'), 'el festivo se descuenta');
+    const escenarios = simularNivelacionRecursos(global.proyecto);
+    assert.strictEqual(escenarios.length, 3);
+    assert.true(escenarios[1].sobreasignaciones < escenarios[0].sobreasignaciones, 'la nivelación reduce el pico');
+    assert.true(escenarios[1].proyecto.elementosGantt.some(e => e.inicio !== '2026-11-19'), 'el escenario expone las fechas reagendadas');
+    assert.strictEqual(JSON.stringify(global.proyecto), antes, 'el proyecto original no se muta');
+    delete global.proyecto;
 });
 
 QUnit.module('ENG-08 · Carga de trabajo');

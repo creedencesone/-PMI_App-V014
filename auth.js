@@ -136,6 +136,7 @@ class AuthSystem {
         acta: { nombre: ' Acta de Inicio', icono: '' },
         dashboard: { nombre: ' Dashboard', icono: '' },
         salud: { nombre: ' Salud del Proyecto', icono: '' },
+        calidad: { nombre: ' Gestión de la Calidad', icono: '' },
         finanzas: { nombre: ' Finanzas', icono: '' },
         cronograma: { nombre: ' Cronograma Gantt', icono: '' },
         requisitos: { nombre: ' Requisitos', icono: '' },

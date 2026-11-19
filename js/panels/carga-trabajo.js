@@ -113,8 +113,82 @@ function calcularCargaPorDia(proyectoParam, opciones) {
 }
 
 /** Pinta el resumen y el histograma apilado de carga diaria. */
+let _escenariosNivelacionUI = [];
+
+function renderizarNivelacion() {
+    const tbody = document.getElementById('nivelacionDisponibilidadBody');
+    if (!tbody || typeof proyecto === 'undefined' || !proyecto) return;
+    const equipo = proyecto.equipo || [];
+    tbody.innerHTML = equipo.length ? equipo.map(persona => {
+        const calendario = calendarioEfectivoPersona(persona, proyecto.calendario);
+        const dias = (calendario.diasNoLaborables || []).map(d => ['D', 'L', 'M', 'X', 'J', 'V', 'S'][d] ?? d).join(', ');
+        return `<tr>
+            <th scope="row">${escapeHtml(persona.nombre || 'Recurso ' + persona.id)}</th>
+            <td>${Number(persona.horasMes) || 0} h</td>
+            <td>${capacidadDiariaPersona(persona)} h/día</td>
+            <td>${escapeHtml(dias || 'L-V')}</td>
+            <td>${(calendario.festivos || []).length}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="5" class="u-text-center">Sin equipo con disponibilidad configurada</td></tr>';
+}
+
+function simularNivelacionDesdeUI() {
+    if (typeof proyecto === 'undefined' || !proyecto || typeof simularNivelacionRecursos !== 'function') return;
+    const granularidad = (document.getElementById('nivelacionGranularidad') || {}).value || 'dia';
+    _escenariosNivelacionUI = simularNivelacionRecursos(proyecto, { granularidad });
+    const tbody = document.getElementById('nivelacionEscenariosBody');
+    const resumen = document.getElementById('nivelacionResumen');
+    if (tbody) {
+        tbody.innerHTML = _escenariosNivelacionUI.map(escenario => `<tr>
+            <th scope="row">${escapeHtml(escenario.nombre)}</th>
+            <td>${escenario.picoHoras.toFixed(1)}</td>
+            <td>${escenario.sobreasignaciones}</td>
+            <td>${escenario.movimientos}</td>
+            <td>${escapeHtml(escenario.riesgo)}</td>
+        </tr>`).join('');
+    }
+    const actual = _escenariosNivelacionUI[0];
+    const nivelado = _escenariosNivelacionUI[1];
+    if (resumen) {
+        resumen.textContent = actual && nivelado
+            ? `${actual.sobreasignaciones} sobreasignación(es) → ${nivelado.sobreasignaciones} tras nivelar. El escenario no se ha aplicado.`
+            : 'Sin datos suficientes para simular.';
+    }
+}
+
+function aplicarNivelacionSeleccionada() {
+    const escenario = _escenariosNivelacionUI.find(e => e.id === 'nivelado');
+    if (!escenario || typeof proyecto === 'undefined' || !proyecto) {
+        mostrarToast('Ejecuta primero la simulación', 'warning');
+        return;
+    }
+    if (typeof puedeEditarPanel === 'function' && !puedeEditarPanel(proyecto.id, 'recursos')) {
+        mostrarToast('No tienes permiso de edición en Recursos', 'warning');
+        return;
+    }
+    const antes = JSON.parse(JSON.stringify(proyecto.elementosGantt || []));
+    (proyecto.elementosGantt || []).forEach(elemento => {
+        const destino = escenario.proyecto.elementosGantt.find(e => String(e.id) === String(elemento.id));
+        if (!destino) return;
+        elemento.inicio = destino.inicio;
+        if (destino.comprimidoPorNivelacion) elemento.duracion = destino.duracion;
+        elemento.retrasoNivelacion = destino.retrasoNivelacion || 0;
+    });
+    // El planificador de dependencias manda: se revalida después de aplicar.
+    if (typeof autoScheduler === 'function') autoScheduler(proyecto.elementosGantt);
+    if (typeof registrarBitacora === 'function') {
+        registrarBitacora('nivelacion', 'recursos', 'aplicar', antes, proyecto.elementosGantt, proyecto);
+    }
+    guardarProyecto();
+    if (typeof cargarElementosGantt === 'function') cargarElementosGantt();
+    renderizarCargaTrabajo();
+    simularNivelacionDesdeUI();
+    mostrarToast('Nivelación aplicada y cronograma revalidado', 'success');
+}
+
 function renderizarCargaTrabajo() {
     const resultado = calcularCargaPorDia();
+    renderizarNivelacion();
     const tbody = document.getElementById('cargaTrabajoBody');
     const resumen = document.getElementById('cargaTrabajoResumen');
     const canvas = document.getElementById('cargaTrabajoChart');
@@ -185,3 +259,6 @@ function renderizarCargaTrabajo() {
 
 window.calcularCargaPorDia = calcularCargaPorDia;
 window.renderizarCargaTrabajo = renderizarCargaTrabajo;
+window.renderizarNivelacion = renderizarNivelacion;
+window.simularNivelacionDesdeUI = simularNivelacionDesdeUI;
+window.aplicarNivelacionSeleccionada = aplicarNivelacionSeleccionada;

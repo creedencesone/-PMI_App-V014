@@ -32,7 +32,9 @@ async function esperarServidor() {
 }
 
 const initScript = (theme) => {
-    const admin = { id: 'admin_001', email: 'admin@pmi.app', nombre: 'QA', role: 'admin', nivel: 100, active: true, proyectosAsignados: [], permisosProyectos: {}, permisos: { ver: true, editar: true, eliminar: true, gestionarUsuarios: true, gestionarProyectos: true, exportarDatos: true, configurarSistema: true, acciones: {} } };
+    // El hash seed es necesario para que AuthSystem.esAdmin() reconozca al fixture;
+    // sin él el admin de QA quedaría fail-closed al invocar los permisos.
+    const admin = { id: 'admin_001', email: 'admin@pmi.app', nombre: 'QA', role: 'admin', nivel: 100, active: true, password: 'pbkdf2$100000$a1b2c3d4e5f60718293a4b5c6d7e8f90$a4dae039e7b33674370afadb7b953cbc1c2388c2cae22e9fb21debf0046afea2', proyectosAsignados: [], permisosProyectos: {}, permisos: { ver: true, editar: true, eliminar: true, gestionarUsuarios: true, gestionarProyectos: true, exportarDatos: true, configurarSistema: true, acciones: { aprobar: true } } };
     localStorage.setItem('pmi_usuarios_v3', JSON.stringify([admin]));
     localStorage.setItem('pmi_sesion_v3', JSON.stringify({ userId: 'admin_001', email: 'admin@pmi.app', role: 'admin', nivel: 100, timestamp: Date.now() }));
     localStorage.setItem('pmi_theme', theme);

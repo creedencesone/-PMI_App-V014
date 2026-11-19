@@ -33,6 +33,7 @@
             if(pid === 'seguros') { renderizarSeguros(); }
             if(pid === 'garantia') { renderizarGarantia(); }
             if(pid === 'salud') { actualizarPanelSalud(); }
+            if(pid === 'calidad' && typeof inicializarCalidadPanel === 'function') inicializarCalidadPanel();
             if(pid === 'beneficios') renderizarBeneficios();
             if(pid === 'cambios') renderizarCambios();
             if(pid === 'cierre' && typeof inicializarCierre === 'function') inicializarCierre();
@@ -50,22 +51,9 @@
             if(pid === 'logistica') { inicializarModuloLogistica(); }
             if(pid === 'agenda') { cargarAgenda(); }
 
-            // Aplicar permisos de edición por módulo
-            var proyectoId = localStorage.getItem('proyectoSeleccionado');
-            if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
-                proyectoId = DataService.resolveId(proyectoId);
-            }
-            var usuario = AuthSystem.getCurrentUser();
-            if (usuario && usuario.role !== 'admin' && proyectoId) {
-                var nivel = AuthSystem.getNivelAccesoModulo(proyectoId, panelId.toLowerCase());
-                var panelEl = document.getElementById('panel' + panelId);
-                if (panelEl) {
-                    var editBtns = panelEl.querySelectorAll('.edit-btn, .btn-primary:not(.btn-accion-especial)');
-                    var deleteBtns = panelEl.querySelectorAll('.delete-btn, .btn-danger');
-                    var mostrar = nivel === 'edit';
-                    editBtns.forEach(function(btn) { btn.style.display = mostrar ? '' : 'none'; });
-                    deleteBtns.forEach(function(btn) { btn.style.display = mostrar ? '' : 'none'; });
-                }
+            // Permisos invocados desde el único helper centralizado (fail-closed).
+            if (typeof aplicarPermisosPanel === 'function') {
+                aplicarPermisosPanel(panel, localStorage.getItem('proyectoSeleccionado'), panelId);
             }
 
             if (typeof hacerScrollAccesible === 'function') hacerScrollAccesible();
@@ -340,41 +328,20 @@
 // ============================================================
 
  function aplicarRestriccionesPermisos(usuario) {
-    console.log(' aplicarRestriccionesPermisos() ejecutándose...');
-
-    if (usuario.role === 'admin') {
-        console.log(' Admin - Acceso total a todos los paneles');
-        return;
-    }
-
+    if (!usuario || !usuario.active) return;
     var proyectoId = localStorage.getItem('proyectoSeleccionado');
-    if (proyectoId && typeof DataService !== 'undefined' && typeof DataService.resolveId === 'function') {
-        proyectoId = DataService.resolveId(proyectoId);
-    }
-
-    var elementos = document.querySelectorAll('.nav-header[data-panel], .nav-header.has-submenu, .submenu-item[data-panel]');
-    for (var i = 0; i < elementos.length; i++) {
-        var el = elementos[i];
-        var panelId = el.dataset.panel;
-
+    document.querySelectorAll('.nav-header[data-panel], .nav-header.has-submenu, .submenu-item[data-panel]').forEach(function(el) {
+        var panelId = el.getAttribute('data-panel');
         if (!panelId && el.classList && el.classList.contains('has-submenu')) {
             var firstChild = el.querySelector('.submenu-item[data-panel]');
-            if (firstChild) panelId = firstChild.dataset.panel;
+            if (firstChild) panelId = firstChild.getAttribute('data-panel');
         }
-
-        if (panelId) {
-            var nivel = AuthSystem.getNivelAccesoModulo(proyectoId, panelId);
-            if (nivel === 'none') {
-                el.style.display = 'none';
-                console.log(' Ocultando panel:', panelId);
-            } else {
-                el.style.display = '';
-                console.log(' Mostrando panel:', panelId, '(' + nivel + ')');
-            }
-        }
-    }
-
-    console.log(' Restricciones aplicadas correctamente');
+        if (!panelId) return;
+        var nivel = typeof nivelAccesoPanel === 'function'
+            ? nivelAccesoPanel(proyectoId, panelId) : 'none';
+        el.style.display = nivel === 'none' ? 'none' : '';
+        el.setAttribute('aria-disabled', nivel === 'none' ? 'true' : 'false');
+    });
 }
 // ============================================================
 // ACTUALIZAR UI DEL USUARIO EN PROYECTO
@@ -627,6 +594,7 @@ window.toggleNavGroup = toggleNavGroup;
 function cerrarModalSatisfaccion() {
     const modal = document.getElementById('modalSatisfaccion');
     if (modal) modal.style.display = 'none';
+    if (typeof cerrarModalGeneric === 'function') cerrarModalGeneric();
 }
 // ============================================
 // SISTEMA DE NUMERACIÓN JERÁRQUICA EDT-ACTIVIDAD (CORREGIDO)
@@ -1226,6 +1194,9 @@ function iniciarIndicadorSync() {
     cargarTemaGuardado();
     cargarIdiomaApp();
     cargarUsuarioSesion();
+    if (typeof aplicarRestriccionesPermisos === 'function') {
+        aplicarRestriccionesPermisos(AuthSystem.getCurrentUser());
+    }
     // Iniciar auto-sync si hay token de API
     if (typeof DataService !== 'undefined' && DataService.getToken()) {
         DataService.startAutoSync(30000);

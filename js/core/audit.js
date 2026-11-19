@@ -30,10 +30,11 @@ function clonarParaBitacora(valor) {
     return valor == null ? null : JSON.parse(JSON.stringify(valor));
 }
 
-function registrarBitacora(entidad, entidadId, accion, antes, despues) {
-    if (typeof proyecto === 'undefined' || !proyecto) return null;
-    if (!Array.isArray(proyecto.bitacora)) proyecto.bitacora = [];
-    const anterior = proyecto.bitacora.length ? proyecto.bitacora[proyecto.bitacora.length - 1].hash : 'GENESIS';
+function registrarBitacora(entidad, entidadId, accion, antes, despues, proyectoParam) {
+    const destino = proyectoParam || (typeof proyecto !== 'undefined' ? proyecto : null);
+    if (!destino) return null;
+    if (!Array.isArray(destino.bitacora)) destino.bitacora = [];
+    const anterior = destino.bitacora.length ? destino.bitacora[destino.bitacora.length - 1].hash : 'GENESIS';
     const entrada = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         fecha: new Date().toISOString(),
@@ -46,13 +47,14 @@ function registrarBitacora(entidad, entidadId, accion, antes, despues) {
         hashAnterior: anterior
     };
     entrada.hash = _hashBitacora(`${anterior}|${JSON.stringify(entrada)}`);
-    proyecto.bitacora.push(entrada);
+    destino.bitacora.push(entrada);
     return entrada;
 }
 
 /** Verifica que la cadena de hashes no haya sido alterada. */
-function verificarBitacora() {
-    const entradas = (typeof proyecto !== 'undefined' && proyecto && proyecto.bitacora) || [];
+function verificarBitacora(proyectoParam) {
+    const destino = proyectoParam || (typeof proyecto !== 'undefined' ? proyecto : null);
+    const entradas = (destino && destino.bitacora) || [];
     let anterior = 'GENESIS';
     for (const entrada of entradas) {
         const copia = { ...entrada };
