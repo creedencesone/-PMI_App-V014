@@ -8,7 +8,7 @@
  * la única fuente de verdad para no depender de ocultación por CSS.
  */
 const PANEL_A_MODULO = Object.freeze({
-    proyecto: 'acta', acta: 'acta', roles: 'acta',
+    proyecto: 'acta', acta: 'acta', roles: 'acta', importarcontrato: 'finanzas',
     dashboard: 'dashboard',
     salud: 'salud', calidad: 'calidad', agentes: 'agentes',
     financiero: 'finanzas', finanzas: 'finanzas', monedas: 'finanzas',

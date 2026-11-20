@@ -25,6 +25,7 @@
             if(pid === 'servicios') renderizarServicios();
             if(pid === 'comunicaciones') { renderizarComunicaciones(); renderizarReuniones(); if (typeof renderizarPlanComunicaciones === 'function') renderizarPlanComunicaciones(); document.querySelectorAll('.subpanel-comunicaciones').forEach(el => el.style.display = 'none'); document.getElementById('subpanelComunicaciones').style.display = 'block'; }
             if(pid === 'acta') renderizarActa();
+            if(pid === 'importarcontrato' && typeof inicializarPanelImportarContrato === 'function') inicializarPanelImportarContrato();
             if(pid === 'procesos') renderizarProcesos();
             if(pid === 'requisitos' && typeof renderizarRequisitos === 'function') renderizarRequisitos();
             if(pid === 'roles') renderizarRoles();

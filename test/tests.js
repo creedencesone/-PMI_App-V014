@@ -19,7 +19,7 @@ if (typeof window === "undefined") {
     const path = process.getBuiltinModule("path");
     const vm = process.getBuiltinModule("vm");
     const base = path.join(process.cwd(), "js");
-    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "services/LocalAIService.js", "core/agentes.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "core/permisos.js", "core/portafolio.js", "core/calidad.js", "core/alertas.js", "core/nivelacion.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
+    ["core/dates.js", "core/csv.js", "core/whatif.js", "core/evm.js", "core/finance.js", "core/wbs.js", "core/audit.js", "core/ui.js", "core/collections.js", "core/contrato-ia.js", "services/LocalAIService.js", "core/agentes.js", "panels/organigrama.js", "panels/gantt.js", "panels/carga-trabajo.js", "panels/panel-salud.js", "panels/panel-informe.js", "panels/financiero-monedas.js", "panels/montecarlo.js", "panels/riesgos.js", "panels/scrum.js", "core/linea-base.js", "core/raci.js", "panels/cierre.js", "core/permisos.js", "core/portafolio.js", "core/calidad.js", "core/alertas.js", "core/nivelacion.js", "panels/import-export.js", "panels/requisitos.js", "panels/beneficios-cambios-lecciones.js"].forEach(f => {
         vm.runInThisContext(fs.readFileSync(path.join(base, f), "utf8"), { filename: f });
     });
 }
@@ -1437,5 +1437,198 @@ QUnit.test('un agente desconocido se ignora y una respuesta inválida cae al fal
         assert.strictEqual(resultado.metadata.agentes, 1);
     } finally {
         LocalAIService.ask = original;
+    }
+});
+
+QUnit.module('Importador de contrato con IA');
+
+QUnit.test('el texto del contrato se sanea antes de fragmentarse', assert => {
+    const sucio = '  Contrato\u0007\r\n<b>de obra</b>\n\n\nfin  ';
+    const limpio = ContratoIA.sanitizarTextoContrato(sucio);
+    assert.false(limpio.includes('\u0007'));
+    assert.false(limpio.includes('<b>'));
+    assert.strictEqual(limpio, 'Contrato\nde obra\n\nfin');
+    assert.strictEqual(ContratoIA.sanitizarTextoContrato(''), '');
+});
+
+QUnit.test('la salida del modelo se normaliza y nunca conserva HTML', assert => {
+    const respuesta = '```json\n{' +
+        '"identificacion":{"nombreProyecto":"<img src=x>Obra <b>nueva</b>","criteriosExito":["Entregar","Entregar"]},' +
+        '"fechas":{"fechaInicio":"01/03/2026"},' +
+        '"economia":{"precioVenta":"1.250,50","monedaVenta":"€"},' +
+        '"requisitos":[{"necesidad":"Certificar obra","prioridad":"alta"},{"necesidad":""}]' +
+        '}\n```';
+    const datos = ContratoIA.normalizarExtraccion(respuesta);
+    assert.ok(datos, 'se acepta JSON con cercas de código');
+    assert.strictEqual(datos.identificacion.nombreProyecto, 'Obra nueva');
+    assert.deepEqual(datos.identificacion.criteriosExito, ['Entregar']);
+    assert.strictEqual(datos.fechas.fechaInicio, '2026-03-01', 'fecha española día/mes/año');
+    assert.strictEqual(datos.economia.precioVenta, 1250.5);
+    assert.strictEqual(datos.economia.monedaVenta, 'EUR');
+    assert.strictEqual(datos.requisitos.length, 1, 'se descartan elementos vacíos');
+    assert.strictEqual(ContratoIA.normalizarExtraccion('texto sin json'), null);
+});
+
+QUnit.test('los contratos largos se fragmentan con solape y límite', assert => {
+    const texto = 'Resumen\n' + ('Cláusula de prueba con datos del contrato. '.repeat(1200)) + '\nAnexo final';
+    const fragmentos = ContratoIA.segmentarContrato(texto, { maxChars: 4000, solape: 200, maxChunks: 6 });
+    assert.true(fragmentos.length > 1);
+    assert.true(fragmentos.length <= 6);
+    assert.true(fragmentos.every(f => f.texto.length <= 4000));
+    assert.strictEqual(fragmentos[0].indice, 1);
+    assert.strictEqual(fragmentos[0].caracteres, fragmentos[0].texto.length);
+    const prompt = ContratoIA.construirPromptExtraccion(fragmentos[0].texto, { indice: 1, total: fragmentos.length });
+    assert.strictEqual(prompt.length, 2);
+    assert.true(prompt[0].content.includes('hitosFinancieros'));
+    assert.true(prompt[0].content.includes('fragmento 1 de ' + fragmentos.length));
+});
+
+QUnit.test('la fusión consolida fragmentos sin duplicar listas', assert => {
+    const uno = ContratoIA.normalizarExtraccion(JSON.stringify({
+        identificacion: { nombreProyecto: 'Obra', alcance: 'Corto' },
+        requisitos: [{ codigo: 'REQ-1', necesidad: 'Uno' }]
+    }));
+    const dos = ContratoIA.normalizarExtraccion(JSON.stringify({
+        identificacion: { alcance: 'Alcance mucho más detallado del contrato firmado' },
+        requisitos: [{ codigo: 'REQ-1', necesidad: 'Uno' }, { codigo: 'REQ-2', necesidad: 'Dos' }]
+    }));
+    const fusion = ContratoIA.fusionarExtracciones([{ datos: uno }, { datos: dos }]);
+    assert.strictEqual(fusion.identificacion.nombreProyecto, 'Obra');
+    assert.strictEqual(fusion.identificacion.alcance, 'Alcance mucho más detallado del contrato firmado');
+    assert.deepEqual(fusion.requisitos.map(r => r.codigo), ['REQ-1', 'REQ-2']);
+});
+
+QUnit.test('sin modelo, la heurística extrae identificador, importe y fechas', assert => {
+    const texto = 'Contrato de suministro de equipos\n' +
+        'Expediente: EXP-2026-04\n' +
+        'Importe: 45.000,00 EUR\n' +
+        'Fecha de inicio: 01/02/2026\n' +
+        'Fecha de fin: 31/12/2026\n' +
+        'Condiciones de pago: 60 días desde factura\n' +
+        'Entregable: lote 1 de equipos\n';
+    const datos = ContratoIA.extraerHeuristico(texto);
+    assert.true(datos.identificacion.nombreProyecto.includes('suministro de equipos'));
+    assert.strictEqual(datos.identificacion.codigo, 'EXP-2026-04');
+    assert.strictEqual(datos.economia.precioVenta, 45000);
+    assert.strictEqual(datos.fechas.fechaInicio, '2026-02-01');
+    assert.strictEqual(datos.fechas.fechaFinPlan, '2026-12-31');
+    assert.true(datos.economia.condicionesPago.includes('60 días'));
+    assert.strictEqual(datos.identificacion.entregablesClave.length, 1);
+});
+
+QUnit.test('TXT y DOCX se leen como texto y se sanea el resultado', async assert => {
+    const txt = await ContratoIA.extraerTextoArchivo({
+        name: 'contrato.txt',
+        type: 'text/plain',
+        text: async () => '  Contrato\r\n<b>de prueba</b>  '
+    });
+    assert.strictEqual(txt.formato, 'txt');
+    assert.strictEqual(txt.texto, 'Contrato\nde prueba');
+
+    function crc32(buf) {
+        let c = ~0;
+        for (const byte of buf) {
+            c ^= byte;
+            for (let i = 0; i < 8; i++) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1));
+        }
+        return ~c >>> 0;
+    }
+    function zipStored(archivos) {
+        const locales = [];
+        const centrales = [];
+        let offset = 0;
+        for (const [nombre, contenido] of Object.entries(archivos)) {
+            const nb = Buffer.from(nombre, 'utf8');
+            const datos = Buffer.from(contenido, 'utf8');
+            const crc = crc32(datos);
+            const local = Buffer.alloc(30 + nb.length + datos.length);
+            local.writeUInt32LE(0x04034b50, 0);
+            local.writeUInt16LE(20, 4);
+            local.writeUInt16LE(0, 6);
+            local.writeUInt16LE(0, 8);
+            local.writeUInt32LE(crc, 14);
+            local.writeUInt32LE(datos.length, 18);
+            local.writeUInt32LE(datos.length, 22);
+            local.writeUInt16LE(nb.length, 26);
+            nb.copy(local, 30);
+            datos.copy(local, 30 + nb.length);
+            locales.push(local);
+
+            const central = Buffer.alloc(46 + nb.length);
+            central.writeUInt32LE(0x02014b50, 0);
+            central.writeUInt16LE(20, 4);
+            central.writeUInt16LE(20, 6);
+            central.writeUInt32LE(crc, 16);
+            central.writeUInt32LE(datos.length, 20);
+            central.writeUInt32LE(datos.length, 24);
+            central.writeUInt16LE(nb.length, 28);
+            central.writeUInt32LE(offset, 42);
+            nb.copy(central, 46);
+            centrales.push(central);
+            offset += local.length;
+        }
+        const tamanoCentral = centrales.reduce((suma, b) => suma + b.length, 0);
+        const eocd = Buffer.alloc(22);
+        eocd.writeUInt32LE(0x06054b50, 0);
+        eocd.writeUInt16LE(centrales.length, 8);
+        eocd.writeUInt16LE(centrales.length, 10);
+        eocd.writeUInt32LE(tamanoCentral, 12);
+        eocd.writeUInt32LE(offset, 16);
+        return Buffer.concat([...locales, ...centrales, eocd]);
+    }
+    const zip = zipStored({
+        'word/document.xml': '<w:document><w:body><w:p><w:t>Contrato de prueba</w:t></w:p></w:body></w:document>'
+    });
+    const docx = await ContratoIA.extraerTextoArchivo({
+        name: 'contrato.docx',
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        arrayBuffer: async () => zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength)
+    });
+    assert.strictEqual(docx.formato, 'docx');
+    assert.strictEqual(docx.texto, 'Contrato de prueba');
+});
+
+QUnit.test('sólo se aplican los campos marcados y queda bitácora', assert => {
+    const extraccion = ContratoIA.normalizarExtraccion(JSON.stringify({
+        identificacion: { nombreProyecto: 'Obra desde contrato', alcance: 'Alcance firmado' },
+        fechas: { fechaInicio: '2026-03-01' },
+        hitosFinancieros: [{ nombre: 'Anticipo', mes: 1, porcentaje: 30 }]
+    }));
+    const propuesta = ContratoIA.proponerCambios({ id: 7, nombre: 'Viejo' }, extraccion, {
+        modo: 'ia', avisos: [], archivo: 'contrato.pdf'
+    });
+    assert.deepEqual(propuesta.propuestas.map(p => p.ruta), [
+        'acta.nombreProyecto', 'acta.alcance', 'fechaInicio', 'hitosFinancieros'
+    ]);
+    assert.deepEqual(propuesta.propuestas[0].reflejos, ['nombre']);
+
+    const proyecto = { id: 7, nombre: 'Viejo', acta: {} };
+    const llamadas = [];
+    const originales = {
+        bitacora: global.registrarBitacora,
+        sincronizar: global.sincronizarActaConProyecto,
+        guardar: global.guardarProyecto
+    };
+    global.registrarBitacora = (...args) => llamadas.push(args);
+    global.sincronizarActaConProyecto = () => llamadas.push(['sync']);
+    global.guardarProyecto = () => llamadas.push(['save']);
+    try {
+        const resultado = ContratoIA.aplicarPropuestas(proyecto, ['acta.nombreProyecto', 'hitosFinancieros'], {
+            propuestas: propuesta.propuestas,
+            metadata: propuesta.metadata
+        });
+        assert.strictEqual(resultado.aplicadas, 2);
+        assert.strictEqual(proyecto.nombre, 'Obra desde contrato');
+        assert.strictEqual(proyecto.acta.nombreProyecto, 'Obra desde contrato');
+        assert.strictEqual(proyecto.fechaInicio, undefined, 'un campo no marcado no se aplica');
+        assert.strictEqual(proyecto.hitosFinancieros.length, 1);
+        assert.strictEqual(proyecto.hitosFinancieros[0].porcentaje, 30);
+        assert.true(llamadas.some(l => l[0] === 'contrato_ia'));
+        assert.true(llamadas.some(l => l[0] === 'sync'));
+        assert.true(llamadas.some(l => l[0] === 'save'));
+    } finally {
+        global.registrarBitacora = originales.bitacora;
+        global.sincronizarActaConProyecto = originales.sincronizar;
+        global.guardarProyecto = originales.guardar;
     }
 });

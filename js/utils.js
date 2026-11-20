@@ -243,6 +243,11 @@ function refreshAllPanels() {
         renderizarHitosFinancieros();
     }
 
+    // Importador de contrato con IA
+    if (typeof inicializarPanelImportarContrato === 'function') {
+        inicializarPanelImportarContrato();
+    }
+
     console.log(" Todos los paneles refrescados");
 }
 
@@ -255,6 +260,7 @@ function updateStaticTexts() {
     // Títulos de paneles principales
     const panelTitles = {
         'panelActa': 'acta_titulo',
+        'panelImportarContrato': 'importarContrato_titulo',
         'panelDashboard': 'dashboard_titulo',
         'panelSalud': 'salud_titulo',
         'panelRiesgos': 'riesgos_titulo',
@@ -607,6 +613,7 @@ function cerrarModalGeneric() {
                 window.iconosGuardados = {};
                 const elementosConIcono = [
                     { selector: '.nav-header[data-panel="acta"] .nav-icon', icono: 'file-text' },
+                    { selector: '.nav-header[data-panel="importarContrato"] .nav-icon', icono: 'upload-cloud' },
                     { selector: '.nav-header[data-panel="dashboard"] .nav-icon', icono: 'bar-chart-2' },
                     { selector: '.nav-header[data-panel="salud"] .nav-icon', icono: 'heart' },
                     { selector: '.nav-header[data-submenu="finanzas"] .nav-icon', icono: 'dollar-sign' },
@@ -648,6 +655,7 @@ function cerrarModalGeneric() {
             }
             const sidebarMap = [
                 { selector: '.nav-header[data-panel="acta"] .nav-title', key: 'sidebar_acta' },
+                { selector: '.nav-header[data-panel="importarContrato"] .nav-title', key: 'sidebar_importarContrato' },
                 { selector: '.nav-header[data-panel="dashboard"] .nav-title', key: 'sidebar_dashboard' },
                 { selector: '.nav-header[data-panel="salud"] .nav-title', key: 'sidebar_salud' },
                 { selector: '.nav-header[data-submenu="finanzas"] .nav-title', key: 'sidebar_finanzas' },
